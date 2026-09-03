@@ -2,9 +2,9 @@ import os
 import requests
 import resend
 
-# Configuración desde GitHub Secrets
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
-RECIPIENT_EMAIL = os.environ.get("EMAIL_USER")
+# Configuración directa
+RESEND_API_KEY = "re_2qY7cN4g_2EALfZ5sLsk6HPf3kHRSUzDG"
+RECIPIENT_EMAIL = "jfebrierg@gmail.com"
 URL_IMAGEN = os.environ.get("URL_IMAGEN", "")
 
 API_URL = "https://jfebrier.pythonanywhere.com/procesar"
