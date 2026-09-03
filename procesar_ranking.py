@@ -6,13 +6,12 @@ import resend
 RESEND_API_KEY = "re_2qY7cN4g_2EALfZ5sLsk6HPf3kHRSUzDG"
 RECIPIENT_EMAIL = "jfebrierg@gmail.com"
 
-# Si usas una URL fija para la imagen del ranking, colócala dentro de las comillas:
-URL_IMAGEN = os.environ.get("<a href="https://ibb.co/N21Ljnxt"><img src="https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg" alt="Banner-Ranking-de-Producci-n-1" border="0"></a>", "")
+# URL directa de la imagen
+URL_IMAGEN = "https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg"
 
 API_URL = "https://jfebrier.pythonanywhere.com/procesar"
 
 def obtener_html_ranking():
-    # Aseguramos enviar un payload válido a PythonAnywhere
     payload = {"url_imagen": URL_IMAGEN}
     headers = {"Content-Type": "application/json"}
     
