@@ -1,16 +1,12 @@
 import os
-import smtplib
 import requests
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import resend
 
-# Configuración de variables desde las credenciales secretas de GitHub
-EMAIL_USER = os.environ.get("EMAIL_USER")
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
-RECIPIENT_EMAIL = os.environ.get("RECIPIENT_EMAIL", EMAIL_USER)
-
-# URL pública de la imagen de origen o endpoint
+# Configuración desde GitHub Secrets
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+RECIPIENT_EMAIL = os.environ.get("EMAIL_USER")
 URL_IMAGEN = os.environ.get("URL_IMAGEN", "")
+
 API_URL = "https://jfebrier.pythonanywhere.com/procesar"
 
 def obtener_html_ranking():
@@ -23,26 +19,23 @@ def obtener_html_ranking():
     return data.get("html", "")
 
 def enviar_correo(html_content):
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "Producción General - Megapoderosos"
-    msg["From"] = EMAIL_USER
-    msg["To"] = RECIPIENT_EMAIL
+    resend.api_key = RESEND_API_KEY
 
-    parte_html = MIMEText(html_content, "html")
-    msg.attach(parte_html)
+    params = {
+        "from": "MEGAPODEROSOS <onboarding@resend.dev>",
+        "to": [RECIPIENT_EMAIL],
+        "subject": "Producción General - MEGAPODEROSOS",
+        "html": html_content,
+    }
 
-    # Conexión al servidor SMTP de Office 365 / Outlook
-    with smtplib.SMTP("smtp.office365.com", 587) as server:
-        server.starttls()
-        server.login(EMAIL_USER, EMAIL_PASSWORD)
-        server.sendmail(EMAIL_USER, RECIPIENT_EMAIL, msg.as_string())
+    email = resend.Emails.send(params)
+    print(f"Correo enviado exitosamente vía Resend. ID: {email.get('id')}")
 
 if __name__ == "__main__":
     try:
         html = obtener_html_ranking()
         if html:
             enviar_correo(html)
-            print("Correo enviado exitosamente.")
         else:
             print("No se obtuvo contenido HTML de la API.")
     except Exception as e:
