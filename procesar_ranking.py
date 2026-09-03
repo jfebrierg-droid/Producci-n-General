@@ -1,43 +1,26 @@
-import os
-import requests
-import resend
+name: Ejecutar Ranking MEGAPODEROSOS
 
-# Configuración directa
-RESEND_API_KEY = "re_2qY7cN4g_2EALfZ5sLsk6HPf3kHRSUzDG"
-RECIPIENT_EMAIL = "jfebrierg@gmail.com"
-URL_IMAGEN = os.environ.get("URL_IMAGEN", "")
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * *'
 
-API_URL = "https://jfebrier.pythonanywhere.com/procesar"
+jobs:
+  ejecutar-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar codigo del repositorio
+        uses: actions/checkout@v4
 
-def obtener_html_ranking():
-    payload = {"url_imagen": URL_IMAGEN}
-    headers = {"Content-Type": "application/json"}
-    
-    response = requests.post(API_URL, json=payload, headers=headers)
-    response.raise_for_status()
-    data = response.json()
-    return data.get("html", "")
+      - name: Configurar entorno de Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-def enviar_correo(html_content):
-    resend.api_key = RESEND_API_KEY
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    params = {
-        "from": "MEGAPODEROSOS <onboarding@resend.dev>",
-        "to": [RECIPIENT_EMAIL],
-        "subject": "Producción General - MEGAPODEROSOS",
-        "html": html_content,
-    }
-
-    email = resend.Emails.send(params)
-    print(f"Correo enviado exitosamente vía Resend. ID: {email.get('id')}")
-
-if __name__ == "__main__":
-    try:
-        html = obtener_html_ranking()
-        if html:
-            enviar_correo(html)
-        else:
-            print("No se obtuvo contenido HTML de la API.")
-    except Exception as e:
-        print(f"Error durante la ejecución: {e}")
-        exit(1)
+      - name: Ejecutar procesamiento y envio de correo
+        run: python procesar_ranking.py
