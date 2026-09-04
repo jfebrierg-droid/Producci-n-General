@@ -9,7 +9,7 @@ def procesar_y_enviar():
 
     # Credenciales de envío (si no usas GitHub Secrets, pon tus datos aquí)
     sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
-    password = os.environ.get("EMAIL_PASSWORD", "COntrace120678")
+    password = os.environ.get("EMAIL_PASSWORD", "COntrace12")
     recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
 
     # Diagnóstico para verificar la carga de credenciales
