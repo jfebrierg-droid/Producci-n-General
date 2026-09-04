@@ -28,4 +28,8 @@ jobs:
           gdown "https://drive.google.com/uc?id=1YmAVaDyplF6CQ_gk2NZsEmLyjFpcFH9Y" -O reporte_diario.png
 
       - name: Ejecutar procesamiento y envio de correo
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
         run: python procesar_ranking.py
