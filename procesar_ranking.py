@@ -8,9 +8,9 @@ def procesar_y_enviar():
     banner_path = "banner.png"
 
     # Credenciales de envío (si no usas GitHub Secrets, pon tus datos aquí)
-    sender_email = os.environ.get("EMAIL_USER", "jfebriergdrive@gmail.com")
-    password = os.environ.get("EMAIL_PASSWORD", "COntrace120678")
-    recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebriergdrive@gmail.com")
+    sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
+    password = os.environ.get("EMAIL_PASSWORD", "COntrace120675")
+    recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
 
     # Diagnóstico para verificar la carga de credenciales
     print("--- VERIFICACIÓN DE CREDENCIALES ---")
