@@ -15,7 +15,7 @@ def obtener_html_ranking():
     if os.path.exists(path_imagen):
         with open(path_imagen, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-        payload = {"base64Image": f"data:image/png;base64,{encoded_string}"}
+        payload = {"base64Image": encoded_string}
     else:
         print("Error: No se encontró el archivo reporte_diario.png localmente.")
         return ""
