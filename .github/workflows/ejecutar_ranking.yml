@@ -22,5 +22,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Descargar reporte_diario.png desde Google Drive
+        run: |
+          curl -L "https://drive.google.com/uc?export=download&id=1Nzq9YFjRqQgQqjjkZqqZ7abm0cm0zzf5" -o reporte_diario.png
+
       - name: Ejecutar procesamiento y envio de correo
         run: python procesar_ranking.py
