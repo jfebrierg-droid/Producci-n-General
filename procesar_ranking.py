@@ -7,6 +7,22 @@ from email.mime.image import MIMEImage
 def procesar_y_enviar():
     banner_path = "banner.png"
 
+    # Credenciales de envío (si no usas GitHub Secrets, pon tus datos aquí)
+    sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
+    password = os.environ.get("EMAIL_PASSWORD", "COntrace120675")
+    recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
+
+    # Diagnóstico para verificar la carga de credenciales
+    print("--- VERIFICACIÓN DE CREDENCIALES ---")
+    print(f"EMAIL_USER: {sender_email}")
+    print(f"EMAIL_RECIPIENT: {recipient_email}")
+    print(f"EMAIL_PASSWORD configurado: {'SÍ' if password and password != 'TU_CONTRASEÑA_DE_APLICACION_AQUI' else 'NO/DEFAULT'}")
+    print("-----------------------------------")
+
+    if not password or password == "TU_CONTRASEÑA_DE_APLICACION_AQUI":
+        print("ERROR: Debes colocar tu contraseña de aplicación de Gmail de 16 caracteres en el código o en los Secrets de GitHub.")
+        return
+
     datos_ranking = [
         {"intermediario": "Cliente Directo Megacentro", "local": "115,507.18", "inter": "0.00", "vida": "3,795.00", "auto": "0.00", "total": "119,302.18"},
         {"intermediario": "Luisa Gonzalez", "local": "28,326.00", "inter": "12,915.53", "vida": "910.00", "auto": "0.00", "total": "42,151.53"},
@@ -75,14 +91,6 @@ def procesar_y_enviar():
     </html>
     """
 
-    sender_email = os.environ.get("EMAIL_USER")
-    password = os.environ.get("EMAIL_PASSWORD")
-    recipient_email = os.environ.get("EMAIL_RECIPIENT")
-
-    if not sender_email or not password or not recipient_email:
-        print("Error: No se encontraron las variables de correo en GitHub Secrets.")
-        return
-
     msg = MIMEMultipart("related")
     msg["Subject"] = "Producción General - MEGAPODEROSOS"
     msg["From"] = sender_email
@@ -103,12 +111,14 @@ def procesar_y_enviar():
         print(f"Advertencia: No se encontró la imagen {banner_path} en el directorio del script.")
 
     try:
+        print("Intentando conectar con el servidor SMTP de Gmail...")
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
         server.login(sender_email, password)
-        server.sendmail(sender_email, recipient_email.split(","), msg.as_string())
+        destinatarios = [email.strip() for email in recipient_email.split(",") if email.strip()]
+        server.sendmail(sender_email, destinatarios, msg.as_string())
         server.quit()
-        print("Correo enviado exitosamente con el banner incrustado y valores actualizados.")
+        print("¡Correo enviado exitosamente!")
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
