@@ -11,10 +11,13 @@ def parse_monto(valor_str):
         return 0.0
 
 def obtener_color(ramo, valor_num):
-    """ Retorna el color de fondo y de texto según la regla de semáforo """
-    color_verde = "background-color: #22c55e; color: #ffffff;"
-    color_naranja = "background-color: #f97316; color: #ffffff;"
-    color_rojo = "background-color: #ef4444; color: #ffffff;"
+    """ Retorna el color de fondo y de texto según el formato suave de la imagen """
+    # Verde: fondo verde menta con texto verde oscuro
+    color_verde = "background-color: #dcfce7; color: #15803d;"
+    # Naranja: fondo naranja suave con texto naranja/marrón intenso
+    color_naranja = "background-color: #ffedd5; color: #c2410c;"
+    # Rojo: fondo rosado claro con texto rojo oscuro
+    color_rojo = "background-color: #ffe4e6; color: #b91c1c;"
 
     if ramo == "local":
         if valor_num >= 30000:
@@ -60,7 +63,6 @@ def procesar_y_enviar():
 
     # Lista de miembros del equipo
     datos_ranking = [
-        {"intermediario": "Cliente Directo Megacentro", "local": "115,507.18", "inter": "0.00", "vida": "3,795.00", "auto": "0.00"},
         {"intermediario": "Luisa Gonzalez", "local": "28,326.00", "inter": "12,915.53", "vida": "910.00", "auto": "0.00"},
         {"intermediario": "Marcos Adames", "local": "14,173.00", "inter": "0.00", "vida": "520.00", "auto": "12,566.53"},
         {"intermediario": "Nicauris Benitez", "local": "0.00", "inter": "21,332.92", "vida": "0.00", "auto": "0.00"},
@@ -168,7 +170,7 @@ def procesar_y_enviar():
             <!-- Banner Superior Pegado -->
             <img src="{BANNER_URL}" alt="Banner Ranking de Producción" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; margin: 0; padding: 0;">
 
-            <!-- Tabla de Producción Unida Directamente -->
+            <!-- Tabla de Producción -->
             <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin: 0; padding: 0; line-height: normal;">
                 <thead>
                     <tr style="background-color: #0d1527; color: #ffffff;">
