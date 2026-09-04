@@ -55,10 +55,10 @@ def procesar_y_enviar():
     password = os.environ.get("EMAIL_PASSWORD", "AQUI_TU_CONTRASEÑA_DE_APLICACION")
     recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
 
-    # URL directa de la imagen alojada en ImgBB
+    # URL directa de la imagen del banner alojada en ImgBB
     BANNER_URL = "https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg"
 
-    # Lista de los 55 miembros del equipo
+    # Lista de miembros del equipo
     datos_ranking = [
         {"intermediario": "Cliente Directo Megacentro", "local": "115,507.18", "inter": "0.00", "vida": "3,795.00", "auto": "0.00"},
         {"intermediario": "Luisa Gonzalez", "local": "28,326.00", "inter": "12,915.53", "vida": "910.00", "auto": "0.00"},
@@ -163,15 +163,13 @@ def procesar_y_enviar():
         <meta charset="utf-8">
     </head>
     <body style="font-family: Arial, sans-serif; background-color: #ffffff; margin: 0; padding: 10px; text-align: left;">
-        <div style="max-width: 850px; margin: 0; text-align: left;">
+        <div style="max-width: 850px; margin: 0; text-align: left; font-size: 0; line-height: 0;">
             
-            <!-- Banner Superior -->
-            <div style="width: 100%; margin-bottom: 15px; text-align: left;">
-                <img src="{BANNER_URL}" alt="Banner Ranking de Producción" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0;">
-            </div>
+            <!-- Banner Superior Pegado -->
+            <img src="{BANNER_URL}" alt="Banner Ranking de Producción" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; margin: 0; padding: 0;">
 
-            <!-- Tabla de Producción -->
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin: 0;">
+            <!-- Tabla de Producción Unida Directamente -->
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin: 0; padding: 0; line-height: normal;">
                 <thead>
                     <tr style="background-color: #0d1527; color: #ffffff;">
                         <th style="padding: 10px; text-align: left; border: 1px solid #2d3748;">Intermediario</th>
@@ -192,11 +190,6 @@ def procesar_y_enviar():
                     </tr>
                 </tbody>
             </table>
-
-            <!-- Banner Inferior -->
-            <div style="width: 100%; margin-top: 15px; text-align: left;">
-                <img src="{BANNER_URL}" alt="Banner Ranking de Producción" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0;">
-            </div>
 
         </div>
     </body>
