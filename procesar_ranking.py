@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 
 def procesar_y_enviar():
-    banner_path = "banner.png"
+    banner_path = "reporte_diario.png"
 
     # Credenciales de envío (si no usas GitHub Secrets, pon tus datos aquí)
     sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
