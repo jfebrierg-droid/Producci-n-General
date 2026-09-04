@@ -1,20 +1,26 @@
 import os
 import requests
 import resend
+import base64
 
-# Configuración directa
-RESEND_API_KEY = "re_2qY7cN4g_2EALfZ5sLsk6HPf3kHRSUzDG"
+# Configuración
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "re_2qY7cN4g_2EALfZ5sLsk6HPf3kHRSUzDG")
 RECIPIENT_EMAIL = "jfebrierg@gmail.com"
-
-# URL directa de la imagen
-URL_IMAGEN = "https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg"
-
 API_URL = "https://jfebrier.pythonanywhere.com/procesar"
 
 def obtener_html_ranking():
-    payload = {"url_imagen": URL_IMAGEN}
-    headers = {"Content-Type": "application/json"}
+    path_imagen = "reporte_diario.png"
     
+    # Si existe la imagen descargada de Drive, la envía en Base64
+    if os.path.exists(path_imagen):
+        with open(path_imagen, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+        payload = {"imagen_b64": encoded_string}
+    else:
+        # Respaldo en caso de prueba sin archivo local
+        payload = {"url_imagen": "https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg"}
+
+    headers = {"Content-Type": "application/json"}
     response = requests.post(API_URL, json=payload, headers=headers)
     response.raise_for_status()
     data = response.json()
