@@ -2,7 +2,6 @@ import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
 
 def parse_monto(valor_str):
     """ Convierte cadenas como '115,507.18' o '-73,122.26' a un float de Python """
@@ -13,7 +12,6 @@ def parse_monto(valor_str):
 
 def obtener_color(ramo, valor_num):
     """ Retorna el color de fondo y de texto según la regla de semáforo """
-    # Verde: #22c55e (texto blanco), Naranja: #f97316 (texto blanco), Rojo: #ef4444 (texto blanco)
     color_verde = "background-color: #22c55e; color: #ffffff;"
     color_naranja = "background-color: #f97316; color: #ffffff;"
     color_rojo = "background-color: #ef4444; color: #ffffff;"
@@ -53,13 +51,14 @@ def obtener_color(ramo, valor_num):
     return "background-color: #ffffff; color: #000000;"
 
 def procesar_y_enviar():
-    banner_path = "reporte_diario.png"
-
     sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
     password = os.environ.get("EMAIL_PASSWORD", "AQUI_TU_CONTRASEÑA_DE_APLICACION")
     recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
 
-    # Lista con los 55 miembros del equipo
+    # URL directa de la imagen alojada en ImgBB
+    BANNER_URL = "https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg"
+
+    # Lista de los 55 miembros del equipo
     datos_ranking = [
         {"intermediario": "Cliente Directo Megacentro", "local": "115,507.18", "inter": "0.00", "vida": "3,795.00", "auto": "0.00"},
         {"intermediario": "Luisa Gonzalez", "local": "28,326.00", "inter": "12,915.53", "vida": "910.00", "auto": "0.00"},
@@ -118,7 +117,7 @@ def procesar_y_enviar():
         {"intermediario": "Paula Herrera", "local": "0.00", "inter": "0.00", "vida": "0.00", "auto": "0.00"}
     ]
 
-    # Ordenar la lista de mayor a menor con prioridad en la columna Local, luego Internacional, Vida y Auto
+    # Ordenar de mayor a menor según prioridad: Local > Internacional > Vida > Auto
     datos_ranking.sort(
         key=lambda x: (
             parse_monto(x["local"]),
@@ -129,13 +128,12 @@ def procesar_y_enviar():
         reverse=True
     )
 
-    # Calcular los totales generales acumulados
+    # Calcular totales
     tot_local = sum(parse_monto(item["local"]) for item in datos_ranking)
     tot_inter = sum(parse_monto(item["inter"]) for item in datos_ranking)
     tot_vida = sum(parse_monto(item["vida"]) for item in datos_ranking)
     tot_auto = sum(parse_monto(item["auto"]) for item in datos_ranking)
 
-    # Construir filas de la tabla HTML con colores de semáforo
     filas_html = ""
     for fila in datos_ranking:
         val_local = parse_monto(fila["local"])
@@ -150,7 +148,7 @@ def procesar_y_enviar():
 
         filas_html += f"""
         <tr>
-            <td style="background-color: #1a2332; color: #ffffff; padding: 8px; font-weight: bold; border: 1px solid #2d3748;">{fila['intermediario']}</td>
+            <td style="background-color: #1a2332; color: #ffffff; padding: 8px; font-weight: bold; border: 1px solid #2d3748; text-align: left;">{fila['intermediario']}</td>
             <td style="{style_local} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${fila['local']}</td>
             <td style="{style_inter} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${fila['inter']}</td>
             <td style="{style_vida} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${fila['vida']}</td>
@@ -164,14 +162,16 @@ def procesar_y_enviar():
     <head>
         <meta charset="utf-8">
     </head>
-    <body style="font-family: Arial, sans-serif; background-color: #ffffff; margin: 0; padding: 10px;">
-        <div style="max-width: 700px; margin: 0 auto;">
-            <!-- Banner superior -->
-            <div style="width: 100%; text-align: center; margin-bottom: 15px;">
-                <img src="cid:banner_megapoderosos" alt="Reporte de Producción MEGAPODEROSOS" style="width: 100%; max-width: 700px; height: auto; display: block; margin: 0 auto;">
+    <body style="font-family: Arial, sans-serif; background-color: #ffffff; margin: 0; padding: 10px; text-align: left;">
+        <div style="max-width: 850px; margin: 0; text-align: left;">
+            
+            <!-- Banner Superior -->
+            <div style="width: 100%; margin-bottom: 15px; text-align: left;">
+                <img src="{BANNER_URL}" alt="Banner Ranking de Producción" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0;">
             </div>
 
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <!-- Tabla de Producción -->
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin: 0;">
                 <thead>
                     <tr style="background-color: #0d1527; color: #ffffff;">
                         <th style="padding: 10px; text-align: left; border: 1px solid #2d3748;">Intermediario</th>
@@ -184,7 +184,7 @@ def procesar_y_enviar():
                 <tbody>
                     {filas_html}
                     <tr style="font-weight: bold; font-size: 13px;">
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748;">Total General</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: left;">Total General</td>
                         <td style="background-color: #0d1527; color: #ffffff; padding: 10px; text-align: right; border: 1px solid #2d3748;">${tot_local:,.2f}</td>
                         <td style="background-color: #0d1527; color: #ffffff; padding: 10px; text-align: right; border: 1px solid #2d3748;">${tot_inter:,.2f}</td>
                         <td style="background-color: #0d1527; color: #ffffff; padding: 10px; text-align: right; border: 1px solid #2d3748;">${tot_vida:,.2f}</td>
@@ -192,27 +192,23 @@ def procesar_y_enviar():
                     </tr>
                 </tbody>
             </table>
+
+            <!-- Banner Inferior -->
+            <div style="width: 100%; margin-top: 15px; text-align: left;">
+                <img src="{BANNER_URL}" alt="Banner Ranking de Producción" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0;">
+            </div>
+
         </div>
     </body>
     </html>
     """
 
-    msg = MIMEMultipart("related")
+    msg = MIMEMultipart("alternative")
     msg["Subject"] = "Producción General - MEGAPODEROSOS"
     msg["From"] = sender_email
     msg["To"] = recipient_email
 
-    msg_alternative = MIMEMultipart("alternative")
-    msg.attach(msg_alternative)
-    msg_alternative.attach(MIMEText(html_content, "html"))
-
-    if os.path.exists(banner_path):
-        with open(banner_path, "rb") as f:
-            img_data = f.read()
-        image = MIMEImage(img_data)
-        image.add_header("Content-ID", "<banner_megapoderosos>")
-        image.add_header("Content-Disposition", "inline", filename="reporte_diario.png")
-        msg.attach(image)
+    msg.attach(MIMEText(html_content, "html"))
 
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
