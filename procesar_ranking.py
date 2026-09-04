@@ -5,11 +5,8 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 
 def procesar_y_enviar():
-    # Ruta de la imagen del banner que esta en la raíz de tu repositorio
     banner_path = "banner.png"
 
-    # Datos reales procesados desde la imagen del reporte
-    # (Excluye automáticamente a José Manuel Febrier García)
     datos_ranking = [
         {"intermediario": "Cliente Directo Megacentro", "local": "115,507.18", "inter": "0.00", "vida": "3,795.00", "auto": "0.00", "total": "119,302.18"},
         {"intermediario": "Luisa Gonzalez", "local": "28,326.00", "inter": "12,915.53", "vida": "910.00", "auto": "0.00", "total": "42,151.53"},
@@ -28,7 +25,6 @@ def procesar_y_enviar():
         {"intermediario": "Julissa Rosario", "local": "0.00", "inter": "24,756.24", "vida": "0.00", "auto": "-73,122.26", "total": "-48,366.02"},
     ]
 
-    # Generación dinámica de celdas
     filas_html = ""
     for fila in datos_ranking:
         filas_html += f"""
@@ -41,7 +37,6 @@ def procesar_y_enviar():
         </tr>
         """
 
-    # Estructura del correo HTML matching la interfaz de MEGAPODEROSOS
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -50,12 +45,10 @@ def procesar_y_enviar():
     </head>
     <body style="font-family: Arial, sans-serif; background-color: #ffffff; margin: 0; padding: 10px;">
         <div style="max-width: 650px; margin: 0 auto;">
-            <!-- BANNER PRINCIPAL (Incrustado via CID) -->
             <div style="width: 100%; text-align: center; margin-bottom: 0px;">
                 <img src="cid:banner_megapoderosos" alt="Ranking de Producción MEGAPODEROSOS" style="width: 100%; max-width: 650px; height: auto; display: block;">
             </div>
 
-            <!-- TABLA ESTILIZADA AZUL/ROSADO -->
             <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                 <thead>
                     <tr style="background-color: #0d1527; color: #ffffff;">
@@ -82,7 +75,6 @@ def procesar_y_enviar():
     </html>
     """
 
-    # Obtener credenciales desde las variables de entorno de GitHub
     sender_email = os.environ.get("EMAIL_USER")
     password = os.environ.get("EMAIL_PASSWORD")
     recipient_email = os.environ.get("EMAIL_RECIPIENT")
@@ -91,18 +83,15 @@ def procesar_y_enviar():
         print("Error: No se encontraron las variables de correo en GitHub Secrets.")
         return
 
-    # Estructura del correo de tipo multipart/related (para cargar imágenes incrustadas CID)
     msg = MIMEMultipart("related")
     msg["Subject"] = "Producción General - MEGAPODEROSOS"
     msg["From"] = sender_email
     msg["To"] = recipient_email
 
-    # Adjuntar HTML
     msg_alternative = MIMEMultipart("alternative")
     msg.attach(msg_alternative)
     msg_alternative.attach(MIMEText(html_content, "html"))
 
-    # Adjuntar el archivo del banner como recurso CID
     if os.path.exists(banner_path):
         with open(banner_path, "rb") as f:
             img_data = f.read()
@@ -113,7 +102,6 @@ def procesar_y_enviar():
     else:
         print(f"Advertencia: No se encontró la imagen {banner_path} en el directorio del script.")
 
-    # Conexión SMTP y envío del correo
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
