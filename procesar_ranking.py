@@ -119,29 +119,45 @@ def procesar_y_enviar():
         {"intermediario": "Paula Herrera", "local": "0.00", "inter": "0.00", "vida": "0.00", "auto": "0.00"}
     ]
 
+    # Procesar valores aplicando la división entre 61 en Internacional y la multiplicación por 12 en Auto
+    datos_procesados = []
+    for item in datos_ranking:
+        val_local = parse_monto(item["local"])
+        val_inter = parse_monto(item["inter"]) / 61.0
+        val_vida = parse_monto(item["vida"])
+        val_auto = parse_monto(item["auto"]) * 12.0
+
+        datos_procesados.append({
+            "intermediario": item["intermediario"],
+            "val_local": val_local,
+            "val_inter": val_inter,
+            "val_vida": val_vida,
+            "val_auto": val_auto
+        })
+
     # Ordenar de mayor a menor según prioridad: Local > Internacional > Vida > Auto
-    datos_ranking.sort(
+    datos_procesados.sort(
         key=lambda x: (
-            parse_monto(x["local"]),
-            parse_monto(x["inter"]),
-            parse_monto(x["vida"]),
-            parse_monto(x["auto"])
+            x["val_local"],
+            x["val_inter"],
+            x["val_vida"],
+            x["val_auto"]
         ),
         reverse=True
     )
 
     # Calcular totales
-    tot_local = sum(parse_monto(item["local"]) for item in datos_ranking)
-    tot_inter = sum(parse_monto(item["inter"]) for item in datos_ranking)
-    tot_vida = sum(parse_monto(item["vida"]) for item in datos_ranking)
-    tot_auto = sum(parse_monto(item["auto"]) for item in datos_ranking)
+    tot_local = sum(item["val_local"] for item in datos_procesados)
+    tot_inter = sum(item["val_inter"] for item in datos_procesados)
+    tot_vida = sum(item["val_vida"] for item in datos_procesados)
+    tot_auto = sum(item["val_auto"] for item in datos_procesados)
 
     filas_html = ""
-    for fila in datos_ranking:
-        val_local = parse_monto(fila["local"])
-        val_inter = parse_monto(fila["inter"])
-        val_vida = parse_monto(fila["vida"])
-        val_auto = parse_monto(fila["auto"])
+    for fila in datos_procesados:
+        val_local = fila["val_local"]
+        val_inter = fila["val_inter"]
+        val_vida = fila["val_vida"]
+        val_auto = fila["val_auto"]
 
         style_local = obtener_color("local", val_local)
         style_inter = obtener_color("inter", val_inter)
@@ -151,10 +167,10 @@ def procesar_y_enviar():
         filas_html += f"""
         <tr>
             <td style="background-color: #1a2332; color: #ffffff; padding: 8px; font-weight: bold; border: 1px solid #2d3748; text-align: left;">{fila['intermediario']}</td>
-            <td style="{style_local} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${fila['local']}</td>
-            <td style="{style_inter} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${fila['inter']}</td>
-            <td style="{style_vida} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${fila['vida']}</td>
-            <td style="{style_auto} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${fila['auto']}</td>
+            <td style="{style_local} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${val_local:,.2f}</td>
+            <td style="{style_inter} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${val_inter:,.2f}</td>
+            <td style="{style_vida} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${val_vida:,.2f}</td>
+            <td style="{style_auto} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${val_auto:,.2f}</td>
         </tr>
         """
 
