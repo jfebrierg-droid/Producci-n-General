@@ -242,19 +242,30 @@ def procesar_y_enviar():
     count_vida = sum(1 for x in datos_procesados if x["val_vida"] > 0)
     count_auto = sum(1 for x in datos_procesados if x["val_auto"] > 0)
 
-    def evaluar_participacion_ramo(nombre_ramo, count, semilla):
-        if count < 10:
-            msg_base = seleccionar_mensaje_dinamico(MENSAJES_BAJO, semilla_extra=semilla)
-        elif 10 <= count <= 15:
-            msg_base = seleccionar_mensaje_dinamico(MENSAJES_MEDIO, semilla_extra=semilla)
+    def evaluar_participacion_ramo(ramo_key, count, semilla):
+        if ramo_key == "inter":
+            if count == 0:
+                msg_base = seleccionar_mensaje_dinamico(MENSAJES_BAJO, semilla_extra=semilla)
+                contexto = "Aún no tenemos participantes en este ramo, ¡vamos a dar el primer paso en uno de los productos más retadores!"
+            else:
+                msg_base = seleccionar_mensaje_dinamico(MENSAJES_ALTO, semilla_extra=semilla)
+                contexto = f"Tenemos <b>{count}</b> persona{'s' if count != 1 else ''} participando, resaltando el esfuerzo por ser uno de los productos más retadores."
         else:
-            msg_base = seleccionar_mensaje_dinamico(MENSAJES_ALTO, semilla_extra=semilla)
-        return f"En <b>{nombre_ramo}</b>: <i>&ldquo;{msg_base}&rdquo;</i>"
+            if count < 10:
+                msg_base = seleccionar_mensaje_dinamico(MENSAJES_BAJO, semilla_extra=semilla)
+                contexto = f"Tenemos solo <b>{count}</b> persona{'s' if count != 1 else ''} participando, por lo que hay que ponerse las pilas."
+            elif 10 <= count <= 15:
+                msg_base = seleccionar_mensaje_dinamico(MENSAJES_MEDIO, semilla_extra=semilla)
+                contexto = f"Tenemos <b>{count}</b> personas participando. ¡Vamos avanzando con buen ritmo!"
+            else:
+                msg_base = seleccionar_mensaje_dinamico(MENSAJES_ALTO, semilla_extra=semilla)
+                contexto = f"Tenemos <b>{count}</b> personas participando, demostrando que sí se puede."
+        return f"{contexto} <i>&ldquo;{msg_base}&rdquo;</i>"
 
-    estado_local = evaluar_participacion_ramo("Local", count_local, semilla=1)
-    estado_inter = evaluar_participacion_ramo("Internacional", count_inter, semilla=4)
-    estado_vida = evaluar_participacion_ramo("Vida", count_vida, semilla=2)
-    estado_auto = evaluar_participacion_ramo("Auto, Hogar y Empresa", count_auto, semilla=3)
+    estado_local = evaluar_participacion_ramo("local", count_local, semilla=1)
+    estado_inter = evaluar_participacion_ramo("inter", count_inter, semilla=4)
+    estado_vida = evaluar_participacion_ramo("vida", count_vida, semilla=2)
+    estado_auto = evaluar_participacion_ramo("auto", count_auto, semilla=3)
 
     counts = [count_local, count_vida, count_auto]
     if any(c < 10 for c in counts):
@@ -267,10 +278,10 @@ def procesar_y_enviar():
     mensaje_dinamico_atencion = f"""
     <div style="background-color: {box_bg}; border-left: 5px solid {box_border}; padding: 18px 22px; margin-top: 20px; margin-bottom: 16px; border-radius: 6px; font-size: 17px; color: {box_color}; text-align: left; line-height: 1.6;">
         <div style="font-weight: bold; margin-bottom: 14px; font-size: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 8px;">Participación por Producto:</div>
-        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);">{estado_local}</div>
-        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08); background-color: rgba(255, 255, 255, 0.7); padding: 8px 12px; border-radius: 4px; border-left: 4px solid #3182ce;"><strong>🌐 Internacional ({count_inter} miembro{'s' if count_inter != 1 else ''}):</strong> {estado_inter}</div>
-        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);">{estado_vida}</div>
-        <div>{estado_auto}</div>
+        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Local:</strong> {estado_local}</div>
+        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08); background-color: rgba(255, 255, 255, 0.7); padding: 8px 12px; border-radius: 4px; border-left: 4px solid #3182ce;"><strong>Internacional:</strong> {estado_inter}</div>
+        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Vida:</strong> {estado_vida}</div>
+        <div><strong>Auto, Hogar y Empresa:</strong> {estado_auto}</div>
     </div>
     """
 
@@ -423,7 +434,7 @@ def procesar_y_enviar():
         destinatarios = [email.strip() for email in recipient_email.split(",") if email.strip()]
         server.sendmail(sender_email, destinatarios, msg.as_string())
         server.quit()
-        print("¡Correo enviado con éxito! Rotación semanal activa y respaldo multi-cuenta configurado.")
+        print("¡Correo enviado con éxito! Rotación semanal activa y reglas de participación configuradas.")
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
