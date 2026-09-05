@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Script: procesar_ranking.py
-Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (fallback de API Keys
-desde variables de entorno) utilizando el nuevo SDK oficial de Google GenAI y contenido dinámico.
+Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (fallback de API Keys)
+y un motor combinatorio avanzado de más de 1,000 variaciones de mensajes motivacionales.
 """
 
 from datetime import datetime
@@ -37,45 +37,109 @@ LISTA_MAESTRA_AGENTES = [
     "Eddy Concepcion", "Yolanda Cabrera", "Paula Herrera", "Rafael Capellan", "Salvador Martinez"
 ]
 
-# BANCOS DE MENSAJES AMPLIADOS (10 OPCIONES POR NIVEL PARA ROTACIÓN SEMANAL)
-MENSAJES_BAJO = [
-    "Este ramo tiene un espacio enorme para crecer este mes. ¡Vamos a meterle ganas y a buscar esas cotizaciones que nos faltan!",
-    "Aquí podemos dar el gran salto. ¡A revisar nuestra cartera y llamar a esos clientes que están pendientes!",
-    "Este producto nos está pidiendo un empujoncito extra. ¡Vamos a ponernos las pilas y a salir a buscar esos números!",
-    "No nos detengamos por este bache; este ramo tiene potencial de sobra. ¡A rescatar esas oportunidades!",
-    "Vamos a ponerle más enfoque a este segmento esta semana. ¡Con un par de llamadas cerramos buenos negocios!",
-    "Este es el momento de redoblar los esfuerzos aquí. ¡El equipo sabe cómo resolver y sacar la tarea!",
-    "Vamos a revisar la estrategia en este ramo. Un poquito más de calle y cerramos esas pendientes.",
-    "Este indicador nos invita a buscar nuevas opciones y tocar puertas frescas. ¡Sí se puede, equipo!",
-    "No aflojemos el paso. Vamos a darle calor a este ramo para que suba como la espuma.",
-    "Con una buena ronda de llamadas esta semana levantamos este número sin problemas. ¡A darle con todo!"
-]
+# --- MOTOR COMBINATORIO DE MENSAJES (>1,000 COMBINACIONES ÚNICAS) ---
+BANCO_BAJO = {
+    "aperturas": [
+        "Analizando cómo vamos en este segmento,",
+        "Revisando los números actuales de este ramo,",
+        "Viendo el comportamiento del equipo en este producto,",
+        "Haciendo una pausa para evaluar este indicador,",
+        "Para nadie es un secreto que en este ramo"
+    ],
+    "nucleos": [
+        "tenemos un margen de mejora gigante y toca ponerse las pilas para revertir este inicio",
+        "estamos por debajo de nuestro potencial real y necesitamos apretar el paso con actitud",
+        "el tablero nos pide un cambio de ritmo urgente y salir a buscar esas cotizaciones pendientes",
+        "tenemos tarea pendiente y hay que redoblar esfuerzos para activar esta cartera",
+        "las oportunidades están ahí esperando, solo falta dar el primer toque de puerta con energía"
+    ],
+    "cierres": [
+        "¡Confié plenamente en la capacidad de este equipo para darle la vuelta!",
+        "¡Sé de qué estamos hechos los MEGAPODEROSOS, a meterle toda la fuerza!",
+        "¡Vamos a demostrar nuestra casta comercial esta misma semana!",
+        "¡Es momento de sacar el carácter y poner los números donde deben estar!",
+        "¡A mover el teléfono y arrancar con fuerza este tramo!"
+    ]
+}
 
-MENSAJES_MEDIO = [
-    "¡Muy bien, equipo! Vamos avanzando con paso firme en este ramo. ¡A mantener el ritmo para cerrar el mes por todo lo alto!",
-    "El equipo viene respondiendo excelente en este segmento. ¡Sigamos con esa misma energía para alcanzar la meta!",
-    "Se nota el trabajo y el movimiento positivo en este producto. ¡No bajemos la guardia y sigamos sumando!",
-    "Vamos por buen camino en este ramo. ¡Un último estirón y logramos el objetivo que nos propusimos!",
-    "La constancia se nota en este indicador. ¡Sigamos así, con la mira puesta en la meta!",
-    "Excelente trabajo de equipo en este segmento. ¡Vamos a mantenernos firmes para asegurar el cierre!",
-    "Este ramo marcha con buen pie gracias al esfuerzo diario. ¡A seguir cosechando éxitos!",
-    "Muy buena labor en este producto. Mantengamos la disciplina y el enfoque hasta el último día.",
-    "Estamos cumpliendo con las expectativas en este ramo. ¡A mantener la inercia positiva!",
-    "El ritmo en este segmento es alentador. ¡Sigamos adelante con la misma dedicación!"
-]
+BANCO_MEDIO = {
+    "aperturas": [
+        "El pulso del equipo en este ramo",
+        "Viendo el ritmo que llevamos en este segmento,",
+        "Analizando el avance de la semana en este producto,",
+        "El esfuerzo constante que se ve reflejado aquí",
+        "Paso a paso estamos consolidando el trabajo en este ramo y"
+    ],
+    "nucleos": [
+        "nos muestra un desempeño estable que demuestra el compromiso diario de todos",
+        "camina con buen paso y una disciplina comercial que da gusto ver",
+        "mantiene una inercia positiva muy interesante que debemos cuidar y potenciar",
+        "refleja el enfoque correcto aunque todavía tenemos espacio para un último empujón",
+        "va tomando forma sólida gracias al trabajo coordinado del grupo"
+    ],
+    "cierres": [
+        "¡A mantenernos firmes para asegurar un cierre de mes extraordinario!",
+        "¡Sigamos con esa misma energía rumbo a la meta establecida!",
+        "¡Excelente constancia, vamos a mantener el pie en el acelerador!",
+        "¡Este es el camino correcto, sigamos sumando con orgullo!",
+        "¡A consolidar estos resultados con el talento que nos caracteriza!"
+    ]
+}
 
-MENSAJES_ALTO = [
-    "¡Espectacular! Este ramo está volando gracias al esfuerzo y la entrega de todos. ¡Así es que se trabaja, equipo!",
-    "¡Qué nivel de desempeño en este segmento! Mis felicitaciones a todos los que están dando el todo por el todo.",
-    "¡Imparables! Demostrando de qué estamos hechos los MEGAPODEROSOS en este ramo. ¡A romper récords!",
-    "¡Una verdadera locura de producción en este ramo! Gracias por ese compromiso que inspira a todos.",
-    "¡Qué manera de brillar en este segmento! Este es el verdadero espíritu de los MEGAPODEROSOS.",
-    "¡Resultados extraordinarios! Cuando se quiere se puede, y ustedes lo están demostrando con hechos.",
-    "¡Excepcional rendimiento en este ramo! El esfuerzo de cada uno nos tiene en la cima. ¡Sigan así!",
-    "¡De 10! Este ramo refleja el talento y la dedicación de un equipo que no se conforma.",
-    "¡Aplausos de pie para todos en este segmento! Demostrando liderazgo y casta de campeones.",
-    "¡Brutal el trabajo en este ramo! Con esta misma energía vamos a comernos el resto del año."
-]
+BANCO_ALTO = {
+    "aperturas": [
+        "¡Lo que estamos logrando en este ramo",
+        "¡Qué nivel tan impresionante estamos mostrando en este segmento,",
+        "¡El rendimiento colectivo en este producto",
+        "¡Imparables y con una energía desbordante,",
+        "¡De 10 absoluto el trabajo que se está haciendo en este ramo y"
+    ],
+    "nucleos": [
+        "es simplemente digno de aplaudir y refleja el verdadero ADN de los MEGAPODEROSOS",
+        "supera cualquier expectativa demostrando la categoría y experiencia de este equipo",
+        "marca un precedente brutal de lo que somos capaces cuando nos lo proponemos",
+        "está rompiendo esquemas gracias a la entrega y el profesionalismo de cada uno",
+        "nos posiciona en lo más alto dejando claro quién manda en la cancha"
+    ],
+    "cierres": [
+        "¡Sigan volando alto y comiéndose el resto del año con este mismo hambre de triunfo!",
+        "¡Esto es liderazgo puro, a disfrutar el éxito y seguir inspirando!",
+        "¡Qué manera tan brutal de trabajar, sigamos haciendo historia!",
+        "¡Aplausos de pie para todos los involucrados, a mantener la cima!",
+        "¡Con esta misma pasión nadie nos para!"
+    ]
+}
+
+BANCO_INTERNACIONAL = {
+    "aperturas": [
+        "Tratándose de nuestro producto internacional,",
+        "En cuanto al ramo internacional, reconocido por su alta exigencia,",
+        "Evaluando el terreno internacional,",
+        "Mirando de frente al reto internacional,",
+        "Sabemos que el segmento internacional es uno de los más retadores y"
+    ],
+    "nucleos": [
+        "cada paso al frente cuenta el doble y merece todo nuestro reconocimiento",
+        "ponerse la camiseta aquí demuestra una visión comercial de otro nivel",
+        "romper el hielo en este producto exige una disciplina y destreza superior",
+        "cada gestión exitosa en este campo resalta el esfuerzo titánico del equipo",
+        "enfrentar este desafío tan complejo demuestra el calibre de nuestros agentes"
+    ],
+    "cierres": [
+        "¡Valoramos enormemente ese esfuerzo extra que marca la diferencia!",
+        "¡A seguir conquistando este mercado tan exclusivo con orgullo!",
+        "¡Su valentía ante los retos más difíciles nos enorgullece a todos!",
+        "¡Sigamos abriendo brecha donde pocos se atreven!",
+        "¡Un reconocimiento especial por asumir este gran desafío con categoría!"
+    ]
+}
+
+def generar_mensaje_combinatorio(banco, semilla=0):
+    semana = datetime.now().isocalendar()[1]
+    idx_a = (semana + semilla) % len(banco["aperturas"])
+    idx_n = (semana * 3 + semilla) % len(banco["nucleos"])
+    idx_c = (semana * 7 + semilla) % len(banco["cierres"])
+    return f"{banco['aperturas'][idx_a]} {banco['nucleos'][idx_n]}. {banco['cierres'][idx_c]}"
 
 def format_moneda(valor):
     if valor < 0:
@@ -122,8 +186,6 @@ def obtener_datos_desde_drive_imagen(file_id):
     """
 
     texto_respuesta = None
-    
-    # SISTEMA DE FALLBACK ENTRE CUENTAS DE GEMINI (NUEVO SDK CLIENT)
     for index, api_key in enumerate(API_KEYS_GEMINI):
         if not api_key:
             print(f"Aviso: La API Key #{index + 1} no está configurada o está vacía.")
@@ -187,12 +249,6 @@ def obtener_color(ramo, valor_num):
     elif valor_num >= 1: return color_naranja
     else: return color_rojo
 
-def seleccionar_mensaje_dinamico(lista_mensajes, semilla_extra=0):
-    ahora = datetime.now()
-    semana_del_anio = ahora.isocalendar()[1]
-    indice = (semana_del_anio + semilla_extra) % len(lista_mensajes)
-    return lista_mensajes[indice]
-
 def procesar_y_enviar():
     sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
     password = os.environ.get("EMAIL_PASSWORD", "AQUI_TU_CONTRASEÑA_DE_APLICACION")
@@ -245,20 +301,20 @@ def procesar_y_enviar():
     def evaluar_participacion_ramo(ramo_key, count, semilla):
         if ramo_key == "inter":
             if count == 0:
-                msg_base = seleccionar_mensaje_dinamico(MENSAJES_BAJO, semilla_extra=semilla)
-                contexto = "Aún no tenemos participantes en este ramo, ¡vamos a dar el primer paso en uno de los productos más retadores!"
+                msg_base = generar_mensaje_combinatorio(BANCO_BAJO, semilla_extra=semilla)
+                contexto = "Aún no tenemos participantes en este ramo. ¡Es la oportunidad perfecta para romper el hielo en uno de los productos más retadores!"
             else:
-                msg_base = seleccionar_mensaje_dinamico(MENSAJES_ALTO, semilla_extra=semilla)
-                contexto = f"Tenemos <b>{count}</b> persona{'s' if count != 1 else ''} participando, resaltando el esfuerzo por ser uno de los productos más retadores."
+                msg_base = generar_mensaje_combinatorio(BANCO_INTERNACIONAL, semilla_extra=semilla)
+                contexto = f"Tenemos <b>{count}</b> persona{'s' if count != 1 else ''} participando, resaltando el gran esfuerzo por ser uno de los productos más retadores."
         else:
             if count < 10:
-                msg_base = seleccionar_mensaje_dinamico(MENSAJES_BAJO, semilla_extra=semilla)
+                msg_base = generar_mensaje_combinatorio(BANCO_BAJO, semilla_extra=semilla)
                 contexto = f"Tenemos solo <b>{count}</b> persona{'s' if count != 1 else ''} participando, por lo que hay que ponerse las pilas."
             elif 10 <= count <= 15:
-                msg_base = seleccionar_mensaje_dinamico(MENSAJES_MEDIO, semilla_extra=semilla)
+                msg_base = generar_mensaje_combinatorio(BANCO_MEDIO, semilla_extra=semilla)
                 contexto = f"Tenemos <b>{count}</b> personas participando. ¡Vamos avanzando con buen ritmo!"
             else:
-                msg_base = seleccionar_mensaje_dinamico(MENSAJES_ALTO, semilla_extra=semilla)
+                msg_base = generar_mensaje_combinatorio(BANCO_ALTO, semilla_extra=semilla)
                 contexto = f"Tenemos <b>{count}</b> personas participando, demostrando que sí se puede."
         return f"{contexto} <i>&ldquo;{msg_base}&rdquo;</i>"
 
@@ -333,7 +389,7 @@ def procesar_y_enviar():
 
     texto_dinamico = f"""
     <div style="font-family: Arial, sans-serif; color: #1e293b; text-align: left;">
-        <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">🔥 EQUIPO MEGAPODEROSOS</div>
+        <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">🔥 MEGAPODEROSOS 💪</div>
         <div style="font-size: 22px; font-weight: bold; color: #334155; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; text-align: left;">📊 Numeritos del mes de {mes_actual.capitalize()}</div>
         
         <table style="width: 100%; border-collapse: collapse; font-size: 19px; line-height: 1.6; text-align: left;">
@@ -434,7 +490,7 @@ def procesar_y_enviar():
         destinatarios = [email.strip() for email in recipient_email.split(",") if email.strip()]
         server.sendmail(sender_email, destinatarios, msg.as_string())
         server.quit()
-        print("¡Correo enviado con éxito! Rotación semanal activa y reglas de participación configuradas.")
+        print("¡Correo enviado con éxito! Título actualizado con éxito.")
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
