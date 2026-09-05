@@ -30,8 +30,8 @@ def obtener_datos_desde_drive_imagen(file_id):
     img = Image.open(image_path)
 
     print("Analizando imagen con IA para extraer los resultados...")
-    # Usamos el modelo multimodal actualizado para leer la tabla de la imagen
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    # Usamos el modelo multimodal actualizado indicado por la API
+    model = genai.GenerativeModel("gemini-3.6-flash")
     prompt = """
     Analiza esta imagen que contiene un reporte o tabla de producción de seguros del equipo MEGAPODEROSOS.
     Extrae la información de TODOS los intermediarios que aparecen y sus montos en los siguientes ramos:
