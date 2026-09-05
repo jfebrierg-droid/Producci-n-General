@@ -1,5 +1,6 @@
 import os
 import smtplib
+from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -9,6 +10,18 @@ def parse_monto(valor_str):
         return float(str(valor_str).replace(",", ""))
     except ValueError:
         return 0.0
+
+def cumple_meta(ramo, valor_num):
+    """ Retorna True si el valor alcanza o supera la meta mínima de su ramo """
+    if ramo == "local":
+        return valor_num >= 30000
+    elif ramo == "inter":
+        return valor_num >= 250
+    elif ramo == "vida":
+        return valor_num >= 3000
+    elif ramo == "auto":
+        return valor_num >= 100000
+    return False
 
 def obtener_color(ramo, valor_num):
     """ Retorna el color de fondo y de texto según el formato suave de la imagen """
@@ -57,6 +70,14 @@ def procesar_y_enviar():
 
     # URL directa de la imagen del banner alojada en ImgBB
     BANNER_URL = "https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg"
+
+    # Obtener el mes en español automáticamente
+    meses_es = {
+        1: "enero", 2: "febrero", 3: "marzo", 4: "abril", 
+        5: "mayo", 6: "junio", 7: "julio", 8: "agosto", 
+        9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre"
+    }
+    mes_actual = meses_es.get(datetime.now().month, "mes")
 
     # Lista de miembros del equipo
     datos_ranking = [
@@ -138,6 +159,11 @@ def procesar_y_enviar():
     top_vida = sorted(datos_procesados, key=lambda x: x["val_vida"], reverse=True)[:3]
     top_auto = sorted(datos_procesados, key=lambda x: x["val_auto"], reverse=True)[:3]
 
+    # Funciones auxiliares para asignar el trofeo solo si cumple la meta
+    def format_top_item(item, ramo, valor):
+        trofeo = " 🏆" if cumple_meta(ramo, valor) else ""
+        return f"{item}{trofeo} (${valor:,.2f})"
+
     # Orden para la tabla completa (prioridad: Local > Internacional > Vida > Auto)
     datos_procesados.sort(
         key=lambda x: (x["val_local"], x["val_inter"], x["val_vida"], x["val_auto"]),
@@ -173,32 +199,33 @@ def procesar_y_enviar():
         </tr>
         """
 
-    # Generar texto dinámico con el Top 3 incluido automáticamente
+    # Texto dinámico con la validación de trofeos por cada miembro del Top 3
     texto_dinamico = f"""
-    ¡Hola, equipo <b>MEGAPODEROSOS</b>! 🚀<br><br>
-    Compartimos el reporte oficial de Humano Seguros. ¡Un reconocimiento especial a nuestros líderes destacados en este periodo!<br><br>
+    <b>¡MEGAPODEROSOS! 🚀</b><br><br>
+    <b>Numeritos de {mes_actual}</b><br><br>
+    ¡Un reconocimiento especial a nuestros líderes destacados en este periodo!<br><br>
     
     🏆 <b>TOP 3 - LOCAL:</b><br>
-    1. {top_local[0]['intermediario']} (${top_local[0]['val_local']:,.2f})<br>
-    2. {top_local[1]['intermediario']} (${top_local[1]['val_local']:,.2f})<br>
-    3. {top_local[2]['intermediario']} (${top_local[2]['val_local']:,.2f})<br><br>
+    1. {format_top_item(top_local[0]['intermediario'], 'local', top_local[0]['val_local'])}<br>
+    2. {format_top_item(top_local[1]['intermediario'], 'local', top_local[1]['val_local'])}<br>
+    3. {format_top_item(top_local[2]['intermediario'], 'local', top_local[2]['val_local'])}<br><br>
 
     🏆 <b>TOP 3 - INTERNACIONAL:</b><br>
-    1. {top_inter[0]['intermediario']} (${top_inter[0]['val_inter']:,.2f})<br>
-    2. {top_inter[1]['intermediario']} (${top_inter[1]['val_inter']:,.2f})<br>
-    3. {top_inter[2]['intermediario']} (${top_inter[2]['val_inter']:,.2f})<br><br>
+    1. {format_top_item(top_inter[0]['intermediario'], 'inter', top_inter[0]['val_inter'])}<br>
+    2. {format_top_item(top_inter[1]['intermediario'], 'inter', top_inter[1]['val_inter'])}<br>
+    3. {format_top_item(top_inter[2]['intermediario'], 'inter', top_inter[2]['val_inter'])}<br><br>
 
     🏆 <b>TOP 3 - VIDA:</b><br>
-    1. {top_vida[0]['intermediario']} (${top_vida[0]['val_vida']:,.2f})<br>
-    2. {top_vida[1]['intermediario']} (${top_vida[1]['val_vida']:,.2f})<br>
-    3. {top_vida[2]['intermediario']} (${top_vida[2]['val_vida']:,.2f})<br><br>
+    1. {format_top_item(top_vida[0]['intermediario'], 'vida', top_vida[0]['val_vida'])}<br>
+    2. {format_top_item(top_vida[1]['intermediario'], 'vida', top_vida[1]['val_vida'])}<br>
+    3. {format_top_item(top_vida[2]['intermediario'], 'vida', top_vida[2]['val_vida'])}<br><br>
 
     🏆 <b>TOP 3 - AUTO, HOGAR Y EMPRESA:</b><br>
-    1. {top_auto[0]['intermediario']} (${top_auto[0]['val_auto']:,.2f})<br>
-    2. {top_auto[1]['intermediario']} (${top_auto[1]['val_auto']:,.2f})<br>
-    3. {top_auto[2]['intermediario']} (${top_auto[2]['val_auto']:,.2f})<br><br>
+    1. {format_top_item(top_auto[0]['intermediario'], 'auto', top_auto[0]['val_auto'])}<br>
+    2. {format_top_item(top_auto[1]['intermediario'], 'auto', top_auto[1]['val_auto'])}<br>
+    3. {format_top_item(top_auto[2]['intermediario'], 'auto', top_auto[2]['val_auto'])}<br><br>
 
-    ¡A seguir dando el máximo en cada ramo! A continuación, el detalle completo del banner y la pizarra general:
+    ¡A seguir dando el máximo en cada ramo! A continuación, la pizarra general:
     """
 
     html_content = f"""
@@ -210,8 +237,8 @@ def procesar_y_enviar():
     <body style="font-family: Arial, sans-serif; background-color: #ffffff; margin: 0; padding: 10px; text-align: left;">
         <div style="max-width: 850px; margin: 0; text-align: left; font-size: 0; line-height: 0;">
             
-            <!-- Bloque de Texto Dinámico con el Top 3 (PRIMERO) -->
-            <div style="background-color: #0d1527; color: #f8fafc; padding: 15px 20px; font-size: 13px; line-height: 1.5; font-family: Arial, sans-serif; border-bottom: 2px solid #3b82f6; text-align: left; margin-bottom: 10px; border-radius: 6px;">
+            <!-- Bloque de Texto Dinámico con Fondo Blanco y Letras Oscuras -->
+            <div style="background-color: #ffffff; color: #1a2332; padding: 15px 20px; font-size: 13px; line-height: 1.5; font-family: Arial, sans-serif; border: 1px solid #e2e8f0; text-align: left; margin-bottom: 10px; border-radius: 6px;">
                 {texto_dinamico}
             </div>
 
