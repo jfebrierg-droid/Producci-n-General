@@ -12,6 +12,65 @@ import requests
 # Configurar la API de Gemini para el análisis de la imagen
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
+# Lista maestra con TODOS los miembros del equipo MEGAPODEROSOS
+LISTA_MAESTRA_AGENTES = [
+    "Milvio Espinal",
+    "Delkis Perez",
+    "Sory Morla",
+    "Indhira Mora",
+    "Luis T Ortiz",
+    "Ruddy Arias",
+    "Leomayra Alcantara",
+    "Marcos Adames",
+    "Maria De La Cruz",
+    "Indhira Santos",
+    "Nicauris Benitez",
+    "Mariela de León Minaya",
+    "Mery Lopez",
+    "Estefania Villegas (Roger)",
+    "Yudelfa Cuevas",
+    "Vladimil Herrera",
+    "Orquidea Feliz",
+    "Marisol Payano",
+    "Jairo Martinez",
+    "Alsiwin Ruiz",
+    "Estarlin Acosta",
+    "Eleuterio Fernandez",
+    "Ninfa Perez",
+    "Angel Matos",
+    "Ingrid Beras",
+    "Kevin Ramirez",
+    "Eduardo Hernandez",
+    "Ana Veloz",
+    "Wanda Peña",
+    "Joan Danis",
+    "Belkis Sanchez",
+    "Aranechi Tejeda",
+    "Angela Vidal",
+    "Felix Morillo",
+    "Hander Perez",
+    "Julissa Rosario",
+    "Amalfi Julissa Rodriguez",
+    "Charles Furment",
+    "Angela Valerio",
+    "Dioselina Ramos",
+    "Luisa Gonzalez",
+    "Hugo Cruz",
+    "Jose Terrero",
+    "Maribel Fernandez",
+    "Esperanza Regalado",
+    "John Adams",
+    "Maria Soriano",
+    "Albertina Febles",
+    "Franklin Graterol",
+    "Cirilo Fermin",
+    "Eddy Concepción",
+    "Yolanda Cabrera",
+    "Paula Herrera",
+    "Rafael Capellan",
+    "Salvador Martinez",
+]
+
 
 def obtener_datos_desde_drive_imagen(file_id):
     """Descarga la imagen de Google Drive y usa Gemini Vision para extraer la tabla de producción."""
@@ -30,7 +89,6 @@ def obtener_datos_desde_drive_imagen(file_id):
     img = Image.open(image_path)
 
     print("Analizando imagen con IA para extraer los resultados...")
-    # Usamos el modelo multimodal actualizado indicado por la API
     model = genai.GenerativeModel("gemini-3.6-flash")
     prompt = """
     Analiza esta imagen que contiene un reporte o tabla de producción de seguros del equipo MEGAPODEROSOS.
@@ -120,9 +178,8 @@ def procesar_y_enviar():
     )
     recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
 
-    # ID de la imagen en Google Drive extraído del enlace proporcionado
+    # ID de la imagen en Google Drive para la lectura de datos
     drive_file_id = "1YmAVaDyplF6CQ_gk2NZsEmLyjFpcFH9Y"
-    BANNER_URL = f"https://drive.google.com/uc?export=download&id={drive_file_id}"
 
     # Obtener los datos dinámicamente desde la imagen de Google Drive
     try:
@@ -131,16 +188,37 @@ def procesar_y_enviar():
         print(f"Error al procesar la imagen de Google Drive: {e}")
         return
 
-    # Procesar valores aplicando transformaciones
-    datos_procesados = []
+    # Mapear los datos extraídos en un diccionario por nombre
+    datos_extraidos_dict = {}
     for item in datos_ranking:
-        val_local = parse_monto(item.get("local", "0.00"))
-        val_inter = parse_monto(item.get("inter", "0.00")) / 61.0
-        val_vida = parse_monto(item.get("vida", "0.00"))
-        val_auto = parse_monto(item.get("auto", "0.00")) * 12.0
+        nombre = item.get("intermediario", "").strip()
+        datos_extraidos_dict[nombre] = item
+
+    # Construir la lista completa integrando la lista maestra de todos los miembros
+    datos_procesados = []
+    for agente in LISTA_MAESTRA_AGENTES:
+        match_item = None
+        # Búsqueda flexible para asegurar el acoplamiento con los nombres de la imagen
+        for k, v in datos_extraidos_dict.items():
+            if (
+                agente.lower() in k.lower() or k.lower() in agente.lower()
+            ):
+                match_item = v
+                break
+
+        if match_item:
+            val_local = parse_monto(match_item.get("local", "0.00"))
+            val_inter = parse_monto(match_item.get("inter", "0.00")) / 61.0
+            val_vida = parse_monto(match_item.get("vida", "0.00"))
+            val_auto = parse_monto(match_item.get("auto", "0.00")) * 12.0
+        else:
+            val_local = 0.0
+            val_inter = 0.0
+            val_vida = 0.0
+            val_auto = 0.0
 
         datos_procesados.append({
-            "intermediario": item.get("intermediario", "Desconocido"),
+            "intermediario": agente,
             "val_local": val_local,
             "val_inter": val_inter,
             "val_vida": val_vida,
@@ -163,6 +241,11 @@ def procesar_y_enviar():
 
     # Función para formatear el item del Top 3
     def format_top_item(item, ramo, valor):
+        if valor <= 0:
+            return (
+                f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight:"
+                f" normal;'>($0.00)</span>"
+            )
         if cumple_meta(ramo, valor):
             return (
                 f"{item} 💪 <span style='color: #64748b; font-weight:"
@@ -308,10 +391,12 @@ def procesar_y_enviar():
                 {texto_dinamico}
             </div>
 
-            <!-- Banner Superior -->
-            <img src="{BANNER_URL}" alt="Banner Ranking de Producción" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; margin: 0 0 12px 0; padding: 0; border-radius: 6px;">
+            <!-- Banner -->
+            <div style="margin-bottom: 12px; text-align: center;">
+                <a href="https://ibb.co/N21Ljnxt"><img src="https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg" alt="Banner-Ranking-de-Producci-n-1" border="0" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;" /></a>
+            </div>
 
-            <!-- Tabla de Producción (Pizarra completa) -->
+            <!-- Tabla de Producción (Pizarra completa con los 55 miembros) -->
             <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin: 0; padding: 0; line-height: normal; border-radius: 6px; overflow: hidden;">
                 <thead>
                     <tr style="background-color: #0d1527; color: #ffffff;">
@@ -355,7 +440,9 @@ def procesar_y_enviar():
         ]
         server.sendmail(sender_email, destinatarios, msg.as_string())
         server.quit()
-        print("¡Correo enviado exitosamente con los datos extraídos de la imagen!")
+        print(
+            "¡Correo enviado exitosamente con la lista completa de miembros!"
+        )
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
