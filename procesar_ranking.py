@@ -11,17 +11,21 @@ def parse_monto(valor_str):
     except ValueError:
         return 0.0
 
+def obtener_meta(ramo):
+    """ Retorna la meta mínima exigida según el ramo """
+    if ramo == "local":
+        return 30000.0
+    elif ramo == "inter":
+        return 250.0
+    elif ramo == "vida":
+        return 3000.0
+    elif ramo == "auto":
+        return 100000.0
+    return 0.0
+
 def cumple_meta(ramo, valor_num):
     """ Retorna True si el valor alcanza o supera la meta mínima de su ramo """
-    if ramo == "local":
-        return valor_num >= 30000
-    elif ramo == "inter":
-        return valor_num >= 250
-    elif ramo == "vida":
-        return valor_num >= 3000
-    elif ramo == "auto":
-        return valor_num >= 100000
-    return False
+    return valor_num >= obtener_meta(ramo)
 
 def obtener_color(ramo, valor_num):
     """ Retorna el color de fondo y de texto según el formato suave de la imagen """
@@ -29,39 +33,14 @@ def obtener_color(ramo, valor_num):
     color_naranja = "background-color: #ffedd5; color: #c2410c;"
     color_rojo = "background-color: #ffe4e6; color: #b91c1c;"
 
-    if ramo == "local":
-        if valor_num >= 30000:
-            return color_verde
-        elif valor_num >= 1:
-            return color_naranja
-        else:
-            return color_rojo
+    meta = obtener_meta(ramo)
 
-    elif ramo == "inter":
-        if valor_num >= 250:
-            return color_verde
-        elif valor_num >= 1:
-            return color_naranja
-        else:
-            return color_rojo
-
-    elif ramo == "vida":
-        if valor_num >= 3000:
-            return color_verde
-        elif valor_num >= 1:
-            return color_naranja
-        else:
-            return color_rojo
-
-    elif ramo == "auto":
-        if valor_num >= 100000:
-            return color_verde
-        elif valor_num >= 1:
-            return color_naranja
-        else:
-            return color_rojo
-
-    return "background-color: #ffffff; color: #000000;"
+    if valor_num >= meta:
+        return color_verde
+    elif valor_num >= 1:
+        return color_naranja
+    else:
+        return color_rojo
 
 def procesar_y_enviar():
     sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
@@ -70,14 +49,6 @@ def procesar_y_enviar():
 
     # URL directa de la imagen del banner alojada en ImgBB
     BANNER_URL = "https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg"
-
-    # Obtener el mes en español automáticamente
-    meses_es = {
-        1: "enero", 2: "febrero", 3: "marzo", 4: "abril", 
-        5: "mayo", 6: "junio", 7: "julio", 8: "agosto", 
-        9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre"
-    }
-    mes_actual = meses_es.get(datetime.now().month, "mes")
 
     # Lista de miembros del equipo
     datos_ranking = [
@@ -159,10 +130,14 @@ def procesar_y_enviar():
     top_vida = sorted(datos_procesados, key=lambda x: x["val_vida"], reverse=True)[:3]
     top_auto = sorted(datos_procesados, key=lambda x: x["val_auto"], reverse=True)[:3]
 
-    # Función auxiliar para asignar el trofeo al lado del nombre solo si cumple la meta
+    # Función para formatear el item del Top 3 (💪 si cumple, 🏃‍♂️ con mensaje si está en vía)
     def format_top_item(item, ramo, valor):
-        trofeo = " 🏆" if cumple_meta(ramo, valor) else ""
-        return f"{item}{trofeo} <span style='color: #64748b; font-weight: normal;'>(${valor:,.2f})</span>"
+        if cumple_meta(ramo, valor):
+            return f"{item} 💪 <span style='color: #64748b; font-weight: normal;'>(${valor:,.2f})</span>"
+        else:
+            meta = obtener_meta(ramo)
+            falta = meta - valor
+            return f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight: normal;'>(${valor:,.2f}) — <b>¡En vía!</b> Faltan ${falta:,.2f}</span>"
 
     # Orden para la tabla completa (prioridad: Local > Internacional > Vida > Auto)
     datos_procesados.sort(
@@ -206,7 +181,7 @@ def procesar_y_enviar():
             🚀 ¡MEGAPODEROSOS!
         </div>
         <div style="font-size: 14px; font-weight: bold; color: #334155; margin-bottom: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
-            📊 Reporte de Numeritos &mdash; {mes_actual.capitalize()}
+            📊 Numeritos del mes en curso
         </div>
         
         <table style="width: 100%; border-collapse: collapse; font-size: 12px; line-height: 1.6;">
