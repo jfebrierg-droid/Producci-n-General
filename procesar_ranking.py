@@ -2,7 +2,8 @@
 """
 Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4 -> 3 -> 2 -> 1),
-reintentos automáticos para errores 503, respaldo de modelos y mensajes cortos con sabor dominicano natural.
+reintentos automáticos para errores 503, respaldo de modelos, mensajes cortos dominicanos
+y el emoji de músculo para quienes cumplen la meta.
 """
 
 from datetime import datetime
@@ -40,94 +41,93 @@ LISTA_MAESTRA_AGENTES = [
     "Eddy Concepcion", "Yolanda Cabrera", "Paula Herrera", "Rafael Capellan", "Salvador Martinez"
 ]
 
-# --- BANCO DE MENSAJES CORTOS Y CON SABOR DOMINICANO NATURAL ---
+# --- BANCO DE MENSAJES ULTRA CORTOS Y DE PURA MOTIVACIÓN DOMINICANA ---
 BANCO_BAJO = {
     "aperturas": [
-        "Mi gente, hay que meterle mano a esto,",
-        "Pilas puestas por aquí,",
-        "Vamos a activarnos con energía,",
-        "Tenemos terreno por buscar,"
+        "¡Mi gente, a ponernos las pilas y",
+        "¡A despertar y",
+        "¡A moverse rápido que",
+        "¡A fajarse con energía y"
     ],
     "nucleos": [
-        "a salir a la calle a buscar esas cotizaciones.",
-        "a movernos rápido para levantar este número.",
-        "a darle calor a este ramo que está frío.",
-        "a buscar ese cliente con hambre de triunfo."
+        "meter mano con esos clientes!",
+        "buscar esos números para levantar esto!",
+        "hay terreno virgen esperando por nosotros!",
+        "darle calor a este ramo que está frío!"
     ],
     "cierres": [
-        "¡A darle con todo!",
-        "¡A despertar mi gente!",
-        "¡A meter el acelerador!",
-        "¡Manos a la obra!"
+        "¡A darle con tó!",
+        "¡A romper el hielo!",
+        "¡Manos a la obra!",
+        "¡A meter el acelerador!"
     ]
 }
 
 BANCO_MEDIO = {
     "aperturas": [
-        "Vamos caminando bien,",
-        "El paso está firme,",
-        "Estamos al pie del cañón,",
-        "Buen ritmo mi gente,"
+        "¡Vamos bien, pero",
+        "¡Paso firme mi gente,",
+        "¡Nadie se detiene,",
+        "¡Estamos activos,"
     ],
     "nucleos": [
-        "¡a meterle un chin más de presión para llegar arriba!",
-        "¡a apretar el paso y asegurar la meta!",
-        "¡a mantener el enfoque y cerrar con fuerza!",
-        "¡a dar ese chin extra que falta!"
+        "hay que dar un chin más para llegar arriba!",
+        "a meterle presión para asegurar la meta!",
+        "a mantener el ritmo y cerrar con fuerza!",
+        "a dar ese extra que nos falta hoy!"
     ],
     "cierres": [
         "¡A fondo mi gente!",
-        "¡Nadie se detiene!",
         "¡A coronar el mes!",
-        "¡Sigamos así!"
+        "¡Sigamos así!",
+        "¡A cerrar con fuerza!"
     ]
 }
 
 BANCO_ALTO = {
     "aperturas": [
-        "¡Qué nivelazo de equipo,",
-        "¡Duro y sin bajar la guardia,",
-        "¡Imparables mi gente,",
-        "¡Qué manera de lucirse,"
+        "¡Qué nivelazo mi gente,",
+        "¡Imparables por aquí,",
+        "¡Qué manera de lucirse,",
+        "¡Duro y sin bajar la guardia,"
     ],
     "nucleos": [
-        "¡esto sí es fajarse con orgullo!",
-        "¡dejando el listón bien alto como debe ser!",
-        "¡demostrando por qué somos los número uno!",
-        "¡un verdadero orgullo para todos!"
+        "dejando el listón bien alto como los mejores!",
+        "demostrando quiénes mandan en la pista!",
+        "trabajando con el swing ganador!",
+        "rompiendo esquemas con orgullo total!"
     ],
     "cierres": [
         "¡A disfrutar la cima!",
-        "¡A seguir rompiendo esquemas!",
-        "¡Eso se llama trabajar con ganas!",
-        "¡A mantener ese swing ganador!"
+        "¡Así se goza y se trabaja!",
+        "¡Orgullo total!",
+        "¡A mantener ese ritmo!"
     ]
 }
 
 BANCO_INTERNACIONAL = {
     "aperturas": [
-        "Fuera del país se juega fuerte,",
-        "El terreno internacional exige presencia,",
-        "Atravesando fronteras con categoría,",
-        "El mercado de afuera pide acción,"
+        "¡Allá afuera se pica hondo,",
+        "¡A sonar duro en el extranjero,",
+        "¡Atravesando fronteras con fuerza,",
+        "¡El mercado de afuera pide acción,"
     ],
     "nucleos": [
-        "¡a demostrar de qué estamos hechos allá fuera!",
-        "¡a dejar nuestra bandera en alto con fuerza!",
-        "¡a conquistar mercados con el corazón!",
-        "¡a sonar duro en el extranjero!"
+        "a representar la patria con orgullo!",
+        "a dejar nuestra bandera por lo alto!",
+        "a conquistar mercados con la sabrosura criolla!",
+        "a demostrar la casta dominicana!"
     ],
     "cierres": [
         "¡A romper fronteras!",
-        "¡A seguir conquistando!",
-        "¡Orgullo total afuera!",
-        "¡A brillar en grande!"
+        "¡A brillar en grande!",
+        "¡Duro con eso!",
+        "¡A seguir conquistando!"
     ]
 }
 
 def generar_mensaje_combinatorio(banco, semilla_extra=0):
     ahora = datetime.now()
-    # Combinación basada en la semana y el año actual para garantizar unicidad por años
     semilla_tiempo = ahora.isocalendar()[1] + (ahora.year * 52) + semilla_extra
     idx_a = semilla_tiempo % len(banco["aperturas"])
     idx_n = (semilla_tiempo * 3) % len(banco["nucleos"])
@@ -356,7 +356,7 @@ def procesar_y_enviar():
         if valor <= 0:
             return f"<b>{item}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(0.0)})</span>"
         if cumple_meta(ramo, valor):
-            return f"<b>{item}</b> ⭐ <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(valor)})</span>"
+            return f"<b>{item}</b> 💪 <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(valor)})</span>"
         else:
             meta = obtener_meta(ramo)
             if ramo == "auto":
