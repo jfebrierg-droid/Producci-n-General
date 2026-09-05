@@ -93,7 +93,7 @@ def obtener_datos_desde_drive_imagen(file_id):
 
     if response.status_code != 200:
         raise Exception(
-            "No se pudo descargar la imagen de Google Drive. Verifica que el archivo sea público ('Cualquier persona con el enlace')."
+            "No se pudo descargar la imagen de Google Drive. Verifica que el archivo sea público."
         )
 
     image_path = "temp_ranking_drive.jpg"
@@ -165,7 +165,7 @@ def cumple_meta(ramo, valor_num):
 
 
 def obtener_color(ramo, valor_num):
-    # Si el valor es negativo, aplicamos un rojo intenso muy llamativo
+    # Si el valor es negativo, rojo intenso con texto blanco
     if valor_num < 0:
         return "background-color: #ef4444; color: #ffffff;"
 
@@ -316,35 +316,35 @@ def procesar_y_enviar():
 
         filas_html += f"""
         <tr>
-            <td style="background-color: #ffffff; color: #1e293b; padding: 8px; font-weight: bold; border: 1px solid #cbd5e1; text-align: left;">{fila['intermediario']}</td>
-            <td style="{style_local} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_local)}</td>
-            <td style="{style_inter} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_inter)}</td>
-            <td style="{style_vida} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_vida)}</td>
-            <td style="{style_auto} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_auto)}</td>
+            <td style="background-color: #ffffff; color: #1e293b; padding: 11px 12px; font-weight: bold; border: 1px solid #cbd5e1; text-align: left;">{fila['intermediario']}</td>
+            <td style="{style_local} padding: 11px 12px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_local)}</td>
+            <td style="{style_inter} padding: 11px 12px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_inter)}</td>
+            <td style="{style_vida} padding: 11px 12px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_vida)}</td>
+            <td style="{style_auto} padding: 11px 12px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_auto)}</td>
         </tr>
         """
 
     texto_dinamico = f"""
     <div style="font-family: Arial, sans-serif; color: #1e293b;">
-        <div style="font-size: 16px; font-weight: bold; color: #0284c7; margin-bottom: 6px; letter-spacing: 0.5px;">
+        <div style="font-size: 18px; font-weight: bold; color: #0284c7; margin-bottom: 8px; letter-spacing: 0.5px;">
             🚀 ¡MEGAPODEROSOS!
         </div>
-        <div style="font-size: 14px; font-weight: bold; color: #334155; margin-bottom: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+        <div style="font-size: 15px; font-weight: bold; color: #334155; margin-bottom: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
             📊 Numeritos del mes de {mes_actual.capitalize()}
         </div>
         
-        <table style="width: 100%; border-collapse: collapse; font-size: 12px; line-height: 1.6;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.7;">
             <tr>
-                <td style="width: 50%; vertical-align: top; padding-right: 10px; padding-bottom: 12px;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 4px;">⬆️ TOP 3 &mdash; LOCAL</div>
+                <td style="width: 50%; vertical-align: top; padding-right: 12px; padding-bottom: 14px;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 6px;">⬆️ TOP 3 &mdash; LOCAL</div>
                     <div style="padding-left: 6px; color: #334155;">
                         1. {format_top_item(top_local[0]['intermediario'], 'local', top_local[0]['val_local'])}<br>
                         2. {format_top_item(top_local[1]['intermediario'], 'local', top_local[1]['val_local'])}<br>
                         3. {format_top_item(top_local[2]['intermediario'], 'local', top_local[2]['val_local'])}
                     </div>
                 </td>
-                <td style="width: 50%; vertical-align: top; padding-left: 10px; padding-bottom: 12px;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 4px;">⬆️ TOP 3 &mdash; INTERNACIONAL</div>
+                <td style="width: 50%; vertical-align: top; padding-left: 12px; padding-bottom: 14px;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 6px;">⬆️ TOP 3 &mdash; INTERNACIONAL</div>
                     <div style="padding-left: 6px; color: #334155;">
                         1. {format_top_item(top_inter[0]['intermediario'], 'inter', top_inter[0]['val_inter'])}<br>
                         2. {format_top_item(top_inter[1]['intermediario'], 'inter', top_inter[1]['val_inter'])}<br>
@@ -353,16 +353,16 @@ def procesar_y_enviar():
                 </td>
             </tr>
             <tr>
-                <td style="width: 50%; vertical-align: top; padding-right: 10px; padding-top: 4px;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 4px;">⬆️ TOP 3 &mdash; VIDA</div>
+                <td style="width: 50%; vertical-align: top; padding-right: 12px; padding-top: 6px;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 6px;">⬆️ TOP 3 &mdash; VIDA</div>
                     <div style="padding-left: 6px; color: #334155;">
                         1. {format_top_item(top_vida[0]['intermediario'], 'vida', top_vida[0]['val_vida'])}<br>
                         2. {format_top_item(top_vida[1]['intermediario'], 'vida', top_vida[1]['val_vida'])}<br>
                         3. {format_top_item(top_vida[2]['intermediario'], 'vida', top_vida[2]['val_vida'])}
                     </div>
                 </td>
-                <td style="width: 50%; vertical-align: top; padding-left: 10px; padding-top: 4px;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 4px;">⬆️ TOP 3 &mdash; AUTO, HOGAR Y EMPRESA</div>
+                <td style="width: 50%; vertical-align: top; padding-left: 12px; padding-top: 6px;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 6px;">⬆️ TOP 3 &mdash; AUTO, HOGAR Y EMPRESA</div>
                     <div style="padding-left: 6px; color: #334155;">
                         1. {format_top_item(top_auto[0]['intermediario'], 'auto', top_auto[0]['val_auto'])}<br>
                         2. {format_top_item(top_auto[1]['intermediario'], 'auto', top_auto[1]['val_auto'])}<br>
@@ -372,7 +372,7 @@ def procesar_y_enviar():
             </tr>
         </table>
         
-        <div style="margin-top: 12px; font-size: 12px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 10px; text-align: center;">
+        <div style="margin-top: 14px; font-size: 14px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 12px; text-align: center;">
             ¡A seguir dándolo todo en cada ramo! A continuación, la pizarra general:
         </div>
     </div>
@@ -385,37 +385,37 @@ def procesar_y_enviar():
         <meta charset="utf-8">
     </head>
     <body style="font-family: Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 10px; text-align: left;">
-        <div style="max-width: 850px; margin: 0; text-align: left; font-size: 0; line-height: 0;">
+        <div style="max-width: 850px; margin: 0 auto; text-align: left;">
             
             <!-- Tarjeta de Encabezado -->
-            <div style="background-color: #ffffff; color: #1e293b; padding: 20px 24px; font-size: 13px; line-height: 1.5; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 12px; border-radius: 8px; border-left: 5px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+            <div style="background-color: #ffffff; color: #1e293b; padding: 22px 26px; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 14px; border-radius: 8px; border-left: 6px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                 {texto_dinamico}
             </div>
 
             <!-- Banner -->
-            <div style="margin-bottom: 12px; text-align: center;">
+            <div style="margin-bottom: 14px; text-align: center;">
                 <a href="https://ibb.co/N21Ljnxt"><img src="https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg" alt="Banner-Ranking-de-Producci-n-1" border="0" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;" /></a>
             </div>
 
             <!-- Tabla de Producción (Pizarra completa) -->
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin: 0; padding: 0; line-height: normal; border-radius: 6px; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 0; padding: 0; border-radius: 6px; overflow: hidden;">
                 <thead>
                     <tr style="background-color: #0d1527; color: #ffffff;">
-                        <th style="padding: 10px; text-align: left; border: 1px solid #2d3748;">Intermediario</th>
-                        <th style="padding: 10px; text-align: center; border: 1px solid #2d3748;">Local</th>
-                        <th style="padding: 10px; text-align: center; border: 1px solid #2d3748;">Internacional</th>
-                        <th style="padding: 10px; text-align: center; border: 1px solid #2d3748;">Vida</th>
-                        <th style="padding: 10px; text-align: center; border: 1px solid #2d3748;">Auto, Hogar y Empresa</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #2d3748;">Intermediario</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #2d3748;">Local</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #2d3748;">Internacional</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #2d3748;">Vida</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #2d3748;">Auto, Hogar y Empresa</th>
                     </tr>
                 </thead>
                 <tbody>
                     {filas_html}
-                    <tr style="font-weight: bold; font-size: 13px;">
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: left;">Total General</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_local)}</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_inter)}</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_vida)}</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_auto)}</td>
+                    <tr style="font-weight: bold; font-size: 15px;">
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 12px; border: 1px solid #2d3748; text-align: left;">Total General</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 12px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_local)}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 12px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_inter)}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 12px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_vida)}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 12px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_auto)}</td>
                     </tr>
                 </tbody>
             </table>
@@ -443,7 +443,7 @@ def procesar_y_enviar():
         ]
         server.sendmail(sender_email, destinatarios, msg.as_string())
         server.quit()
-        print("¡Correo enviado exitosamente con los negativos resaltados en rojo intenso!")
+        print("¡Correo enviado exitosamente con la letra ampliada y optimizada!")
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
