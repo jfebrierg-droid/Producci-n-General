@@ -2,3 +2,4 @@ requests
 resend
 google-generativeai
 pillow
+gdown
