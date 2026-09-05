@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Script: procesar_ranking.py
-Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (fallback de API Keys)
-y un motor combinatorio optimizado para mensajes cortos, retadores y motivadores.
+Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4, 3, 2, 1),
+reintentos automáticos para errores 503 y respaldo de modelos.
 """
 
 from datetime import datetime
@@ -10,14 +10,17 @@ import json
 import os
 import re
 import smtplib
+import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from PIL import Image
 import requests
 from google import genai
 
-# --- CONFIGURACIÓN DE MULTI-CUENTAS (GEMINI_API_KEY_2 primero, luego GEMINI_API_KEY) ---
+# --- CONFIGURACIÓN DE MULTI-CUENTAS (Orden de prioridad: 4 -> 3 -> 2 -> 1) ---
 API_KEYS_GEMINI = [
+    os.environ.get("GEMINI_API_KEY_4"),
+    os.environ.get("GEMINI_API_KEY_3"),
     os.environ.get("GEMINI_API_KEY_2"),
     os.environ.get("GEMINI_API_KEY")
 ]
@@ -37,89 +40,29 @@ LISTA_MAESTRA_AGENTES = [
     "Eddy Concepcion", "Yolanda Cabrera", "Paula Herrera", "Rafael Capellan", "Salvador Martinez"
 ]
 
-# --- MOTOR COMBINATORIO DE MENSAJES CORTOS Y RETADORES (SIN CLICHÉS) ---
+# --- MOTOR COMBINATORIO DE MENSAJES CORTOS Y RETADORES ---
 BANCO_BAJO = {
-    "aperturas": [
-        "El tablero exige más carácter hoy.",
-        "Tenemos terreno valioso por recuperar,",
-        "Los números piden un golpe de timón,",
-        "Es hora de sacudir este marcador"
-    ],
-    "nucleos": [
-        "¡despertemos ese potencial oculto!",
-        "¡demostremos nuestra verdadera casta comercial!",
-        "¡es el momento exacto para dar el rebase!",
-        "¡a buscar esas cotizaciones con hambre de triunfo!"
-    ],
-    "cierres": [
-        "¡A por todas!",
-        "¡Demostremos quién manda!",
-        "¡El momento de reaccionar es ya!",
-        "¡A romper el hielo!"
-    ]
+    "aperturas": ["El tablero exige más carácter hoy.", "Tenemos terreno valioso por recuperar,", "Los números piden un golpe de timón,", "Es hora de sacudir este marcador"],
+    "nucleos": ["¡despertemos ese potencial oculto!", "¡demostremos nuestra verdadera casta comercial!", "¡es el momento exacto para dar el rebase!", "¡a buscar esas cotizaciones con hambre de triunfo!"],
+    "cierres": ["¡A por todas!", "¡Demostremos quién manda!", "¡El momento de reaccionar es ya!", "¡A romper el hielo!"]
 }
 
 BANCO_MEDIO = {
-    "aperturas": [
-        "Buen ritmo de trabajo,",
-        "Estamos estables en este segmento,",
-        "La inercia es positiva,",
-        "Vamos avanzando con constancia,"
-    ],
-    "nucleos": [
-        "¡subamos la marcha para romper récords!",
-        "¡apretemos el paso hacia la cima!",
-        "¡es hora de acelerar a fondo!",
-        "¡mantengamos el pulso ganador!"
-    ],
-    "cierres": [
-        "¡A por el primer lugar!",
-        "¡Nadie nos para!",
-        "¡A mantener el acelerador a fondo!",
-        "¡A consolidar la meta!"
-    ]
+    "aperturas": ["Buen ritmo de trabajo,", "Estamos estables en este segmento,", "La inercia es positiva,", "Vamos avanzando con constancia,"],
+    "nucleos": ["¡subamos la marcha para romper récords!", "¡apretemos el paso hacia la cima!", "¡es hora de acelerar a fondo!", "¡mantengamos el pulso ganador!"],
+    "cierres": ["¡A por el primer lugar!", "¡Nadie nos para!", "¡A mantener el acelerador a fondo!", "¡A consolidar la meta!"]
 }
 
 BANCO_ALTO = {
-    "aperturas": [
-        "¡Imparables en la cancha,",
-        "¡Nivel brutal de producción,",
-        "¡Liderazgo absoluto y categoría,",
-        "¡Qué manera de dominar este ramo,"
-    ],
-    "nucleos": [
-        "¡este es el verdadero ADN MEGAPODEROSO!",
-        "¡dejando claro quién manda en el terreno!",
-        "¡marcando un precedente histórico!",
-        "¡demostrando una categoría superior!"
-    ],
-    "cierres": [
-        "¡A volar alto!",
-        "¡A disfrutar la cima sin bajar la guardia!",
-        "¡A devorarse el resto del mes!",
-        "¡Esto es ganar con autoridad!"
-    ]
+    "aperturas": ["¡Imparables en la cancha,", "¡Nivel brutal de producción,", "¡Liderazgo absoluto y categoría,", "¡Qué manera de dominar este ramo,"],
+    "nucleos": ["¡este es el verdadero ADN MEGAPODEROSOS!", "¡dejando claro quién manda en el terreno!", "¡marcando un precedente histórico!", "¡demostrando una categoría superior!"],
+    "cierres": ["¡A volar alto!", "¡A disfrutar la cima sin bajar la guardia!", "¡A devorarse el resto del mes!", "¡Esto es ganar con autoridad!"]
 }
 
 BANCO_INTERNACIONAL = {
-    "aperturas": [
-        "El mercado internacional es de titanes,",
-        "Romper esquemas fuera de casa",
-        "Este reto exige jerarquía,",
-        "Conquistar este mercado exclusivo"
-    ],
-    "nucleos": [
-        "¡demuestra el calibre de nuestros agentes!",
-        "¡se conquista con audacia y disciplina!",
-        "¡eleva la vara al máximo nivel!",
-        "¡deja huella en las grandes ligas!"
-    ],
-    "cierres": [
-        "¡A seguir conquistando!",
-        "¡Vamos con todo por más!",
-        "¡Orgullo puro MEGAPODEROSO!",
-        "¡A romper fronteras!"
-    ]
+    "aperturas": ["El mercado internacional es de titanes,", "Romper esquemas fuera de casa", "Este reto exige jerarquía,", "Conquistar este mercado exclusivo"],
+    "nucleos": ["¡demuestra el calibre de nuestros agentes!", "¡se conquista con audacia y disciplina!", "¡eleva la vara al máximo nivel!", "¡deja huella en las grandes ligas!"],
+    "cierres": ["¡A seguir conquistando!", "¡Vamos con todo por más!", "¡Orgullo puro MEGAPODEROSOS!", "¡A romper fronteras!"]
 }
 
 def generar_mensaje_combinatorio(banco, semilla_extra=0):
@@ -151,7 +94,7 @@ def obtener_datos_desde_drive_imagen(file_id):
         f.write(response.content)
 
     img = Image.open(image_path)
-    print("Analizando imagen con IA (Sistema multi-cuenta activo con google.genai y gemini-3.6-flash)...")
+    print("Analizando imagen con IA (Sistema multi-cuenta priorizando Key 4 -> 3 -> 2 -> 1)...")
     
     prompt = """
     Analiza esta imagen que contiene un reporte o tabla de producción de seguros del equipo MEGAPODEROSOS.
@@ -173,35 +116,52 @@ def obtener_datos_desde_drive_imagen(file_id):
     - Devuelve ÚNICAMENTE el bloque JSON válido, sin texto adicional antes ni después.
     """
 
+    modelos_a_probar = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']
     texto_respuesta = None
+
     for index, api_key in enumerate(API_KEYS_GEMINI):
         if not api_key:
-            print(f"Aviso: La API Key #{index + 1} no está configurada o está vacía.")
+            print(f"Aviso: La API Key #{4 - index} no está configurada o está vacía.")
             continue
-        try:
-            print(f"Intentando con la cuenta / API Key #{index + 1}...")
-            client = genai.Client(api_key=api_key)
-            response = client.models.generate_content(
-                model='gemini-3.6-flash',
-                contents=[img, prompt]
-            )
-            texto_respuesta = response.text
-            print(f"¡Éxito utilizando la cuenta #{index + 1}!")
+        
+        client = genai.Client(api_key=api_key)
+        
+        for modelo in modelos_a_probar:
+            exito_modelo = False
+            for intento in range(3): # Hasta 3 reintentos por modelo si hay saturación
+                try:
+                    print(f"Intentando con API Key #{4 - index}, modelo {modelo} (intento {intento + 1})...")
+                    response = client.models.generate_content(
+                        model=modelo,
+                        contents=[img, prompt]
+                    )
+                    texto_respuesta = response.text
+                    exito_modelo = True
+                    print(f"¡Éxito con el modelo {modelo} usando la clave actual!")
+                    break
+                except Exception as e:
+                    error_msg = str(e)
+                    print(f"Aviso: {error_msg}")
+                    if "503" in error_msg or "UNAVAILABLE" in error_msg or "high demand" in error_msg:
+                        tiempo_espera = (intento + 1) * 3
+                        print(f"Servidor saturado (503). Esperando {tiempo_espera}s antes de reintentar...")
+                        time.sleep(tiempo_espera)
+                        continue
+                    elif "429" in error_msg or "Quota" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+                        print("Límite de cuota alcanzado. Probando siguiente opción...")
+                        break
+                    else:
+                        break
+            if exito_modelo:
+                break
+        if texto_respuesta:
             break
-        except Exception as e:
-            error_msg = str(e)
-            print(f"Aviso con la cuenta #{index + 1}: {error_msg}")
-            if "429" in error_msg or "Quota" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
-                print("Límite de cuota alcanzado. Cambiando a la siguiente cuenta de respaldo...")
-                continue
-            else:
-                raise e
 
     if os.path.exists(image_path):
         os.remove(image_path)
 
     if not texto_respuesta:
-        raise Exception("Se agotó la cuota o no hay claves válidas configuradas en todas las cuentas de Google.")
+        raise Exception("Se agotaron los reintentos, modelos y claves debido a saturación del servidor (503) o límites de cuota.")
 
     match = re.search(r"\[.*\]", texto_respuesta, re.DOTALL)
     if match:
@@ -474,7 +434,7 @@ def procesar_y_enviar():
         destinatarios = [email.strip() for email in recipient_email.split(",") if email.strip()]
         server.sendmail(sender_email, destinatarios, msg.as_string())
         server.quit()
-        print("¡Correo enviado con éxito! Título actualizado con éxito.")
+        print("¡Correo enviado con éxito!")
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
