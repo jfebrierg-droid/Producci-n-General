@@ -3,3 +3,4 @@ resend
 google-generativeai
 pillow
 gdown
+google-genai
