@@ -14,26 +14,25 @@ genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 
 def obtener_datos_desde_drive_imagen(file_id):
-  """Descarga la imagen de Google Drive y usa Gemini Vision para extraer la tabla de producción."""
-  url = f"https://drive.google.com/uc?export=download&id={file_id}"
-  print("Descargando imagen desde Google Drive...")
-  response = requests.get(url)
-  if response.status_code != 200:
-    raise Exception(
-        "No se pudo descargar la imagen de Google Drive. Verifica que el"
-        " archivo sea público ('Cualquier persona con el enlace')."
-    )
+    """Descarga la imagen de Google Drive y usa Gemini Vision para extraer la tabla de producción."""
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    print("Descargando imagen desde Google Drive...")
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception(
+            "No se pudo descargar la imagen de Google Drive. Verifica que el archivo sea público ('Cualquier persona con el enlace')."
+        )
 
-  image_path = "temp_ranking_drive.jpg"
-  with open(image_path, "wb") as f:
-    f.write(response.content)
+    image_path = "temp_ranking_drive.jpg"
+    with open(image_path, "wb") as f:
+        f.write(response.content)
 
-  img = Image.open(image_path)
+    img = Image.open(image_path)
 
-  print("Analizando imagen con IA para extraer los resultados...")
-  # Usamos el modelo multimodal para leer la tabla de la imagen
-  model = genai.GenerativeModel("gemini-1.5-flash")
-  prompt = """
+    print("Analizando imagen con IA para extraer los resultados...")
+    # Usamos el modelo multimodal actualizado para leer la tabla de la imagen
+    model = genai.GenerativeModel("gemini-2.0-flash")
+    prompt = """
     Analiza esta imagen que contiene un reporte o tabla de producción de seguros del equipo MEGAPODEROSOS.
     Extrae la información de TODOS los intermediarios que aparecen y sus montos en los siguientes ramos:
     1. local
@@ -53,185 +52,185 @@ def obtener_datos_desde_drive_imagen(file_id):
     - Devuelve ÚNICAMENTE el bloque JSON válido, sin texto adicional antes ni después.
     """
 
-  response = model.generate_content([img, prompt])
-  texto_respuesta = response.text
+    response = model.generate_content([img, prompt])
+    texto_respuesta = response.text
 
-  # Limpiar archivos temporales
-  if os.path.exists(image_path):
-    os.remove(image_path)
+    # Limpiar archivos temporales
+    if os.path.exists(image_path):
+        os.remove(image_path)
 
-  # Extraer el JSON de la respuesta
-  match = re.search(r"\[.*\]", texto_respuesta, re.DOTALL)
-  if match:
-    return json.loads(match.group(0))
-  else:
-    raise Exception(
-        f"No se pudo interpretar la respuesta de la IA como JSON:\n{texto_respuesta}"
-    )
+    # Extraer el JSON de la respuesta
+    match = re.search(r"\[.*\]", texto_respuesta, re.DOTALL)
+    if match:
+        return json.loads(match.group(0))
+    else:
+        raise Exception(
+            f"No se pudo interpretar la respuesta de la IA como JSON:\n{texto_respuesta}"
+        )
 
 
 def parse_monto(valor_str):
-  """Convierte cadenas como '115,507.18' o '-73,122.26' a un float de Python"""
-  try:
-    if not valor_str:
-      return 0.0
-    return float(str(valor_str).replace(",", ""))
-  except ValueError:
-    return 0.0
+    """Convierte cadenas como '115,507.18' o '-73,122.26' a un float de Python"""
+    try:
+        if not valor_str:
+            return 0.0
+        return float(str(valor_str).replace(",", ""))
+    except ValueError:
+        return 0.0
 
 
 def obtener_meta(ramo):
-  """Retorna la meta mínima exigida según el ramo"""
-  if ramo == "local":
-    return 30000.0
-  elif ramo == "inter":
-    return 250.0
-  elif ramo == "vida":
-    return 3000.0
-  elif ramo == "auto":
-    return 100000.0
-  return 0.0
+    """Retorna la meta mínima exigida según el ramo"""
+    if ramo == "local":
+        return 30000.0
+    elif ramo == "inter":
+        return 250.0
+    elif ramo == "vida":
+        return 3000.0
+    elif ramo == "auto":
+        return 100000.0
+    return 0.0
 
 
 def cumple_meta(ramo, valor_num):
-  """Retorna True si el valor alcanza o supera la meta mínima de su ramo"""
-  return valor_num >= obtener_meta(ramo)
+    """Retorna True si el valor alcanza o supera la meta mínima de su ramo"""
+    return valor_num >= obtener_meta(ramo)
 
 
 def obtener_color(ramo, valor_num):
-  """Retorna el color de fondo y de texto según el formato suave de la imagen"""
-  color_verde = "background-color: #dcfce7; color: #15803d;"
-  color_naranja = "background-color: #ffedd5; color: #c2410c;"
-  color_rojo = "background-color: #ffe4e6; color: #b91c1c;"
+    """Retorna el color de fondo y de texto según el formato suave de la imagen"""
+    color_verde = "background-color: #dcfce7; color: #15803d;"
+    color_naranja = "background-color: #ffedd5; color: #c2410c;"
+    color_rojo = "background-color: #ffe4e6; color: #b91c1c;"
 
-  meta = obtener_meta(ramo)
+    meta = obtener_meta(ramo)
 
-  if valor_num >= meta:
-    return color_verde
-  elif valor_num >= 1:
-    return color_naranja
-  else:
-    return color_rojo
+    if valor_num >= meta:
+        return color_verde
+    elif valor_num >= 1:
+        return color_naranja
+    else:
+        return color_rojo
 
 
 def procesar_y_enviar():
-  sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
-  password = os.environ.get(
-      "EMAIL_PASSWORD", "AQUI_TU_CONTRASEÑA_DE_APLICACION"
-  )
-  recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
+    sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
+    password = os.environ.get(
+        "EMAIL_PASSWORD", "AQUI_TU_CONTRASEÑA_DE_APLICACION"
+    )
+    recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
 
-  # ID de la imagen en Google Drive extraído del enlace proporcionado
-  drive_file_id = "1YmAVaDyplF6CQ_gk2NZsEmLyjFpcFH9Y"
-  BANNER_URL = f"https://drive.google.com/uc?export=download&id={drive_file_id}"
+    # ID de la imagen en Google Drive extraído del enlace proporcionado
+    drive_file_id = "1YmAVaDyplF6CQ_gk2NZsEmLyjFpcFH9Y"
+    BANNER_URL = f"https://drive.google.com/uc?export=download&id={drive_file_id}"
 
-  # Obtener los datos dinámicamente desde la imagen de Google Drive
-  try:
-    datos_ranking = obtener_datos_desde_drive_imagen(drive_file_id)
-  except Exception as e:
-    print(f"Error al procesar la imagen de Google Drive: {e}")
-    return
+    # Obtener los datos dinámicamente desde la imagen de Google Drive
+    try:
+        datos_ranking = obtener_datos_desde_drive_imagen(drive_file_id)
+    except Exception as e:
+        print(f"Error al procesar la imagen de Google Drive: {e}")
+        return
 
-  # Procesar valores aplicando transformaciones
-  datos_procesados = []
-  for item in datos_ranking:
-    val_local = parse_monto(item.get("local", "0.00"))
-    val_inter = parse_monto(item.get("inter", "0.00")) / 61.0
-    val_vida = parse_monto(item.get("vida", "0.00"))
-    val_auto = parse_monto(item.get("auto", "0.00")) * 12.0
+    # Procesar valores aplicando transformaciones
+    datos_procesados = []
+    for item in datos_ranking:
+        val_local = parse_monto(item.get("local", "0.00"))
+        val_inter = parse_monto(item.get("inter", "0.00")) / 61.0
+        val_vida = parse_monto(item.get("vida", "0.00"))
+        val_auto = parse_monto(item.get("auto", "0.00")) * 12.0
 
-    datos_procesados.append({
-        "intermediario": item.get("intermediario", "Desconocido"),
-        "val_local": val_local,
-        "val_inter": val_inter,
-        "val_vida": val_vida,
-        "val_auto": val_auto,
-    })
+        datos_procesados.append({
+            "intermediario": item.get("intermediario", "Desconocido"),
+            "val_local": val_local,
+            "val_inter": val_inter,
+            "val_vida": val_vida,
+            "val_auto": val_auto,
+        })
 
-  # Extraer Top 3 por cada categoría de manera independiente
-  top_local = sorted(
-      datos_procesados, key=lambda x: x["val_local"], reverse=True
-  )[:3]
-  top_inter = sorted(
-      datos_procesados, key=lambda x: x["val_inter"], reverse=True
-  )[:3]
-  top_vida = sorted(
-      datos_procesados, key=lambda x: x["val_vida"], reverse=True
-  )[:3]
-  top_auto = sorted(
-      datos_procesados, key=lambda x: x["val_auto"], reverse=True
-  )[:3]
+    # Extraer Top 3 por cada categoría de manera independiente
+    top_local = sorted(
+        datos_procesados, key=lambda x: x["val_local"], reverse=True
+    )[:3]
+    top_inter = sorted(
+        datos_procesados, key=lambda x: x["val_inter"], reverse=True
+    )[:3]
+    top_vida = sorted(
+        datos_procesados, key=lambda x: x["val_vida"], reverse=True
+    )[:3]
+    top_auto = sorted(
+        datos_procesados, key=lambda x: x["val_auto"], reverse=True
+    )[:3]
 
-  # Función para formatear el item del Top 3
-  def format_top_item(item, ramo, valor):
-    if cumple_meta(ramo, valor):
-      return (
-          f"{item} 💪 <span style='color: #64748b; font-weight:"
-          f" normal;'>(${valor:,.2f})</span>"
-      )
-    else:
-      meta = obtener_meta(ramo)
-      if ramo == "auto":
-        return (
-            f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight:"
-            f" normal;'>(${valor:,.2f})</span>"
-        )
-      else:
-        falta = meta - valor
-        return (
-            f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight:"
-            f" normal;'>(${valor:,.2f}) — <b>¡En vía!</b> Faltan"
-            f" ${falta:,.2f}</span>"
-        )
+    # Función para formatear el item del Top 3
+    def format_top_item(item, ramo, valor):
+        if cumple_meta(ramo, valor):
+            return (
+                f"{item} 💪 <span style='color: #64748b; font-weight:"
+                f" normal;'>(${valor:,.2f})</span>"
+            )
+        else:
+            meta = obtener_meta(ramo)
+            if ramo == "auto":
+                return (
+                    f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight:"
+                    f" normal;'>(${valor:,.2f})</span>"
+                )
+            else:
+                falta = meta - valor
+                return (
+                    f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight:"
+                    f" normal;'>(${valor:,.2f}) — <b>¡En vía!</b> Faltan"
+                    f" ${falta:,.2f}</span>"
+                )
 
-  # Obtener el nombre del mes actual en español de forma dinámica
-  meses_es = {
-      1: "enero",
-      2: "febrero",
-      3: "marzo",
-      4: "abril",
-      5: "mayo",
-      6: "junio",
-      7: "julio",
-      8: "agosto",
-      9: "septiembre",
-      10: "octubre",
-      11: "noviembre",
-      12: "diciembre",
-  }
-  mes_actual = meses_es.get(datetime.now().month, "mes")
+    # Obtener el nombre del mes actual en español de forma dinámica
+    meses_es = {
+        1: "enero",
+        2: "febrero",
+        3: "marzo",
+        4: "abril",
+        5: "mayo",
+        6: "junio",
+        7: "julio",
+        8: "agosto",
+        9: "septiembre",
+        10: "octubre",
+        11: "noviembre",
+        12: "diciembre",
+    }
+    mes_actual = meses_es.get(datetime.now().month, "mes")
 
-  # Orden para la tabla completa (prioridad: Local > Internacional > Vida > Auto)
-  datos_procesados.sort(
-      key=lambda x: (
-          x["val_local"],
-          x["val_inter"],
-          x["val_vida"],
-          x["val_auto"],
-      ),
-      reverse=True,
-  )
+    # Orden para la tabla completa (prioridad: Local > Internacional > Vida > Auto)
+    datos_procesados.sort(
+        key=lambda x: (
+            x["val_local"],
+            x["val_inter"],
+            x["val_vida"],
+            x["val_auto"],
+        ),
+        reverse=True,
+    )
 
-  # Calcular totales generales
-  tot_local = sum(item["val_local"] for item in datos_procesados)
-  tot_inter = sum(item["val_inter"] for item in datos_procesados)
-  tot_vida = sum(item["val_vida"] for item in datos_procesados)
-  tot_auto = sum(item["val_auto"] for item in datos_procesados)
+    # Calcular totales generales
+    tot_local = sum(item["val_local"] for item in datos_procesados)
+    tot_inter = sum(item["val_inter"] for item in datos_procesados)
+    tot_vida = sum(item["val_vida"] for item in datos_procesados)
+    tot_auto = sum(item["val_auto"] for item in datos_procesados)
 
-  # Construir HTML de las filas de la pizarra completa
-  filas_html = ""
-  for fila in datos_procesados:
-    val_local = fila["val_local"]
-    val_inter = fila["val_inter"]
-    val_vida = fila["val_vida"]
-    val_auto = fila["val_auto"]
+    # Construir HTML de las filas de la pizarra completa
+    filas_html = ""
+    for fila in datos_procesados:
+        val_local = fila["val_local"]
+        val_inter = fila["val_inter"]
+        val_vida = fila["val_vida"]
+        val_auto = fila["val_auto"]
 
-    style_local = obtener_color("local", val_local)
-    style_inter = obtener_color("inter", val_inter)
-    style_vida = obtener_color("vida", val_vida)
-    style_auto = obtener_color("auto", val_auto)
+        style_local = obtener_color("local", val_local)
+        style_inter = obtener_color("inter", val_inter)
+        style_vida = obtener_color("vida", val_vida)
+        style_auto = obtener_color("auto", val_auto)
 
-    filas_html += f"""
+        filas_html += f"""
         <tr>
             <td style="background-color: #ffffff; color: #1e293b; padding: 8px; font-weight: bold; border: 1px solid #cbd5e1; text-align: left;">{fila['intermediario']}</td>
             <td style="{style_local} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_local:,.2f}</td>
@@ -241,7 +240,7 @@ def procesar_y_enviar():
         </tr>
         """
 
-  texto_dinamico = f"""
+    texto_dinamico = f"""
     <div style="font-family: Arial, sans-serif; color: #1e293b;">
         <div style="font-size: 16px; font-weight: bold; color: #0284c7; margin-bottom: 6px; letter-spacing: 0.5px;">
             🚀 ¡MEGAPODEROSOS!
@@ -295,7 +294,7 @@ def procesar_y_enviar():
     </div>
     """
 
-  html_content = f"""
+    html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
@@ -340,26 +339,26 @@ def procesar_y_enviar():
     </html>
     """
 
-  msg = MIMEMultipart("alternative")
-  msg["Subject"] = "Producción General - MEGAPODEROSOS"
-  msg["From"] = sender_email
-  msg["To"] = recipient_email
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "Producción General - MEGAPODEROSOS"
+    msg["From"] = sender_email
+    msg["To"] = recipient_email
 
-  msg.attach(MIMEText(html_content, "html"))
+    msg.attach(MIMEText(html_content, "html"))
 
-  try:
-    server = smtplib.SMTP("smtp.gmail.com", 587)
-    server.starttls()
-    server.login(sender_email, password)
-    destinatarios = [
-        email.strip() for email in recipient_email.split(",") if email.strip()
-    ]
-    server.sendmail(sender_email, destinatarios, msg.as_string())
-    server.quit()
-    print("¡Correo enviado exitosamente con los datos extraídos de la imagen!")
-  except Exception as e:
-    print(f"Error al enviar el correo: {e}")
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, password)
+        destinatarios = [
+            email.strip() for email in recipient_email.split(",") if email.strip()
+        ]
+        server.sendmail(sender_email, destinatarios, msg.as_string())
+        server.quit()
+        print("¡Correo enviado exitosamente con los datos extraídos de la imagen!")
+    except Exception as e:
+        print(f"Error al enviar el correo: {e}")
 
 
 if __name__ == "__main__":
-  procesar_y_enviar()
+    procesar_y_enviar()
