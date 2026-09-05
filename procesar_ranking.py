@@ -19,7 +19,7 @@ import google.generativeai as genai
 # --- CONFIGURACIÓN DE MULTI-CUENTAS (VARIABLES DE ENTORNO) ---
 # El script leerá automáticamente ambas claves desde tu servidor.
 API_KEYS_GEMINI = [
-    os.environ.get("GEMINI_API_KEY_1"),
+    os.environ.get("GEMINI_API_KEY"),
     os.environ.get("GEMINI_API_KEY_2")
 ]
 
