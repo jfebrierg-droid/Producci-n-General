@@ -64,12 +64,19 @@ LISTA_MAESTRA_AGENTES = [
     "Albertina Febles",
     "Franklin Graterol",
     "Cirilo Fermin",
-    "Eddy Concepcion",
+    "Eddy Concepción",
     "Yolanda Cabrera",
     "Paula Herrera",
     "Rafael Capellan",
     "Salvador Martinez",
 ]
+
+
+def format_moneda(valor):
+    """Formatea un número asegurando que el signo menos vaya antes del dólar (-$X.XX)."""
+    if valor < 0:
+        return f"-${abs(valor):,.2f}"
+    return f"${valor:,.2f}"
 
 
 def obtener_datos_desde_drive_imagen(file_id):
@@ -238,26 +245,26 @@ def procesar_y_enviar():
         if valor <= 0:
             return (
                 f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight:"
-                f" normal;'>($0.00)</span>"
+                f" normal;'>({format_moneda(0.0)})</span>"
             )
         if cumple_meta(ramo, valor):
             return (
                 f"{item} 💪 <span style='color: #64748b; font-weight:"
-                f" normal;'>(${valor:,.2f})</span>"
+                f" normal;'>({format_moneda(valor)})</span>"
             )
         else:
             meta = obtener_meta(ramo)
             if ramo == "auto":
                 return (
                     f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight:"
-                    f" normal;'>(${valor:,.2f})</span>"
+                    f" normal;'>({format_moneda(valor)})</span>"
                 )
             else:
                 falta = meta - valor
                 return (
                     f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight:"
-                    f" normal;'>(${valor:,.2f}) — <b>¡En vía!</b> Faltan"
-                    f" ${falta:,.2f}</span>"
+                    f" normal;'>({format_moneda(valor)}) — <b>¡En vía!</b>"
+                    f" Faltan {format_moneda(falta)}</span>"
                 )
 
     meses_es = {
@@ -306,10 +313,10 @@ def procesar_y_enviar():
         filas_html += f"""
         <tr>
             <td style="background-color: #ffffff; color: #1e293b; padding: 8px; font-weight: bold; border: 1px solid #cbd5e1; text-align: left;">{fila['intermediario']}</td>
-            <td style="{style_local} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_local:,.2f}</td>
-            <td style="{style_inter} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_inter:,.2f}</td>
-            <td style="{style_vida} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_vida:,.2f}</td>
-            <td style="{style_auto} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_auto:,.2f}</td>
+            <td style="{style_local} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_local)}</td>
+            <td style="{style_inter} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_inter)}</td>
+            <td style="{style_vida} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_vida)}</td>
+            <td style="{style_auto} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_auto)}</td>
         </tr>
         """
 
@@ -401,10 +408,10 @@ def procesar_y_enviar():
                     {filas_html}
                     <tr style="font-weight: bold; font-size: 13px;">
                         <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: left;">Total General</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">${tot_local:,.2f}</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">${tot_inter:,.2f}</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">${tot_vida:,.2f}</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">${tot_auto:,.2f}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_local)}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_inter)}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_vida)}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_auto)}</td>
                     </tr>
                 </tbody>
             </table>
@@ -432,7 +439,9 @@ def procesar_y_enviar():
         ]
         server.sendmail(sender_email, destinatarios, msg.as_string())
         server.quit()
-        print("¡Correo enviado exitosamente con el asunto actualizado!")
+        print(
+            "¡Correo enviado exitosamente con el formato de moneda corregido!"
+        )
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
