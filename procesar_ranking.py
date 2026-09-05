@@ -12,7 +12,7 @@ import requests
 # Configurar la API de Gemini para el análisis de la imagen
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# Lista maestra con TODOS los miembros del equipo MEGAPODEROSOS
+# Lista maestra con TODOS los miembros del equipo MEGAPODEROSOS (Eddy Concepcion sin acento)
 LISTA_MAESTRA_AGENTES = [
     "Milvio Espinal",
     "Delkis Perez",
@@ -71,98 +71,57 @@ LISTA_MAESTRA_AGENTES = [
     "Salvador Martinez",
 ]
 
-# BANCOS DE MENSAJES VARIADOS PARA EVITAR REPETICIÓN DURANTE EL AÑO
+# BANCOS DE MENSAJES CON TONO EJECUTIVO, PROFESIONAL Y MOTIVADOR (SIN MENCIONAR LÍMITES)
 MENSAJES_BAJO = [
     (
-        "Tenemos menos de 10 miembros con producción en este ramo. ¡Es momento"
-        " de acelerar el paso y encender los motores para repuntar!"
+        "Este ramo presenta una oportunidad importante de desarrollo. Es el"
+        " momento idóneo para enfocar nuestra estrategia comercial y potenciar"
+        " los resultados."
     ),
     (
-        "Este producto cuenta con menos de 10 asesores activos. ¡Vamos a"
-        " ponernos las pilas y rescatar esos números antes de que cierre el"
-        " período!"
+        "Identificamos un espacio propicio para intensificar la gestión en"
+        " este segmento y dinamizar la producción antes del cierre del período."
     ),
     (
-        "Menos de 10 participantes registran resultados aquí. ¡Demostremos de"
-        " qué estamos hechos y vamos a dinamizar las ventas!"
+        "Este producto nos invita a redoblar esfuerzos y activar nuevas"
+        " acciones comerciales para consolidar nuestra posición."
     ),
     (
-        "Este ramo tiene una participación menor a 10 personas. ¡Es hora de"
-        " activar estrategias y empujar juntos hacia la meta!"
-    ),
-    (
-        "Con menos de 10 activos en este segmento, necesitamos sacudirnos y"
-        " meterle velocidad para cambiar este panorama cuanto antes."
-    ),
-    (
-        "La participación está por debajo de 10 asesores en este producto. ¡Es"
-        " nuestro momento de demostrar resiliencia y subir esos números!"
-    ),
-    (
-        "Registramos menos de 10 resultados aquí, por lo que necesitamos un"
-        " golpe de timón urgente. ¡Vamos a motivarnos y salir a ganar!"
+        "Una revisión de nuestra estrategia en este ramo nos permitirá"
+        " optimizar el rendimiento y alcanzar las metas previstas."
     ),
 ]
 
 MENSAJES_MEDIO = [
     (
-        "Ya contamos con un grupo activo entre 11 y 15 miembros en este ramo,"
-        " pero aún hay espacio para escalar más. ¡Sigamos sumando!"
+        "El equipo muestra un avance constante y sólido en este ramo."
+        " Continuemos impulsando la gestión para alcanzar el objetivo"
+        " proyectado."
     ),
     (
-        "Entre 11 y 15 asesores ya tienen resultados en este producto. ¡Muy"
-        " bien por el esfuerzo, vamos por más!"
+        "Contamos con un desempeño favorable y en ascenso en este segmento."
+        " Mantengamos el enfoque y la constancia operativa."
     ),
     (
-        "Este ramo muestra una participación en buen ascenso con 11-15"
-        " activos. ¡No aflojemos el paso, el objetivo está más cerca!"
-    ),
-    (
-        "Ya son varios los MEGAPODEROSOS aportando en este segmento (11-15"
-        " activos). ¡Sigamos impulsando los números!"
-    ),
-    (
-        "Este producto ya cuenta con un sólido bloque activo entre 11 y 15"
-        " agentes. ¡A mantener el enfoque y seguir escalando!"
-    ),
-    (
-        "El rango de 11 a 15 miembros con resultados refleja nuestro"
-        " esfuerzo constante. ¡A dar el último tirón!"
-    ),
-    (
-        "Tenemos entre 11 y 15 MEGAPODEROSOS activos moviendo este producto."
-        " ¡Excelente trabajo intermedio, vamos por la cima!"
+        "El ritmo de participación en este producto es positivo; sigamos"
+        " consolidando los resultados con profesionalismo y liderazgo."
     ),
 ]
 
 MENSAJES_ALTO = [
     (
-        "¡Gran ritmo de participación con 16 o más asesores generando"
-        " resultados en este ramo! ¡Así se lidera!"
+        "Excelente nivel de participación y resultados en este ramo. El"
+        " compromiso y la constancia del equipo reflejan nuestra verdadera"
+        " capacidad de ejecución."
     ),
     (
-        "Superamos los 16 miembros activos en este producto. ¡Su constancia"
-        " y energía son de otro nivel!"
+        "Este segmento destaca por una producción sobresaliente."
+        " Felicitaciones a todos los asesores por mantener este alto"
+        " estandarte de excelencia."
     ),
     (
-        "Contar con más de 16 personas produciendo aquí demuestra la casta"
-        " de campeones que tenemos. ¡Felicitaciones!"
-    ),
-    (
-        "Este ramo brilla con luz propia gracias a la participación masiva"
-        " de 16 o más agentes. ¡Mantengamos este ritmo ganador!"
-    ),
-    (
-        "Más de 16 MEGAPODEROSOS activos dejando huella en este producto."
-        " ¡Sigamos arrasando con todo!"
-    ),
-    (
-        "Con 16 o más integrantes aportando resultados, demostramos por qué"
-        " somos los MEGAPODEROSOS. ¡A seguir brillando!"
-    ),
-    (
-        "Contamos con más de 16 valiosos aportes en este ramo. ¡Una"
-        " felicitación gigante por este ritmo excepcional!"
+        "Un desempeño extraordinario que evidencia la competitividad y solidez"
+        " de nuestro equipo de liderazgo comercial."
     ),
 ]
 
@@ -278,7 +237,7 @@ def obtener_color(ramo, valor_num):
 
 
 def seleccionar_mensaje_dinamico(lista_mensajes, semilla_extra=0):
-    """Selecciona un mensaje único de la lista basado en el día del año y una semilla para garantizar que no se repita en las ejecuciones."""
+    """Selecciona un mensaje único de la lista basado en el día del año y una semilla para garantizar rotación sin repetición."""
     ahora = datetime.now()
     indice = (
         ahora.timetuple().tm_yday * 7
@@ -338,12 +297,12 @@ def procesar_y_enviar():
             "val_auto": val_auto,
         })
 
-    # CÁLCULO DINÁMICO DE MIEMBROS CON RESULTADOS (> 0) POR PRODUCTO
+    # CÁLCULO DE MIEMBROS ACTIVOS POR PRODUCTO (PARA ELEGIR EL BANCO DE MENSAJES CORRECTO)
     count_local = sum(1 for x in datos_procesados if x["val_local"] > 0)
     count_vida = sum(1 for x in datos_procesados if x["val_vida"] > 0)
     count_auto = sum(1 for x in datos_procesados if x["val_auto"] > 0)
 
-    # EVALUACIÓN DINÁMICA CON REDACCIÓN FLUIDA Y NATURAL
+    # EVALUACIÓN CON LENGUAJE EJECUTIVO Y PROFESIONAL
     def evaluar_participacion_ramo(nombre_ramo, count, semilla):
         if count < 10:
             msg_base = seleccionar_mensaje_dinamico(
@@ -359,8 +318,7 @@ def procesar_y_enviar():
             )
 
         return (
-            f"En el ramo de <b>{nombre_ramo}</b> contamos con <b>{count}"
-            f" asesores activos</b>. {msg_base}"
+            f"En el ramo de <b>{nombre_ramo}</b>: <i>&ldquo;{msg_base}&rdquo;</i>"
         )
 
     estado_local = evaluar_participacion_ramo("Local", count_local, semilla=1)
@@ -369,7 +327,7 @@ def procesar_y_enviar():
         "Auto, Hogar y Empresa", count_auto, semilla=3
     )
 
-    # Determinar el color del contenedor según el estado general de los productos
+    # Colores del contenedor según desempeño general
     counts = [count_local, count_vida, count_auto]
     if any(c < 10 for c in counts):
         box_bg = "#fffbeb"
@@ -386,7 +344,7 @@ def procesar_y_enviar():
 
     mensaje_dinamico_atencion = f"""
     <div style="background-color: {box_bg}; border-left: 5px solid {box_border}; padding: 18px 22px; margin-top: 20px; margin-bottom: 16px; border-radius: 6px; font-size: 17px; color: {box_color}; text-align: left; line-height: 1.6;">
-        <div style="font-weight: bold; margin-bottom: 14px; font-size: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 8px;">📊 Panorama Actual de Participación:</div>
+        <div style="font-weight: bold; margin-bottom: 14px; font-size: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 8px;">📈 Análisis y Perspectiva de Participación:</div>
         <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);">{estado_local}</div>
         <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);">{estado_vida}</div>
         <div>{estado_auto}</div>
@@ -409,28 +367,28 @@ def procesar_y_enviar():
     def format_top_item(item, ramo, valor):
         if valor <= 0:
             return (
-                f"<b>{item}</b> 🏃‍♂️ <span style='color: #64748b; font-weight:"
+                f"<b>{item}</b> <span style='color: #64748b; font-weight:"
                 f" normal; font-size: 18px;'>({format_moneda(0.0)})</span>"
             )
         if cumple_meta(ramo, valor):
             return (
-                f"<b>{item}</b> 💪 <span style='color: #64748b; font-weight:"
+                f"<b>{item}</b> ⭐ <span style='color: #64748b; font-weight:"
                 f" normal; font-size: 18px;'>({format_moneda(valor)})</span>"
             )
         else:
             meta = obtener_meta(ramo)
             if ramo == "auto":
                 return (
-                    f"<b>{item}</b> 🏃‍♂️ <span style='color: #64748b; font-weight:"
+                    f"<b>{item}</b> <span style='color: #64748b; font-weight:"
                     f" normal; font-size: 18px;'>({format_moneda(valor)})</span>"
                 )
             else:
                 falta = meta - valor
                 return (
-                    f"<b>{item}</b> 🏃‍♂️ <span style='color: #64748b; font-weight:"
+                    f"<b>{item}</b> <span style='color: #64748b; font-weight:"
                     f" normal; font-size: 18px;'>({format_moneda(valor)})</span><br><span"
                     f" style='font-size: 15px; color: #c2410c; font-weight:"
-                    f" bold; padding-left: 20px;'>— ¡En vía! Faltan"
+                    f" bold; padding-left: 20px;'>— En proceso: faltan"
                     f" {format_moneda(falta)}</span>"
                 )
 
@@ -490,16 +448,16 @@ def procesar_y_enviar():
     texto_dinamico = f"""
     <div style="font-family: Arial, sans-serif; color: #1e293b; text-align: left;">
         <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">
-            🚀 ¡MEGAPODEROSOS!
+            🎯 EQUIPO MEGAPODEROSOS
         </div>
         <div style="font-size: 22px; font-weight: bold; color: #334155; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; text-align: left;">
-            📊 Numeritos del mes de {mes_actual.capitalize()}
+            📊 Reporte de Producción &mdash; {mes_actual.capitalize()}
         </div>
         
         <table style="width: 100%; border-collapse: collapse; font-size: 19px; line-height: 1.6; text-align: left;">
             <tr>
                 <td style="width: 50%; vertical-align: top; padding-right: 16px; padding-bottom: 20px; text-align: left;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">⬆️ TOP 3 &mdash; LOCAL</div>
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 3 &mdash; LOCAL</div>
                     <div style="color: #334155; text-align: left;">
                         1. {format_top_item(top_local[0]['intermediario'], 'local', top_local[0]['val_local'])}<br><br>
                         2. {format_top_item(top_local[1]['intermediario'], 'local', top_local[1]['val_local'])}<br><br>
@@ -507,7 +465,7 @@ def procesar_y_enviar():
                     </div>
                 </td>
                 <td style="width: 50%; vertical-align: top; padding-left: 16px; padding-bottom: 20px; text-align: left;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">⬆️ TOP 3 &mdash; INTERNACIONAL</div>
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 3 &mdash; INTERNACIONAL</div>
                     <div style="color: #334155; text-align: left;">
                         1. {format_top_item(top_inter[0]['intermediario'], 'inter', top_inter[0]['val_inter'])}<br><br>
                         2. {format_top_item(top_inter[1]['intermediario'], 'inter', top_inter[1]['val_inter'])}<br><br>
@@ -517,7 +475,7 @@ def procesar_y_enviar():
             </tr>
             <tr>
                 <td style="width: 50%; vertical-align: top; padding-right: 16px; padding-top: 10px; text-align: left;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">⬆️ TOP 3 &mdash; VIDA</div>
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 3 &mdash; VIDA</div>
                     <div style="color: #334155; text-align: left;">
                         1. {format_top_item(top_vida[0]['intermediario'], 'vida', top_vida[0]['val_vida'])}<br><br>
                         2. {format_top_item(top_vida[1]['intermediario'], 'vida', top_vida[1]['val_vida'])}<br><br>
@@ -525,7 +483,7 @@ def procesar_y_enviar():
                     </div>
                 </td>
                 <td style="width: 50%; vertical-align: top; padding-left: 16px; padding-top: 10px; text-align: left;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">⬆️ TOP 3 &mdash; AUTO, HOGAR Y EMPRESA</div>
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 3 &mdash; AUTO, HOGAR Y EMPRESA</div>
                     <div style="color: #334155; text-align: left;">
                         1. {format_top_item(top_auto[0]['intermediario'], 'auto', top_auto[0]['val_auto'])}<br><br>
                         2. {format_top_item(top_auto[1]['intermediario'], 'auto', top_auto[1]['val_auto'])}<br><br>
@@ -535,11 +493,11 @@ def procesar_y_enviar():
             </tr>
         </table>
 
-        <!-- CONDICIÓN DINÁMICA ROTATIVA CON REDACCIÓN NATURAL -->
+        <!-- ANÁLISIS Y PERSPECTIVA DE PARTICIPACIÓN EJECUTIVA -->
         {mensaje_dinamico_atencion}
         
         <div style="margin-top: 16px; font-size: 19px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: left; font-weight: bold;">
-            ¡A seguir dándolo todo en cada ramo! A continuación, la pizarra general:
+            A continuación, el detalle consolidado de la producción general:
         </div>
     </div>
     """
@@ -593,7 +551,7 @@ def procesar_y_enviar():
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = (
-        f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 🚀"
+        f"Reporte de Producción de {mes_actual.capitalize()} - MEGAPODEROSOS"
     )
     msg["From"] = sender_email
     msg["To"] = recipient_email
@@ -609,9 +567,7 @@ def procesar_y_enviar():
         ]
         server.sendmail(sender_email, destinatarios, msg.as_string())
         server.quit()
-        print(
-            "¡Correo enviado con redacción fluida y nombre de Eddy corregido!"
-        )
+        print("¡Correo enviado con éxito bajo un perfil ejecutivo y corporativo!")
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
