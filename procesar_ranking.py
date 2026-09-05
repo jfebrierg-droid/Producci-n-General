@@ -99,7 +99,7 @@ def obtener_datos_desde_drive_imagen(file_id):
         f.write(response.content)
 
     img = Image.open(image_path)
-    print("Analizando imagen con IA (Sistema multi-cuenta activo con google.genai)...")
+    print("Analizando imagen con IA (Sistema multi-cuenta activo con google.genai y gemini-3.6-flash)...")
     
     prompt = """
     Analiza esta imagen que contiene un reporte o tabla de producción de seguros del equipo MEGAPODEROSOS.
@@ -132,7 +132,7 @@ def obtener_datos_desde_drive_imagen(file_id):
             print(f"Intentando con la cuenta / API Key #{index + 1}...")
             client = genai.Client(api_key=api_key)
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.6-flash',
                 contents=[img, prompt]
             )
             texto_respuesta = response.text
@@ -264,7 +264,6 @@ def procesar_y_enviar():
     else:
         box_bg, box_border, box_color = "#f0fdf4", "#22c55e", "#166534"
 
-    # Cuadro de Participación por Producto actualizado
     mensaje_dinamico_atencion = f"""
     <div style="background-color: {box_bg}; border-left: 5px solid {box_border}; padding: 18px 22px; margin-top: 20px; margin-bottom: 16px; border-radius: 6px; font-size: 17px; color: {box_color}; text-align: left; line-height: 1.6;">
         <div style="font-weight: bold; margin-bottom: 14px; font-size: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 8px;">Participación por Producto:</div>
