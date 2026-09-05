@@ -159,10 +159,10 @@ def procesar_y_enviar():
     top_vida = sorted(datos_procesados, key=lambda x: x["val_vida"], reverse=True)[:3]
     top_auto = sorted(datos_procesados, key=lambda x: x["val_auto"], reverse=True)[:3]
 
-    # Funciones auxiliares para asignar el trofeo solo si cumple la meta
+    # Función auxiliar para asignar el trofeo al lado del nombre solo si cumple la meta
     def format_top_item(item, ramo, valor):
         trofeo = " 🏆" if cumple_meta(ramo, valor) else ""
-        return f"{item}{trofeo} (${valor:,.2f})"
+        return f"{item}{trofeo} <span style='color: #64748b; font-weight: normal;'>(${valor:,.2f})</span>"
 
     # Orden para la tabla completa (prioridad: Local > Internacional > Vida > Auto)
     datos_procesados.sort(
@@ -191,41 +191,67 @@ def procesar_y_enviar():
 
         filas_html += f"""
         <tr>
-            <td style="background-color: #1a2332; color: #ffffff; padding: 8px; font-weight: bold; border: 1px solid #2d3748; text-align: left;">{fila['intermediario']}</td>
-            <td style="{style_local} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${val_local:,.2f}</td>
-            <td style="{style_inter} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${val_inter:,.2f}</td>
-            <td style="{style_vida} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${val_vida:,.2f}</td>
-            <td style="{style_auto} padding: 8px; text-align: right; border: 1px solid #2d3748; font-weight: bold;">${val_auto:,.2f}</td>
+            <td style="background-color: #ffffff; color: #1e293b; padding: 8px; font-weight: bold; border: 1px solid #cbd5e1; text-align: left;">{fila['intermediario']}</td>
+            <td style="{style_local} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_local:,.2f}</td>
+            <td style="{style_inter} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_inter:,.2f}</td>
+            <td style="{style_vida} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_vida:,.2f}</td>
+            <td style="{style_auto} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_auto:,.2f}</td>
         </tr>
         """
 
-    # Texto dinámico con la validación de trofeos por cada miembro del Top 3
+    # Bloque de texto superior con fondo blanco y diseño limpio y profesional
     texto_dinamico = f"""
-    <b>¡MEGAPODEROSOS! 🚀</b><br><br>
-    <b>Numeritos de {mes_actual}</b><br><br>
-    ¡Un reconocimiento especial a nuestros líderes destacados en este periodo!<br><br>
-    
-    🏆 <b>TOP 3 - LOCAL:</b><br>
-    1. {format_top_item(top_local[0]['intermediario'], 'local', top_local[0]['val_local'])}<br>
-    2. {format_top_item(top_local[1]['intermediario'], 'local', top_local[1]['val_local'])}<br>
-    3. {format_top_item(top_local[2]['intermediario'], 'local', top_local[2]['val_local'])}<br><br>
-
-    🏆 <b>TOP 3 - INTERNACIONAL:</b><br>
-    1. {format_top_item(top_inter[0]['intermediario'], 'inter', top_inter[0]['val_inter'])}<br>
-    2. {format_top_item(top_inter[1]['intermediario'], 'inter', top_inter[1]['val_inter'])}<br>
-    3. {format_top_item(top_inter[2]['intermediario'], 'inter', top_inter[2]['val_inter'])}<br><br>
-
-    🏆 <b>TOP 3 - VIDA:</b><br>
-    1. {format_top_item(top_vida[0]['intermediario'], 'vida', top_vida[0]['val_vida'])}<br>
-    2. {format_top_item(top_vida[1]['intermediario'], 'vida', top_vida[1]['val_vida'])}<br>
-    3. {format_top_item(top_vida[2]['intermediario'], 'vida', top_vida[2]['val_vida'])}<br><br>
-
-    🏆 <b>TOP 3 - AUTO, HOGAR Y EMPRESA:</b><br>
-    1. {format_top_item(top_auto[0]['intermediario'], 'auto', top_auto[0]['val_auto'])}<br>
-    2. {format_top_item(top_auto[1]['intermediario'], 'auto', top_auto[1]['val_auto'])}<br>
-    3. {format_top_item(top_auto[2]['intermediario'], 'auto', top_auto[2]['val_auto'])}<br><br>
-
-    ¡A seguir dando el máximo en cada ramo! A continuación, la pizarra general:
+    <div style="font-family: Arial, sans-serif; color: #1e293b;">
+        <div style="font-size: 16px; font-weight: bold; color: #0284c7; margin-bottom: 6px; letter-spacing: 0.5px;">
+            🚀 ¡MEGAPODEROSOS!
+        </div>
+        <div style="font-size: 14px; font-weight: bold; color: #334155; margin-bottom: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+            📊 Reporte de Numeritos &mdash; {mes_actual.capitalize()}
+        </div>
+        
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px; line-height: 1.6;">
+            <tr>
+                <td style="width: 50%; vertical-align: top; padding-right: 10px; padding-bottom: 12px;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 4px;">⬆️ TOP 3 &mdash; LOCAL</div>
+                    <div style="padding-left: 6px; color: #334155;">
+                        1. {format_top_item(top_local[0]['intermediario'], 'local', top_local[0]['val_local'])}<br>
+                        2. {format_top_item(top_local[1]['intermediario'], 'local', top_local[1]['val_local'])}<br>
+                        3. {format_top_item(top_local[2]['intermediario'], 'local', top_local[2]['val_local'])}
+                    </div>
+                </td>
+                <td style="width: 50%; vertical-align: top; padding-left: 10px; padding-bottom: 12px;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 4px;">⬆️ TOP 3 &mdash; INTERNACIONAL</div>
+                    <div style="padding-left: 6px; color: #334155;">
+                        1. {format_top_item(top_inter[0]['intermediario'], 'inter', top_inter[0]['val_inter'])}<br>
+                        2. {format_top_item(top_inter[1]['intermediario'], 'inter', top_inter[1]['val_inter'])}<br>
+                        3. {format_top_item(top_inter[2]['intermediario'], 'inter', top_inter[2]['val_inter'])}
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 50%; vertical-align: top; padding-right: 10px; padding-top: 4px;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 4px;">⬆️ TOP 3 &mdash; VIDA</div>
+                    <div style="padding-left: 6px; color: #334155;">
+                        1. {format_top_item(top_vida[0]['intermediario'], 'vida', top_vida[0]['val_vida'])}<br>
+                        2. {format_top_item(top_vida[1]['intermediario'], 'vida', top_vida[1]['val_vida'])}<br>
+                        3. {format_top_item(top_vida[2]['intermediario'], 'vida', top_vida[2]['val_vida'])}
+                    </div>
+                </td>
+                <td style="width: 50%; vertical-align: top; padding-left: 10px; padding-top: 4px;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 4px;">⬆️ TOP 3 &mdash; AUTO, HOGAR Y EMPRESA</div>
+                    <div style="padding-left: 6px; color: #334155;">
+                        1. {format_top_item(top_auto[0]['intermediario'], 'auto', top_auto[0]['val_auto'])}<br>
+                        2. {format_top_item(top_auto[1]['intermediario'], 'auto', top_auto[1]['val_auto'])}<br>
+                        3. {format_top_item(top_auto[2]['intermediario'], 'auto', top_auto[2]['val_auto'])}
+                    </div>
+                </td>
+            </tr>
+        </table>
+        
+        <div style="margin-top: 12px; font-size: 12px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 10px; text-align: center;">
+            ¡A seguir dándolo todo en cada ramo! A continuación, la pizarra general:
+        </div>
+    </div>
     """
 
     html_content = f"""
@@ -234,19 +260,19 @@ def procesar_y_enviar():
     <head>
         <meta charset="utf-8">
     </head>
-    <body style="font-family: Arial, sans-serif; background-color: #ffffff; margin: 0; padding: 10px; text-align: left;">
+    <body style="font-family: Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 10px; text-align: left;">
         <div style="max-width: 850px; margin: 0; text-align: left; font-size: 0; line-height: 0;">
             
-            <!-- Bloque de Texto Dinámico con Fondo Blanco y Letras Oscuras -->
-            <div style="background-color: #ffffff; color: #1a2332; padding: 15px 20px; font-size: 13px; line-height: 1.5; font-family: Arial, sans-serif; border: 1px solid #e2e8f0; text-align: left; margin-bottom: 10px; border-radius: 6px;">
+            <!-- Tarjeta de Encabezado con Fondo Blanco e impacto visual -->
+            <div style="background-color: #ffffff; color: #1e293b; padding: 20px 24px; font-size: 13px; line-height: 1.5; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 12px; border-radius: 8px; border-left: 5px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                 {texto_dinamico}
             </div>
 
             <!-- Banner Superior -->
-            <img src="{BANNER_URL}" alt="Banner Ranking de Producción" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; margin: 0; padding: 0;">
+            <img src="{BANNER_URL}" alt="Banner Ranking de Producción" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; margin: 0 0 12px 0; padding: 0; border-radius: 6px;">
 
-            <!-- Tabla de Producción (Pizarra completa intacta) -->
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin: 0; padding: 0; line-height: normal;">
+            <!-- Tabla de Producción (Pizarra completa) -->
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin: 0; padding: 0; line-height: normal; border-radius: 6px; overflow: hidden;">
                 <thead>
                     <tr style="background-color: #0d1527; color: #ffffff;">
                         <th style="padding: 10px; text-align: left; border: 1px solid #2d3748;">Intermediario</th>
