@@ -107,22 +107,22 @@ BANCO_ALTO = {
 
 BANCO_INTERNACIONAL = {
     "aperturas": [
-        "¡A mandar fuego pa' fuera mi gente,",
-        "¡Soltando chispa en el extranjero,",
-        "¡Cruzando el charco con fuerza,",
-        "¡Facturando bien lejos de aquí,"
+        "¡Mi gente, a asegurar a los nuestros con cobertura mundial,",
+        "¡A ofrecer esa protección internacional aquí mismo en el patio,",
+        "¡Duro con el seguro de afuera para nuestra gente,",
+        "¡A colocar esas pólizas globales aquí en casa,"
     ],
     "nucleos": [
-        "a meter mano en el extranjero como se debe!",
-        "a cobrar esos verdes que están esperando!",
-        "a demostrar de qué estamos hechos afuera!",
-        "a poner la bandera en lo más alto del mapa!"
+        "para que tengan salud de primera en cualquier parte del mundo!",
+        "ofreciendo esa tranquilidad internacional sin salir del país!",
+        "protegiendo a los clientes de aquí con cobertura de nivel mundial!",
+        "vendiendo ese blindaje internacional que tanto busca nuestra gente!"
     ],
     "cierres": [
-        "¡A romper allá afuera!",
-        "¡Duro con esos dólares!",
-        "¡A sonar lejos!",
-        "¡A cobrar en grande!"
+        "¡A seguir sumando sin aflojar!",
+        "¡A mantener el enfoque hasta el final!",
+        "¡A darle con tó' y sin bajar el ritmo!",
+        "¡A seguir trabajando duro!"
     ]
 }
 
@@ -192,7 +192,7 @@ def obtener_datos_desde_drive_imagen(file_id):
             exito_modelo = False
             for intento in range(3):
                 try:
-                    print(f"Intentandoกับ API Key #{4 - index}, modelo {modelo} (intento {intento + 1})...")
+                    print(f"Intentando con API Key #{4 - index}, modelo {modelo} (intento {intento + 1})...")
                     response = client.models.generate_content(
                         model=modelo,
                         contents=[img, prompt]
@@ -395,7 +395,7 @@ def procesar_y_enviar():
 
     texto_dinamico = f"""
     <div style="font-family: Arial, sans-serif; color: #1e293b; text-align: left;">
-        <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">🔥 MEGAPODEROSOS 💪</div>
+        <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">🔥 EQUIPO MEGAPODEROSO 💪</div>
         <div style="font-size: 22px; font-weight: bold; color: #334155; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; text-align: left;">📊 Numeritos del mes de {mes_actual.capitalize()}</div>
         
         <table style="width: 100%; border-collapse: collapse; font-size: 19px; line-height: 1.6; text-align: left;">
@@ -484,7 +484,7 @@ def procesar_y_enviar():
     """
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS"
+    msg["Subject"] = f"Producción de {mes_actual.capitalize()} - EQUIPO MEGAPODEROSO"
     msg["From"] = sender_email
     msg["To"] = recipient_email
     msg.attach(MIMEText(html_content, "html"))
