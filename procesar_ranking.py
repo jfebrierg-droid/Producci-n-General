@@ -78,7 +78,6 @@ def obtener_datos_desde_drive_imagen(file_id):
     print("Descargando imagen desde Google Drive...")
 
     try:
-        # Se añade timeout=30 para evitar que el script se quede colgado indefinidamente
         response = requests.get(url, timeout=30)
     except requests.exceptions.Timeout:
         raise Exception(
@@ -121,11 +120,9 @@ def obtener_datos_desde_drive_imagen(file_id):
     response = model.generate_content([img, prompt])
     texto_respuesta = response.text
 
-    # Limpiar archivos temporales
     if os.path.exists(image_path):
         os.remove(image_path)
 
-    # Extraer el JSON de la respuesta
     match = re.search(r"\[.*\]", texto_respuesta, re.DOTALL)
     if match:
         return json.loads(match.group(0))
@@ -136,7 +133,6 @@ def obtener_datos_desde_drive_imagen(file_id):
 
 
 def parse_monto(valor_str):
-    """Convierte cadenas como '115,507.18' o '-73,122.26' a un float de Python"""
     try:
         if not valor_str:
             return 0.0
@@ -146,7 +142,6 @@ def parse_monto(valor_str):
 
 
 def obtener_meta(ramo):
-    """Retorna la meta mínima exigida según el ramo"""
     if ramo == "local":
         return 30000.0
     elif ramo == "inter":
@@ -159,12 +154,10 @@ def obtener_meta(ramo):
 
 
 def cumple_meta(ramo, valor_num):
-    """Retorna True si el valor alcanza o supera la meta mínima de su ramo"""
     return valor_num >= obtener_meta(ramo)
 
 
 def obtener_color(ramo, valor_num):
-    """Retorna el color de fondo y de texto según el formato suave de la imagen"""
     color_verde = "background-color: #dcfce7; color: #15803d;"
     color_naranja = "background-color: #ffedd5; color: #c2410c;"
     color_rojo = "background-color: #ffe4e6; color: #b91c1c;"
@@ -186,23 +179,19 @@ def procesar_y_enviar():
     )
     recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
 
-    # ID de la imagen en Google Drive para la lectura de datos
     drive_file_id = "1YmAVaDyplF6CQ_gk2NZsEmLyjFpcFH9Y"
 
-    # Obtener los datos dinámicamente desde la imagen de Google Drive
     try:
         datos_ranking = obtener_datos_desde_drive_imagen(drive_file_id)
     except Exception as e:
         print(f"Error al procesar la imagen de Google Drive: {e}")
         return
 
-    # Mapear los datos extraídos en un diccionario por nombre
     datos_extraidos_dict = {}
     for item in datos_ranking:
         nombre = item.get("intermediario", "").strip()
         datos_extraidos_dict[nombre] = item
 
-    # Construir la lista completa integrando la lista maestra de todos los miembros
     datos_procesados = []
     for agente in LISTA_MAESTRA_AGENTES:
         match_item = None
@@ -232,7 +221,6 @@ def procesar_y_enviar():
             "val_auto": val_auto,
         })
 
-    # Extraer Top 3 por cada categoría de manera independiente
     top_local = sorted(
         datos_procesados, key=lambda x: x["val_local"], reverse=True
     )[:3]
@@ -246,7 +234,6 @@ def procesar_y_enviar():
         datos_procesados, key=lambda x: x["val_auto"], reverse=True
     )[:3]
 
-    # Función para formatear el item del Top 3
     def format_top_item(item, ramo, valor):
         if valor <= 0:
             return (
@@ -273,7 +260,6 @@ def procesar_y_enviar():
                     f" ${falta:,.2f}</span>"
                 )
 
-    # Obtener el nombre del mes actual en español de forma dinámica
     meses_es = {
         1: "enero",
         2: "febrero",
@@ -290,7 +276,6 @@ def procesar_y_enviar():
     }
     mes_actual = meses_es.get(datetime.now().month, "mes")
 
-    # Orden para la tabla completa (prioridad: Local > Internacional > Vida > Auto)
     datos_procesados.sort(
         key=lambda x: (
             x["val_local"],
@@ -301,13 +286,11 @@ def procesar_y_enviar():
         reverse=True,
     )
 
-    # Calcular totales generales
     tot_local = sum(item["val_local"] for item in datos_procesados)
     tot_inter = sum(item["val_inter"] for item in datos_procesados)
     tot_vida = sum(item["val_vida"] for item in datos_procesados)
     tot_auto = sum(item["val_auto"] for item in datos_procesados)
 
-    # Construir HTML de las filas de la pizarra completa
     filas_html = ""
     for fila in datos_procesados:
         val_local = fila["val_local"]
@@ -432,7 +415,9 @@ def procesar_y_enviar():
     """
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = "Producción General - MEGAPODEROSOS"
+    msg["Subject"] = (
+        f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 🚀"
+    )
     msg["From"] = sender_email
     msg["To"] = recipient_email
 
@@ -447,9 +432,7 @@ def procesar_y_enviar():
         ]
         server.sendmail(sender_email, destinatarios, msg.as_string())
         server.quit()
-        print(
-            "¡Correo enviado exitosamente con la lista completa de miembros!"
-        )
+        print("¡Correo enviado exitosamente con el asunto actualizado!")
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
