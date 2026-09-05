@@ -2,7 +2,7 @@
 """
 Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (fallback de API Keys
-desde variables de entorno) y contenido dinámico semanal sin repetición para el equipo MEGAPODEROSOS.
+desde variables de entorno) utilizando el nuevo SDK oficial de Google GenAI y contenido dinámico.
 """
 
 from datetime import datetime
@@ -14,12 +14,12 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from PIL import Image
 import requests
-import google.generativeai as genai
+from google import genai
 
-# --- CONFIGURACIÓN DE MULTI-CUENTAS (GEMINI_API_KEY_2 primero, luego GEMINI_API_KEY_1) ---
+# --- CONFIGURACIÓN DE MULTI-CUENTAS (GEMINI_API_KEY_2 primero, luego GEMINI_API_KEY) ---
 API_KEYS_GEMINI = [
     os.environ.get("GEMINI_API_KEY_2"),
-    os.environ.get("GEMINI_API_KEY_1")
+    os.environ.get("GEMINI_API_KEY")
 ]
 
 # Lista maestra con TODOS los miembros del equipo MEGAPODEROSOS
@@ -99,7 +99,7 @@ def obtener_datos_desde_drive_imagen(file_id):
         f.write(response.content)
 
     img = Image.open(image_path)
-    print("Analizando imagen con IA (Sistema multi-cuenta activo)...")
+    print("Analizando imagen con IA (Sistema multi-cuenta activo con google.genai)...")
     
     prompt = """
     Analiza esta imagen que contiene un reporte o tabla de producción de seguros del equipo MEGAPODEROSOS.
@@ -123,16 +123,18 @@ def obtener_datos_desde_drive_imagen(file_id):
 
     texto_respuesta = None
     
-    # SISTEMA DE FALLBACK ENTRE CUENTAS DE GEMINI (GEMINI_API_KEY_2 primero)
+    # SISTEMA DE FALLBACK ENTRE CUENTAS DE GEMINI (NUEVO SDK CLIENT)
     for index, api_key in enumerate(API_KEYS_GEMINI):
         if not api_key:
             print(f"Aviso: La API Key #{index + 1} no está configurada o está vacía.")
             continue
         try:
             print(f"Intentando con la cuenta / API Key #{index + 1}...")
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-3.6-flash")
-            response = model.generate_content([img, prompt])
+            client = genai.Client(api_key=api_key)
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=[img, prompt]
+            )
             texto_respuesta = response.text
             print(f"¡Éxito utilizando la cuenta #{index + 1}!")
             break
@@ -262,7 +264,7 @@ def procesar_y_enviar():
     else:
         box_bg, box_border, box_color = "#f0fdf4", "#22c55e", "#166534"
 
-    # Cuadro de Participación por Producto (con Internacional resaltado y sin mención de la meta de 10 en los textos)
+    # Cuadro de Participación por Producto actualizado
     mensaje_dinamico_atencion = f"""
     <div style="background-color: {box_bg}; border-left: 5px solid {box_border}; padding: 18px 22px; margin-top: 20px; margin-bottom: 16px; border-radius: 6px; font-size: 17px; color: {box_color}; text-align: left; line-height: 1.6;">
         <div style="font-weight: bold; margin-bottom: 14px; font-size: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 8px;">Participación por Producto:</div>
@@ -322,7 +324,6 @@ def procesar_y_enviar():
     texto_dinamico = f"""
     <div style="font-family: Arial, sans-serif; color: #1e293b; text-align: left;">
         <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">🔥 EQUIPO MEGAPODEROSOS</div>
-        <!-- Título actualizado a Numeritos del mes -->
         <div style="font-size: 22px; font-weight: bold; color: #334155; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; text-align: left;">📊 Numeritos del mes de {mes_actual.capitalize()}</div>
         
         <table style="width: 100%; border-collapse: collapse; font-size: 19px; line-height: 1.6; text-align: left;">
@@ -411,7 +412,6 @@ def procesar_y_enviar():
     """
 
     msg = MIMEMultipart("alternative")
-    # Asunto actualizado sin la palabra "Reporte de"
     msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS"
     msg["From"] = sender_email
     msg["To"] = recipient_email
