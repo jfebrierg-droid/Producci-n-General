@@ -1,3 +1,4 @@
+
 from datetime import datetime
 import json
 import os
@@ -71,70 +72,144 @@ LISTA_MAESTRA_AGENTES = [
     "Salvador Martinez",
 ]
 
-# BANCOS DE MENSAJES CON TONO EJECUTIVO, PROFESIONAL Y MOTIVADOR (SIN MENCIONAR LÍMITES)
+# BANCOS DE MENSAJES AMPLIADOS (10 OPCIONES POR NIVEL PARA ROTACIÓN SEMANAL SIN REPETICIÓN RÁPIDA)
 MENSAJES_BAJO = [
     (
-        "Este ramo presenta una oportunidad importante de desarrollo. Es el"
-        " momento idóneo para enfocar nuestra estrategia comercial y potenciar"
-        " los resultados."
+        "Este ramo tiene un espacio enorme para crecer este mes. ¡Vamos a"
+        " meterle ganas y a buscar esas cotizaciones que nos faltan!"
     ),
     (
-        "Identificamos un espacio propicio para intensificar la gestión en"
-        " este segmento y dinamizar la producción antes del cierre del período."
+        "Aquí podemos dar el gran salto. ¡A revisar nuestra cartera y llamar a"
+        " esos clientes que están pendientes!"
     ),
     (
-        "Este producto nos invita a redoblar esfuerzos y activar nuevas"
-        " acciones comerciales para consolidar nuestra posición."
+        "Este producto nos está pidiendo un empujoncito extra. ¡Vamos a"
+        " ponernos las pilas y a salir a buscar esos números!"
     ),
     (
-        "Una revisión de nuestra estrategia en este ramo nos permitirá"
-        " optimizar el rendimiento y alcanzar las metas previstas."
+        "No nos detengamos por este bache; este ramo tiene potencial de sobra."
+        " ¡A rescatar esas oportunidades!"
+    ),
+    (
+        "Vamos a ponerle más enfoque a este segmento esta semana. ¡Con un par"
+        " de llamadas cerramos buenos negocios!"
+    ),
+    (
+        "Este es el momento de redoblar los esfuerzos aquí. ¡El equipo sabe"
+        " cómo resolver y sacar la tarea!"
+    ),
+    (
+        "Vamos a revisar la estrategia en este ramo. Un poquito más de calle y"
+        " cerramos esas pendientes."
+    ),
+    (
+        "Este indicador nos invita a buscar nuevas opciones y tocar puertas"
+        " frescas. ¡Sí se puede, equipo!"
+    ),
+    (
+        "No aflojemos el paso. Vamos a darle calor a este ramo para que suba"
+        " como la espuma."
+    ),
+    (
+        "Con una buena ronda de llamadas esta semana levantamos este número sin"
+        " problemas. ¡A darle con todo!"
     ),
 ]
 
 MENSAJES_MEDIO = [
     (
-        "El equipo muestra un avance constante y sólido en este ramo."
-        " Continuemos impulsando la gestión para alcanzar el objetivo"
-        " proyectado."
+        "¡Muy bien, equipo! Vamos avanzando con paso firme en este ramo. ¡A"
+        " mantener el ritmo para cerrar el mes por todo lo alto!"
     ),
     (
-        "Contamos con un desempeño favorable y en ascenso en este segmento."
-        " Mantengamos el enfoque y la constancia operativa."
+        "El equipo viene respondiendo excelente en este segmento. ¡Sigamos con"
+        " esa misma energía para alcanzar la meta!"
     ),
     (
-        "El ritmo de participación en este producto es positivo; sigamos"
-        " consolidando los resultados con profesionalismo y liderazgo."
+        "Se nota el trabajo y el movimiento positivo en este producto. ¡No"
+        " bajemos la guardia y sigamos sumando!"
+    ),
+    (
+        "Vamos por buen camino en este ramo. ¡Un último estirón y logramos el"
+        " objetivo que nos propusimos!"
+    ),
+    (
+        "La constancia se nota en este indicador. ¡Sigamos así, con la mira"
+        " puesta en la meta!"
+    ),
+    (
+        "Excelente trabajo de equipo en este segmento. ¡Vamos a mantenernos"
+        " firmes para asegurar el cierre!"
+    ),
+    (
+        "Este ramo marcha con buen pie gracias al esfuerzo diario. ¡A seguir"
+        " cosechando éxitos!"
+    ),
+    (
+        "Muy buena labor en este producto. Mantengamos la disciplina y el"
+        " enfoque hasta el último día."
+    ),
+    (
+        "Estamos cumpliendo con las expectativas en este ramo. ¡A mantener la"
+        " inercia positiva!"
+    ),
+    (
+        "El ritmo en este segmento es alentador. ¡Sigamos adelante con la"
+        " misma dedicación!"
     ),
 ]
 
 MENSAJES_ALTO = [
     (
-        "Excelente nivel de participación y resultados en este ramo. El"
-        " compromiso y la constancia del equipo reflejan nuestra verdadera"
-        " capacidad de ejecución."
+        "¡Espectacular! Este ramo está volando gracias al esfuerzo y la"
+        " entrega de todos. ¡Así es que se trabaja, equipo!"
     ),
     (
-        "Este segmento destaca por una producción sobresaliente."
-        " Felicitaciones a todos los asesores por mantener este alto"
-        " estandarte de excelencia."
+        "¡Qué nivel de desempeño en este segmento! Mis felicitaciones a todos"
+        " los que están dando el todo por el todo."
     ),
     (
-        "Un desempeño extraordinario que evidencia la competitividad y solidez"
-        " de nuestro equipo de liderazgo comercial."
+        "¡Imparables! Demostrando de qué estamos hechos los MEGAPODEROSOS en"
+        " este ramo. ¡A romper récords!"
+    ),
+    (
+        "¡Una verdadera locura de producción en este ramo! Gracias por ese"
+        " compromiso que inspira a todos."
+    ),
+    (
+        "¡Qué manera de brillar en este segmento! Este es el verdadero espíritu"
+        " de los MEGAPODEROSOS."
+    ),
+    (
+        "¡Resultados extraordinarios! Cuando se quiere se puede, y ustedes lo"
+        " están demostrando con hechos."
+    ),
+    (
+        "¡Excepcional rendimiento en este ramo! El esfuerzo de cada uno nos"
+        " tiene en la cima. ¡Sigan así!"
+    ),
+    (
+        "¡De 10! Este ramo refleja el talento y la dedicación de un equipo que"
+        " no se conforma."
+    ),
+    (
+        "¡Aplausos de pie para todos en este segmento! Demostrando liderazgo y"
+        " casta de campeones."
+    ),
+    (
+        "¡Brutal el trabajo en este ramo! Con esta misma energía vamos a"
+        " comernos el resto del año."
     ),
 ]
 
 
 def format_moneda(valor):
-    """Formatea un número asegurando que el signo menos vaya antes del dólar (-$X.XX)."""
     if valor < 0:
         return f"-${abs(valor):,.2f}"
     return f"${valor:,.2f}"
 
 
 def obtener_datos_desde_drive_imagen(file_id):
-    """Descarga la imagen de Google Drive y usa Gemini Vision para extraer la tabla de producción."""
     url = f"https://drive.google.com/uc?export=download&id={file_id}"
     print("Descargando imagen desde Google Drive...")
 
@@ -237,14 +312,11 @@ def obtener_color(ramo, valor_num):
 
 
 def seleccionar_mensaje_dinamico(lista_mensajes, semilla_extra=0):
-    """Selecciona un mensaje único de la lista basado en el día del año y una semilla para garantizar rotación sin repetición."""
+    """Selecciona un mensaje basado en el número de semana del año, garantizando variación y evitando repeticiones rápidas."""
     ahora = datetime.now()
-    indice = (
-        ahora.timetuple().tm_yday * 7
-        + ahora.hour
-        + ahora.minute
-        + semilla_extra
-    ) % len(lista_mensajes)
+    # Usar el número de semana del año (1 a 52) asegura que el mensaje cambie semanalmente de forma consistente
+    semana_del_anio = ahora.isocalendar()[1]
+    indice = (semana_del_anio + semilla_extra) % len(lista_mensajes)
     return lista_mensajes[indice]
 
 
@@ -297,12 +369,10 @@ def procesar_y_enviar():
             "val_auto": val_auto,
         })
 
-    # CÁLCULO DE MIEMBROS ACTIVOS POR PRODUCTO (PARA ELEGIR EL BANCO DE MENSAJES CORRECTO)
     count_local = sum(1 for x in datos_procesados if x["val_local"] > 0)
     count_vida = sum(1 for x in datos_procesados if x["val_vida"] > 0)
     count_auto = sum(1 for x in datos_procesados if x["val_auto"] > 0)
 
-    # EVALUACIÓN CON LENGUAJE EJECUTIVO Y PROFESIONAL
     def evaluar_participacion_ramo(nombre_ramo, count, semilla):
         if count < 10:
             msg_base = seleccionar_mensaje_dinamico(
@@ -318,7 +388,7 @@ def procesar_y_enviar():
             )
 
         return (
-            f"En el ramo de <b>{nombre_ramo}</b>: <i>&ldquo;{msg_base}&rdquo;</i>"
+            f"En <b>{nombre_ramo}</b>: <i>&ldquo;{msg_base}&rdquo;</i>"
         )
 
     estado_local = evaluar_participacion_ramo("Local", count_local, semilla=1)
@@ -327,7 +397,6 @@ def procesar_y_enviar():
         "Auto, Hogar y Empresa", count_auto, semilla=3
     )
 
-    # Colores del contenedor según desempeño general
     counts = [count_local, count_vida, count_auto]
     if any(c < 10 for c in counts):
         box_bg = "#fffbeb"
@@ -344,7 +413,7 @@ def procesar_y_enviar():
 
     mensaje_dinamico_atencion = f"""
     <div style="background-color: {box_bg}; border-left: 5px solid {box_border}; padding: 18px 22px; margin-top: 20px; margin-bottom: 16px; border-radius: 6px; font-size: 17px; color: {box_color}; text-align: left; line-height: 1.6;">
-        <div style="font-weight: bold; margin-bottom: 14px; font-size: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 8px;">📈 Análisis y Perspectiva de Participación:</div>
+        <div style="font-weight: bold; margin-bottom: 14px; font-size: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 8px;">💡 ¿Cómo vamos en cada ramo?</div>
         <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);">{estado_local}</div>
         <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);">{estado_vida}</div>
         <div>{estado_auto}</div>
@@ -388,8 +457,7 @@ def procesar_y_enviar():
                     f"<b>{item}</b> <span style='color: #64748b; font-weight:"
                     f" normal; font-size: 18px;'>({format_moneda(valor)})</span><br><span"
                     f" style='font-size: 15px; color: #c2410c; font-weight:"
-                    f" bold; padding-left: 20px;'>— En proceso: faltan"
-                    f" {format_moneda(falta)}</span>"
+                    f" bold; padding-left: 20px;'>— Faltan {format_moneda(falta)} para la meta</span>"
                 )
 
     meses_es = {
@@ -448,10 +516,10 @@ def procesar_y_enviar():
     texto_dinamico = f"""
     <div style="font-family: Arial, sans-serif; color: #1e293b; text-align: left;">
         <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">
-            🎯 EQUIPO MEGAPODEROSOS
+            🔥 EQUIPO MEGAPODEROSOS
         </div>
         <div style="font-size: 22px; font-weight: bold; color: #334155; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; text-align: left;">
-            📊 Reporte de Producción &mdash; {mes_actual.capitalize()}
+            📊 Así va nuestra producción de {mes_actual.capitalize()}
         </div>
         
         <table style="width: 100%; border-collapse: collapse; font-size: 19px; line-height: 1.6; text-align: left;">
@@ -493,11 +561,10 @@ def procesar_y_enviar():
             </tr>
         </table>
 
-        <!-- ANÁLISIS Y PERSPECTIVA DE PARTICIPACIÓN EJECUTIVA -->
         {mensaje_dinamico_atencion}
         
         <div style="margin-top: 16px; font-size: 19px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: left; font-weight: bold;">
-            A continuación, el detalle consolidado de la producción general:
+            A continuación, el detalle completo de la producción:
         </div>
     </div>
     """
@@ -511,17 +578,14 @@ def procesar_y_enviar():
     <body style="font-family: Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 10px; text-align: left;">
         <div style="width: 100%; max-width: 850px; margin: 0; text-align: left;">
             
-            <!-- Tarjeta de Encabezado -->
             <div style="background-color: #ffffff; color: #1e293b; padding: 24px 28px; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 16px; border-radius: 8px; border-left: 6px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                 {texto_dinamico}
             </div>
 
-            <!-- Banner -->
             <div style="margin-bottom: 16px; text-align: left;">
                 <a href="https://ibb.co/N21Ljnxt"><img src="https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg" alt="Banner-Ranking-de-Producci-n-1" border="0" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;" /></a>
             </div>
 
-            <!-- Tabla de Producción (Pizarra completa) -->
             <table style="width: 100%; border-collapse: collapse; font-size: 19px; margin: 0; padding: 0; border-radius: 6px; overflow: hidden; text-align: left;">
                 <thead>
                     <tr style="background-color: #0d1527; color: #ffffff; text-align: left;">
@@ -567,7 +631,10 @@ def procesar_y_enviar():
         ]
         server.sendmail(sender_email, destinatarios, msg.as_string())
         server.quit()
-        print("¡Correo enviado con éxito bajo un perfil ejecutivo y corporativo!")
+        print(
+            "¡Correo enviado con éxito! Rotación semanal activa sin"
+            " repetición."
+        )
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
