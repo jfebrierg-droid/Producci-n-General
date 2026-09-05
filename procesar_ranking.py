@@ -76,7 +76,15 @@ def obtener_datos_desde_drive_imagen(file_id):
     """Descarga la imagen de Google Drive y usa Gemini Vision para extraer la tabla de producción."""
     url = f"https://drive.google.com/uc?export=download&id={file_id}"
     print("Descargando imagen desde Google Drive...")
-    response = requests.get(url)
+
+    try:
+        # Se añade timeout=30 para evitar que el script se quede colgado indefinidamente
+        response = requests.get(url, timeout=30)
+    except requests.exceptions.Timeout:
+        raise Exception(
+            "La solicitud a Google Drive tardó demasiado tiempo (timeout)."
+        )
+
     if response.status_code != 200:
         raise Exception(
             "No se pudo descargar la imagen de Google Drive. Verifica que el archivo sea público ('Cualquier persona con el enlace')."
@@ -198,7 +206,6 @@ def procesar_y_enviar():
     datos_procesados = []
     for agente in LISTA_MAESTRA_AGENTES:
         match_item = None
-        # Búsqueda flexible para asegurar el acoplamiento con los nombres de la imagen
         for k, v in datos_extraidos_dict.items():
             if (
                 agente.lower() in k.lower() or k.lower() in agente.lower()
