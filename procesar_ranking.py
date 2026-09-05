@@ -1,122 +1,106 @@
 from datetime import datetime
-import io
-import os
-import smtplib
+import base64
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import google.generativeai as genai
-from google.oauth2.service_account import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
+import json
+import os
+import smtplib
+import urllib.request
 
-# Configuración de APIs
-GOOGLE_API_KEY = os.environ.get(
-    "GOOGLE_API_KEY"
-)  # Tu API Key de Gemini / Google AI Studio
-genai.configure(api_key=GOOGLE_API_KEY)
-
-# ID de la carpeta de Google Drive donde está el reporte
-FOLDER_ID = "1Nzq9YFjRqQgQqjjKZqqZ7abm0cm0zzf5"
-NOMBRE_ARCHIVO = "reporte_diario.png"
+# ID del archivo reporte_diario.png en Google Drive
+# (Asegúrate de que el archivo en Drive tenga permisos de "Cualquier persona con el enlace puede ver")
+FILE_ID = "1Nzq9YFjRqQgQqjjKZqqZ7abm0cm0zzf5"
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 
 
-def buscar_y_descargar_de_drive(output_path="ranking_actual.jpg"):
-  """Se conecta a Google Drive, busca el archivo 'reporte_diario.png'
-
-  dentro de la carpeta específica y lo descarga automáticamente.
-  """
+def descargar_desde_drive(output_path="reporte_diario.png"):
+  """Descarga la imagen directamente desde Google Drive usando librerías nativas de Python"""
   try:
-    # Nota: Asegúrate de tener configuradas tus credenciales de service account o entorno de Google Drive
-    # Si usas credenciales de Google Cloud, puedes autenticarte así:
-    SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
-    # Si utilizas un archivo JSON de credenciales:
-    # creds = Credentials.from_service_account_file('credentials.json', scopes=SCOPES)
-    # service = build('drive', 'v3', credentials=creds)
+    url = f"https://drive.google.com/uc?export=download&id={FILE_ID}"
+    print("📁 Descargando reporte fresco desde Google Drive...")
 
-    # Si estás ejecutando en un entorno con credenciales por defecto de Google Cloud / OAuth:
-    service = build("drive", "v3")
-
-    # Consulta para buscar el archivo exacto dentro de la carpeta
-    query = f"name = '{NOMBRE_ARCHIVO}' and '{FOLDER_ID}' in parents and trashed = false"
-    results = (
-        service.files()
-        .list(q=query, spaces="drive", fields="files(id, name)")
-        .execute()
-    )
-    items = results.get("files", [])
-
-    if not items:
-      print(
-          f"❌ No se encontró el archivo '{NOMBRE_ARCHIVO}' en la carpeta de"
-          " Google Drive."
-      )
-      return None
-
-    file_id = items[0]["id"]
-    print(
-        f"📁 Archivo encontrado en Google Drive (ID: {file_id}). Descargando..."
-    )
-
-    # Descargar el archivo
-    request = service.files().get_media(fileId=file_id)
-    fh = io.FileIO(output_path, "wb")
-    downloader = MediaIoBaseDownload(fh, request)
-    done = False
-    while not done:
-      status, done = downloader.next_chunk()
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req) as response, open(
+        output_path, "wb"
+    ) as out_file:
+      out_file.write(response.read())
 
     print(f"✅ Imagen descargada exitosamente como: {output_path}")
     return output_path
-
   except Exception as e:
-    print(f"⚠️ Error al conectar o descargar desde Google Drive: {e}")
+    print(f"⚠️ Error al descargar desde Google Drive: {e}")
     return None
 
 
-def extraer_datos_con_gemini(image_path):
-  """Utiliza Gemini Vision para leer la imagen recién descargada de Drive
-
-  y extraer todos los valores tabulares de los intermediarios en formato JSON.
-  """
-  model = genai.GenerativeModel("gemini-2.5-flash")
-
-  prompt = (
-      "Analiza esta imagen de reporte de producción. Extrae todos los"
-      " intermediarios/asesores y sus valores numéricos para cada columna:"
-      " 'local', 'inter' (Internacional), 'vida', y 'auto' (Auto, Hogar y"
-      " Empresa). Devuelve la respuesta ÚNICAMENTE como una lista de"
-      " diccionarios en Python estricta, con las claves: 'intermediario',"
-      " 'local', 'inter', 'vida', 'auto'. Los valores deben ser cadenas de"
-      " texto tal cual se ven (ej. '124,082.18' o '0.00' o '-73,122.26'). No"
-      " omitas a ningún asesor de la lista."
-  )
-
-  # Subir el archivo temporalmente a Gemini para análisis visual
-  sample_file = genai.upload_file(image_path)
-
-  response = model.generate_content([sample_file, prompt])
-  print(
-      "🤖 Datos extraídos y leídos directamente de la imagen por Gemini Vision."
-  )
-
-  # Parsear el texto devuelto por Gemini para convertirlo en una lista ejecutable de Python
-  texto_respuesta = response.text.strip()
-  # Limpieza básica por si el modelo incluye bloques de código markdown ```python ... ```
-  if "```python" in texto_respuesta:
-    texto_respuesta = texto_respuesta.split("```python")[1].split("```")[0]
-  elif "```" in texto_respuesta:
-    texto_respuesta = texto_respuesta.split("```")[1].split("```")[0]
+def extraer_datos_con_gemini_rest(image_path):
+  """Envía la imagen a Gemini utilizando la API REST mediante urllib (cero dependencias externas)"""
+  if not GOOGLE_API_KEY:
+    print("❌ GOOGLE_API_KEY no está configurada en las variables de entorno.")
+    return []
 
   try:
-    datos_ranking = eval(texto_respuesta.strip())
-    return datos_ranking
-  except Exception as err:
-    print(f"Error al parsear la respuesta de Gemini: {err}")
+    with open(image_path, "rb") as image_file:
+      image_bytes = image_file.read()
+      image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GOOGLE_API_KEY}"
+
+    prompt = (
+        "Analiza esta imagen de reporte de producción. Extrae todos los"
+        " intermediarios/asesores y sus valores numéricos para cada columna:"
+        " 'local', 'inter' (Internacional), 'vida', y 'auto' (Auto, Hogar y"
+        " Empresa). Devuelve la respuesta ÚNICAMENTE como una lista de"
+        " diccionarios en Python estricta, con las claves: 'intermediario',"
+        " 'local', 'inter', 'vida', 'auto'. Los valores deben ser cadenas de"
+        " texto tal cual se ven (ej. '124,082.18' o '0.00' o '-73,122.26'). No"
+        " omitas a ningún asesor de la lista."
+    )
+
+    payload = {
+        "contents": [{
+            "parts": [
+                {"text": prompt},
+                {
+                    "inline_data": {
+                        "mime_type": "image/png",
+                        "data": image_base64,
+                    }
+                },
+            ]
+        }]
+    }
+
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    print("🤖 Consultando a Gemini Vision (vía API REST nativa)...")
+    with urllib.request.urlopen(req) as response:
+      res_data = json.loads(response.read().decode("utf-8"))
+      texto_respuesta = (
+          res_data.get("candidates", [{}])[0]
+          .get("content", {})
+          .get("parts", [{}])[0]
+          .get("text", "")
+          .strip()
+      )
+
+    # Limpieza de bloques markdown
+    if "```python" in texto_respuesta:
+      texto_respuesta = texto_respuesta.split("```python")[1].split("```")[0]
+    elif "```" in texto_respuesta:
+      texto_respuesta = texto_respuesta.split("```")[1].split("```")[0]
+
+    return eval(texto_respuesta.strip())
+  except Exception as e:
+    print(f"⚠️ Error al procesar con Gemini REST API: {e}")
     return []
 
 
 def parse_monto(valor_str):
-  """Convierte cadenas como '124,082.18' o '-73,122.26' a un float de Python"""
   try:
     limpio = (
         str(valor_str)
@@ -166,24 +150,21 @@ def procesar_y_enviar():
   recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
   BANNER_URL = "https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg"
 
-  # PASO 1: Descargar siempre el reporte fresco desde Google Drive
-  imagen_local = buscar_y_descargar_de_drive("reporte_diario.png")
+  # PASO 1: Descarga directa desde Drive sin librerías externas
+  imagen_local = descargar_desde_drive("reporte_diario.png")
   if not imagen_local:
     print("❌ Proceso abortado: no se pudo obtener la imagen de Google Drive.")
     return
 
-  # PASO 2: Extraer datos automáticamente usando IA sobre la imagen descargada
-  datos_ranking = extraer_datos_con_gemini(imagen_local)
+  # PASO 2: Lectura automática con Gemini Vision mediante REST
+  datos_ranking = extraer_datos_con_gemini_rest(imagen_local)
   if not datos_ranking:
     print(
         "❌ Proceso abortado: no se pudieron extraer los datos de la imagen."
     )
     return
 
-  # PASO 3: Procesar valores aplicando las fórmulas correctas
-  # - Local y Vida: directos
-  # - Internacional: dividido por 61.0
-  # - Auto, Hogar y Empresa: multiplicado por 12.0
+  # PASO 3: Procesamiento y fórmulas
   datos_procesados = []
   for item in datos_ranking:
     val_local = parse_monto(item.get("local", "0"))
@@ -199,7 +180,7 @@ def procesar_y_enviar():
         "val_auto": val_auto,
     })
 
-  # PASO 4: Extraer Top 3 independientes por categoría
+  # Top 3 independientes por categoría
   top_local = sorted(
       datos_procesados, key=lambda x: x["val_local"], reverse=True
   )[:3]
@@ -234,7 +215,6 @@ def procesar_y_enviar():
             f" ${falta:,.2f}</span>"
         )
 
-  # Mes dinámico en español
   meses_es = {
       1: "enero",
       2: "febrero",
@@ -251,7 +231,6 @@ def procesar_y_enviar():
   }
   mes_actual = meses_es.get(datetime.now().month, "mes")
 
-  # Ordenar tabla general
   datos_procesados.sort(
       key=lambda x: (x["val_local"], x["val_inter"], x["val_vida"], x["val_auto"]),
       reverse=True,
@@ -367,7 +346,7 @@ def procesar_y_enviar():
     </html>
     """
 
-  # PASO 5: Envío del correo electrónico
+  # PASO 5: Envío del correo
   msg = MIMEMultipart("alternative")
   msg["Subject"] = "Producción General - MEGAPODEROSOS"
   msg["From"] = sender_email
@@ -380,10 +359,7 @@ def procesar_y_enviar():
     server.login(sender_email, password)
     server.sendmail(sender_email, recipient_email.split(","), msg.as_string())
     server.quit()
-    print(
-        "🚀 ¡Correo con el reporte actualizado desde Google Drive enviado"
-        " exitosamente!"
-    )
+    print("🚀 ¡Correo con el reporte actualizado desde Drive enviado con éxito!")
   except Exception as e:
     print(f"Error al enviar el correo: {e}")
 
