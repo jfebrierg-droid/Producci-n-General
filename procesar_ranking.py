@@ -484,7 +484,7 @@ def procesar_y_enviar():
     """
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"Producción de {mes_actual.capitalize()} - EQUIPO MEGAPODEROSO"
+    msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
     msg["From"] = sender_email
     msg["To"] = recipient_email
     msg.attach(MIMEText(html_content, "html"))
