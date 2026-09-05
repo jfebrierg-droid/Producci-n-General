@@ -3,7 +3,7 @@
 Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4 -> 3 -> 2 -> 1),
 reintentos automáticos para errores 503, respaldo de modelos, mensajes cortos dominicanos
-y el emoji de músculo para quienes cumplen la meta.
+con el estilo criollo en todos los ramos, emojis alegóricos por producto y el emoji de músculo para quienes cumplen la meta.
 """
 
 from datetime import datetime
@@ -86,43 +86,43 @@ BANCO_MEDIO = {
 
 BANCO_ALTO = {
     "aperturas": [
-        "¡Qué nivelazo mi gente,",
+        "¡Pero ustedes están en alta mi gente,",
+        "¡Mi gente, ustedes están rompiendo,",
         "¡Imparables por aquí,",
-        "¡Qué manera de lucirse,",
-        "¡Duro y sin bajar la guardia,"
+        "¡Duro y sin aflojar mi gente,"
     ],
     "nucleos": [
-        "dejando el listón bien alto como los mejores!",
-        "demostrando quiénes mandan en la pista!",
-        "trabajando con el swing ganador!",
-        "rompiendo esquemas con orgullo total!"
+        "barriendo con to' por ahí!",
+        "demostrando quiénes son los duros de verdad!",
+        "trabajando con un swing que no coge corte!",
+        "dejando a to' el mundo atrás!"
     ],
     "cierres": [
-        "¡A disfrutar la cima!",
-        "¡Así se goza y se trabaja!",
-        "¡Orgullo total!",
-        "¡A mantener ese ritmo!"
+        "¡A seguir sumando sin aflojar!",
+        "¡A mantener el enfoque hasta el final!",
+        "¡Orgullo total y a seguir!",
+        "¡A mantener ese ritmo duro!"
     ]
 }
 
 BANCO_INTERNACIONAL = {
     "aperturas": [
-        "¡Allá afuera se pica hondo,",
-        "¡A sonar duro en el extranjero,",
-        "¡Atravesando fronteras con fuerza,",
-        "¡El mercado de afuera pide acción,"
+        "¡A mandar fuego pa' fuera mi gente,",
+        "¡Soltando chispa en el extranjero,",
+        "¡Cruzando el charco con fuerza,",
+        "¡Facturando bien lejos de aquí,"
     ],
     "nucleos": [
-        "a representar la patria con orgullo!",
-        "a dejar nuestra bandera por lo alto!",
-        "a conquistar mercados con la sabrosura criolla!",
-        "a demostrar la casta dominicana!"
+        "a meter mano en el extranjero como se debe!",
+        "a cobrar esos verdes que están esperando!",
+        "a demostrar de qué estamos hechos afuera!",
+        "a poner la bandera en lo más alto del mapa!"
     ],
     "cierres": [
-        "¡A romper fronteras!",
-        "¡A brillar en grande!",
-        "¡Duro con eso!",
-        "¡A seguir conquistando!"
+        "¡A romper allá afuera!",
+        "¡Duro con esos dólares!",
+        "¡A sonar lejos!",
+        "¡A cobrar en grande!"
     ]
 }
 
@@ -192,7 +192,7 @@ def obtener_datos_desde_drive_imagen(file_id):
             exito_modelo = False
             for intento in range(3):
                 try:
-                    print(f"Intentando con API Key #{4 - index}, modelo {modelo} (intento {intento + 1})...")
+                    print(f"Intentandoกับ API Key #{4 - index}, modelo {modelo} (intento {intento + 1})...")
                     response = client.models.generate_content(
                         model=modelo,
                         contents=[img, prompt]
@@ -340,10 +340,10 @@ def procesar_y_enviar():
     mensaje_dinamico_atencion = f"""
     <div style="background-color: {box_bg}; border-left: 5px solid {box_border}; padding: 18px 22px; margin-top: 20px; margin-bottom: 16px; border-radius: 6px; font-size: 17px; color: {box_color}; text-align: left; line-height: 1.6;">
         <div style="font-weight: bold; margin-bottom: 14px; font-size: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 8px;">Participación por Producto:</div>
-        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Local:</strong> {estado_local}</div>
-        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08); background-color: rgba(255, 255, 255, 0.7); padding: 8px 12px; border-radius: 4px; border-left: 4px solid #3182ce;"><strong>Internacional:</strong> {estado_inter}</div>
-        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Vida:</strong> {estado_vida}</div>
-        <div><strong>Auto, Hogar y Empresa:</strong> {estado_auto}</div>
+        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Local 🩺:</strong> {estado_local}</div>
+        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Internacional ✈️:</strong> {estado_inter}</div>
+        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Vida ❤️:</strong> {estado_vida}</div>
+        <div><strong>Auto, Hogar y Empresa 🚗:</strong> {estado_auto}</div>
     </div>
     """
 
