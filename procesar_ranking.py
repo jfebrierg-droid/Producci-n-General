@@ -165,7 +165,6 @@ def cumple_meta(ramo, valor_num):
 
 
 def obtener_color(ramo, valor_num):
-    # Si el valor es negativo, rojo intenso con texto blanco
     if valor_num < 0:
         return "background-color: #ef4444; color: #ffffff;"
 
@@ -232,6 +231,62 @@ def procesar_y_enviar():
             "val_auto": val_auto,
         })
 
+    # CÁLCULO DINÁMICO DE MIEMBROS CON RESULTADOS (> 0) POR PRODUCTO
+    count_local = sum(1 for x in datos_procesados if x["val_local"] > 0)
+    count_vida = sum(1 for x in datos_procesados if x["val_vida"] > 0)
+    count_auto = sum(1 for x in datos_procesados if x["val_auto"] > 0)
+
+    # FUNCIÓN PARA EVALUAR CADA RAMO SEGÚN LOS NUEVOS UMBRALES
+    def evaluar_participacion_ramo(nombre_ramo, count):
+      if count < 10:
+        return (
+            f"<b>{nombre_ramo} ({count} miembros):</b> ⚠️ Menos de 10 miembros"
+            " con resultados. ¡Tenemos que ponernos las pilas y aumentar"
+            " urgentemente la participación!"
+        )
+      elif 10 <= count <= 15:
+        return (
+            f"<b>{nombre_ramo} ({count} miembros):</b> 📈 ¡Vamos mejorando!"
+            " Seguimos sumando participación, ¡a mantener el impulso!"
+        )
+      else:  # >= 16
+        return (
+            f"<b>{nombre_ramo} ({count} miembros):</b> 🔥 ¡Felicitaciones por el"
+            " buen ritmo! Excelente participación del equipo."
+        )
+
+    estado_local = evaluar_participacion_ramo("Local", count_local)
+    estado_vida = evaluar_participacion_ramo("Vida", count_vida)
+    estado_auto = evaluar_participacion_ramo(
+        "Auto, Hogar y Empresa", count_auto
+    )
+
+    # Determinar el color del contenedor según el estado general
+    counts = [count_local, count_vida, count_auto]
+    if any(c < 10 for c in counts):
+      box_bg = "#fffbeb"
+      box_border = "#f59e0b"
+      box_color = "#92400e"
+    elif any(10 <= c <= 15 for c in counts):
+      box_bg = "#fefce8"
+      box_border = "#eab308"
+      box_color = "#854d0e"
+    else:
+      box_bg = "#f0fdf4"
+      box_border = "#22c55e"
+      box_color = "#166534"
+
+    mensaje_dinamico_atencion = f"""
+    <div style="background-color: {box_bg}; border-left: 5px solid {box_border}; padding: 16px 20px; margin-top: 20px; margin-bottom: 16px; border-radius: 6px; font-size: 18px; color: {box_color}; text-align: left; line-height: 1.6;">
+        <div style="font-weight: bold; margin-bottom: 10px; font-size: 19px;">📊 Estado de Participación por Producto:</div>
+        <ul style="margin: 0; padding-left: 20px;">
+            <li style="margin-bottom: 8px;">{estado_local}</li>
+            <li style="margin-bottom: 8px;">{estado_vida}</li>
+            <li style="margin-bottom: 8px;">{estado_auto}</li>
+        </ul>
+    </div>
+    """
+
     top_local = sorted(
         datos_procesados, key=lambda x: x["val_local"], reverse=True
     )[:3]
@@ -248,27 +303,29 @@ def procesar_y_enviar():
     def format_top_item(item, ramo, valor):
         if valor <= 0:
             return (
-                f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight:"
-                f" normal;'>({format_moneda(0.0)})</span>"
+                f"<b>{item}</b> 🏃‍♂️ <span style='color: #64748b; font-weight:"
+                f" normal; font-size: 18px;'>({format_moneda(0.0)})</span>"
             )
         if cumple_meta(ramo, valor):
             return (
-                f"{item} 💪 <span style='color: #64748b; font-weight:"
-                f" normal;'>({format_moneda(valor)})</span>"
+                f"<b>{item}</b> 💪 <span style='color: #64748b; font-weight:"
+                f" normal; font-size: 18px;'>({format_moneda(valor)})</span>"
             )
         else:
             meta = obtener_meta(ramo)
             if ramo == "auto":
                 return (
-                    f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight:"
-                    f" normal;'>({format_moneda(valor)})</span>"
+                    f"<b>{item}</b> 🏃‍♂️ <span style='color: #64748b; font-weight:"
+                    f" normal; font-size: 18px;'>({format_moneda(valor)})</span>"
                 )
             else:
                 falta = meta - valor
                 return (
-                    f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight:"
-                    f" normal;'>({format_moneda(valor)}) — <b>¡En vía!</b>"
-                    f" Faltan {format_moneda(falta)}</span>"
+                    f"<b>{item}</b> 🏃‍♂️ <span style='color: #64748b; font-weight:"
+                    f" normal; font-size: 18px;'>({format_moneda(valor)})</span><br><span"
+                    f" style='font-size: 15px; color: #c2410c; font-weight:"
+                    f" bold; padding-left: 20px;'>— ¡En vía! Faltan"
+                    f" {format_moneda(falta)}</span>"
                 )
 
     meses_es = {
@@ -316,63 +373,66 @@ def procesar_y_enviar():
 
         filas_html += f"""
         <tr>
-            <td style="background-color: #ffffff; color: #1e293b; padding: 11px 12px; font-weight: bold; border: 1px solid #cbd5e1; text-align: left;">{fila['intermediario']}</td>
-            <td style="{style_local} padding: 11px 12px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_local)}</td>
-            <td style="{style_inter} padding: 11px 12px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_inter)}</td>
-            <td style="{style_vida} padding: 11px 12px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_vida)}</td>
-            <td style="{style_auto} padding: 11px 12px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">{format_moneda(val_auto)}</td>
+            <td style="background-color: #ffffff; color: #1e293b; padding: 16px 20px; font-weight: bold; border: 1px solid #cbd5e1; text-align: left; font-size: 19px;">{fila['intermediario']}</td>
+            <td style="{style_local} padding: 16px 20px; text-align: left; border: 1px solid #cbd5e1; font-weight: bold; font-size: 19px;">{format_moneda(val_local)}</td>
+            <td style="{style_inter} padding: 16px 20px; text-align: left; border: 1px solid #cbd5e1; font-weight: bold; font-size: 19px;">{format_moneda(val_inter)}</td>
+            <td style="{style_vida} padding: 16px 20px; text-align: left; border: 1px solid #cbd5e1; font-weight: bold; font-size: 19px;">{format_moneda(val_vida)}</td>
+            <td style="{style_auto} padding: 16px 20px; text-align: left; border: 1px solid #cbd5e1; font-weight: bold; font-size: 19px;">{format_moneda(val_auto)}</td>
         </tr>
         """
 
     texto_dinamico = f"""
-    <div style="font-family: Arial, sans-serif; color: #1e293b;">
-        <div style="font-size: 18px; font-weight: bold; color: #0284c7; margin-bottom: 8px; letter-spacing: 0.5px;">
+    <div style="font-family: Arial, sans-serif; color: #1e293b; text-align: left;">
+        <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">
             🚀 ¡MEGAPODEROSOS!
         </div>
-        <div style="font-size: 15px; font-weight: bold; color: #334155; margin-bottom: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+        <div style="font-size: 22px; font-weight: bold; color: #334155; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; text-align: left;">
             📊 Numeritos del mes de {mes_actual.capitalize()}
         </div>
         
-        <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.7;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 19px; line-height: 1.6; text-align: left;">
             <tr>
-                <td style="width: 50%; vertical-align: top; padding-right: 12px; padding-bottom: 14px;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 6px;">⬆️ TOP 3 &mdash; LOCAL</div>
-                    <div style="padding-left: 6px; color: #334155;">
-                        1. {format_top_item(top_local[0]['intermediario'], 'local', top_local[0]['val_local'])}<br>
-                        2. {format_top_item(top_local[1]['intermediario'], 'local', top_local[1]['val_local'])}<br>
+                <td style="width: 50%; vertical-align: top; padding-right: 16px; padding-bottom: 20px; text-align: left;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">⬆️ TOP 3 &mdash; LOCAL</div>
+                    <div style="color: #334155; text-align: left;">
+                        1. {format_top_item(top_local[0]['intermediario'], 'local', top_local[0]['val_local'])}<br><br>
+                        2. {format_top_item(top_local[1]['intermediario'], 'local', top_local[1]['val_local'])}<br><br>
                         3. {format_top_item(top_local[2]['intermediario'], 'local', top_local[2]['val_local'])}
                     </div>
                 </td>
-                <td style="width: 50%; vertical-align: top; padding-left: 12px; padding-bottom: 14px;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 6px;">⬆️ TOP 3 &mdash; INTERNACIONAL</div>
-                    <div style="padding-left: 6px; color: #334155;">
-                        1. {format_top_item(top_inter[0]['intermediario'], 'inter', top_inter[0]['val_inter'])}<br>
-                        2. {format_top_item(top_inter[1]['intermediario'], 'inter', top_inter[1]['val_inter'])}<br>
+                <td style="width: 50%; vertical-align: top; padding-left: 16px; padding-bottom: 20px; text-align: left;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">⬆️ TOP 3 &mdash; INTERNACIONAL</div>
+                    <div style="color: #334155; text-align: left;">
+                        1. {format_top_item(top_inter[0]['intermediario'], 'inter', top_inter[0]['val_inter'])}<br><br>
+                        2. {format_top_item(top_inter[1]['intermediario'], 'inter', top_inter[1]['val_inter'])}<br><br>
                         3. {format_top_item(top_inter[2]['intermediario'], 'inter', top_inter[2]['val_inter'])}
                     </div>
                 </td>
             </tr>
             <tr>
-                <td style="width: 50%; vertical-align: top; padding-right: 12px; padding-top: 6px;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 6px;">⬆️ TOP 3 &mdash; VIDA</div>
-                    <div style="padding-left: 6px; color: #334155;">
-                        1. {format_top_item(top_vida[0]['intermediario'], 'vida', top_vida[0]['val_vida'])}<br>
-                        2. {format_top_item(top_vida[1]['intermediario'], 'vida', top_vida[1]['val_vida'])}<br>
+                <td style="width: 50%; vertical-align: top; padding-right: 16px; padding-top: 10px; text-align: left;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">⬆️ TOP 3 &mdash; VIDA</div>
+                    <div style="color: #334155; text-align: left;">
+                        1. {format_top_item(top_vida[0]['intermediario'], 'vida', top_vida[0]['val_vida'])}<br><br>
+                        2. {format_top_item(top_vida[1]['intermediario'], 'vida', top_vida[1]['val_vida'])}<br><br>
                         3. {format_top_item(top_vida[2]['intermediario'], 'vida', top_vida[2]['val_vida'])}
                     </div>
                 </td>
-                <td style="width: 50%; vertical-align: top; padding-left: 12px; padding-top: 6px;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 6px;">⬆️ TOP 3 &mdash; AUTO, HOGAR Y EMPRESA</div>
-                    <div style="padding-left: 6px; color: #334155;">
-                        1. {format_top_item(top_auto[0]['intermediario'], 'auto', top_auto[0]['val_auto'])}<br>
-                        2. {format_top_item(top_auto[1]['intermediario'], 'auto', top_auto[1]['val_auto'])}<br>
+                <td style="width: 50%; vertical-align: top; padding-left: 16px; padding-top: 10px; text-align: left;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">⬆️ TOP 3 &mdash; AUTO, HOGAR Y EMPRESA</div>
+                    <div style="color: #334155; text-align: left;">
+                        1. {format_top_item(top_auto[0]['intermediario'], 'auto', top_auto[0]['val_auto'])}<br><br>
+                        2. {format_top_item(top_auto[1]['intermediario'], 'auto', top_auto[1]['val_auto'])}<br><br>
                         3. {format_top_item(top_auto[2]['intermediario'], 'auto', top_auto[2]['val_auto'])}
                     </div>
                 </td>
             </tr>
         </table>
+
+        <!-- CONDICIÓN DINÁMICA DE PARTICIPACIÓN POR PRODUCTO -->
+        {mensaje_dinamico_atencion}
         
-        <div style="margin-top: 14px; font-size: 14px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 12px; text-align: center;">
+        <div style="margin-top: 16px; font-size: 19px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: left; font-weight: bold;">
             ¡A seguir dándolo todo en cada ramo! A continuación, la pizarra general:
         </div>
     </div>
@@ -385,37 +445,37 @@ def procesar_y_enviar():
         <meta charset="utf-8">
     </head>
     <body style="font-family: Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 10px; text-align: left;">
-        <div style="max-width: 850px; margin: 0 auto; text-align: left;">
+        <div style="width: 100%; max-width: 850px; margin: 0; text-align: left;">
             
             <!-- Tarjeta de Encabezado -->
-            <div style="background-color: #ffffff; color: #1e293b; padding: 22px 26px; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 14px; border-radius: 8px; border-left: 6px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+            <div style="background-color: #ffffff; color: #1e293b; padding: 24px 28px; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 16px; border-radius: 8px; border-left: 6px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                 {texto_dinamico}
             </div>
 
             <!-- Banner -->
-            <div style="margin-bottom: 14px; text-align: center;">
+            <div style="margin-bottom: 16px; text-align: left;">
                 <a href="https://ibb.co/N21Ljnxt"><img src="https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg" alt="Banner-Ranking-de-Producci-n-1" border="0" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;" /></a>
             </div>
 
             <!-- Tabla de Producción (Pizarra completa) -->
-            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 0; padding: 0; border-radius: 6px; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 19px; margin: 0; padding: 0; border-radius: 6px; overflow: hidden; text-align: left;">
                 <thead>
-                    <tr style="background-color: #0d1527; color: #ffffff;">
-                        <th style="padding: 12px; text-align: left; border: 1px solid #2d3748;">Intermediario</th>
-                        <th style="padding: 12px; text-align: center; border: 1px solid #2d3748;">Local</th>
-                        <th style="padding: 12px; text-align: center; border: 1px solid #2d3748;">Internacional</th>
-                        <th style="padding: 12px; text-align: center; border: 1px solid #2d3748;">Vida</th>
-                        <th style="padding: 12px; text-align: center; border: 1px solid #2d3748;">Auto, Hogar y Empresa</th>
+                    <tr style="background-color: #0d1527; color: #ffffff; text-align: left;">
+                        <th style="padding: 16px; text-align: left; border: 1px solid #2d3748; font-size: 21px;">Intermediario</th>
+                        <th style="padding: 16px; text-align: left; border: 1px solid #2d3748; font-size: 21px;">Local</th>
+                        <th style="padding: 16px; text-align: left; border: 1px solid #2d3748; font-size: 21px;">Internacional</th>
+                        <th style="padding: 16px; text-align: left; border: 1px solid #2d3748; font-size: 21px;">Vida</th>
+                        <th style="padding: 16px; text-align: left; border: 1px solid #2d3748; font-size: 21px;">Auto, Hogar y Empresa</th>
                     </tr>
                 </thead>
                 <tbody>
                     {filas_html}
-                    <tr style="font-weight: bold; font-size: 15px;">
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 12px; border: 1px solid #2d3748; text-align: left;">Total General</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 12px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_local)}</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 12px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_inter)}</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 12px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_vida)}</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 12px; border: 1px solid #2d3748; text-align: right;">{format_moneda(tot_auto)}</td>
+                    <tr style="font-weight: bold; font-size: 21px; text-align: left;">
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 16px; border: 1px solid #2d3748; text-align: left; font-size: 21px;">Total General</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 16px; border: 1px solid #2d3748; text-align: left; font-size: 21px;">{format_moneda(tot_local)}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 16px; border: 1px solid #2d3748; text-align: left; font-size: 21px;">{format_moneda(tot_inter)}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 16px; border: 1px solid #2d3748; text-align: left; font-size: 21px;">{format_moneda(tot_vida)}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 16px; border: 1px solid #2d3748; text-align: left; font-size: 21px;">{format_moneda(tot_auto)}</td>
                     </tr>
                 </tbody>
             </table>
@@ -443,7 +503,9 @@ def procesar_y_enviar():
         ]
         server.sendmail(sender_email, destinatarios, msg.as_string())
         server.quit()
-        print("¡Correo enviado exitosamente con la letra ampliada y optimizada!")
+        print(
+            "¡Correo enviado con las nuevas condiciones dinámicas por ramo!"
+        )
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
