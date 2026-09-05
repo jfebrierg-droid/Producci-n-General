@@ -165,6 +165,10 @@ def cumple_meta(ramo, valor_num):
 
 
 def obtener_color(ramo, valor_num):
+    # Si el valor es negativo, aplicamos un rojo intenso muy llamativo
+    if valor_num < 0:
+        return "background-color: #ef4444; color: #ffffff;"
+
     color_verde = "background-color: #dcfce7; color: #15803d;"
     color_naranja = "background-color: #ffedd5; color: #c2410c;"
     color_rojo = "background-color: #ffe4e6; color: #b91c1c;"
@@ -439,9 +443,7 @@ def procesar_y_enviar():
         ]
         server.sendmail(sender_email, destinatarios, msg.as_string())
         server.quit()
-        print(
-            "¡Correo enviado exitosamente con el formato de moneda corregido!"
-        )
+        print("¡Correo enviado exitosamente con los negativos resaltados en rojo intenso!")
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
