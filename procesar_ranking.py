@@ -134,11 +134,11 @@ BANCO_INTERNACIONAL = {
     ]
 }
 
-def generar_mensaje_combinatorio(banco, semilla=0):
+def generar_mensaje_combinatorio(banco, semilla_extra=0):
     semana = datetime.now().isocalendar()[1]
-    idx_a = (semana + semilla) % len(banco["aperturas"])
-    idx_n = (semana * 3 + semilla) % len(banco["nucleos"])
-    idx_c = (semana * 7 + semilla) % len(banco["cierres"])
+    idx_a = (semana + semilla_extra) % len(banco["aperturas"])
+    idx_n = (semana * 3 + semilla_extra) % len(banco["nucleos"])
+    idx_c = (semana * 7 + semilla_extra) % len(banco["cierres"])
     return f"{banco['aperturas'][idx_a]} {banco['nucleos'][idx_n]}. {banco['cierres'][idx_c]}"
 
 def format_moneda(valor):
