@@ -16,11 +16,10 @@ from PIL import Image
 import requests
 import google.generativeai as genai
 
-# --- CONFIGURACIÓN DE MULTI-CUENTAS (VARIABLES DE ENTORNO) ---
-# El script leerá automáticamente ambas claves desde tu servidor.
+# --- CONFIGURACIÓN DE MULTI-CUENTAS (GEMINI_API_KEY_2 primero, luego GEMINI_API_KEY_1) ---
 API_KEYS_GEMINI = [
-    os.environ.get("GEMINI_API_KEY"),
-    os.environ.get("GEMINI_API_KEY_2")
+    os.environ.get("GEMINI_API_KEY_2"),
+    os.environ.get("GEMINI_API_KEY_1")
 ]
 
 # Lista maestra con TODOS los miembros del equipo MEGAPODEROSOS
@@ -75,7 +74,7 @@ MENSAJES_ALTO = [
     "¡Excepcional rendimiento en este ramo! El esfuerzo de cada uno nos tiene en la cima. ¡Sigan así!",
     "¡De 10! Este ramo refleja el talento y la dedicación de un equipo que no se conforma.",
     "¡Aplausos de pie para todos en este segmento! Demostrando liderazgo y casta de campeones.",
-    "¡Brutal el trabajo en este ramo! Con esta misma energía vamos a comernos el restó del año."
+    "¡Brutal el trabajo en este ramo! Con esta misma energía vamos a comernos el resto del año."
 ]
 
 def format_moneda(valor):
@@ -124,10 +123,10 @@ def obtener_datos_desde_drive_imagen(file_id):
 
     texto_respuesta = None
     
-    # SISTEMA DE FALLBACK ENTRE CUENTAS DE GEMINI
+    # SISTEMA DE FALLBACK ENTRE CUENTAS DE GEMINI (GEMINI_API_KEY_2 primero)
     for index, api_key in enumerate(API_KEYS_GEMINI):
         if not api_key:
-            print(f"Aviso: La variable GEMINI_API_KEY_{index + 1} no está configurada o está vacía.")
+            print(f"Aviso: La API Key #{index + 1} no está configurada o está vacía.")
             continue
         try:
             print(f"Intentando con la cuenta / API Key #{index + 1}...")
@@ -141,7 +140,7 @@ def obtener_datos_desde_drive_imagen(file_id):
             error_msg = str(e)
             print(f"Aviso con la cuenta #{index + 1}: {error_msg}")
             if "429" in error_msg or "Quota" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
-                print("Límite de cuota alcanzado en esta cuenta. Cambiando a la siguiente cuenta de respaldo...")
+                print("Límite de cuota alcanzado. Cambiando a la siguiente cuenta de respaldo...")
                 continue
             else:
                 raise e
@@ -237,6 +236,7 @@ def procesar_y_enviar():
         })
 
     count_local = sum(1 for x in datos_procesados if x["val_local"] > 0)
+    count_inter = sum(1 for x in datos_procesados if x["val_inter"] > 0)
     count_vida = sum(1 for x in datos_procesados if x["val_vida"] > 0)
     count_auto = sum(1 for x in datos_procesados if x["val_auto"] > 0)
 
@@ -250,6 +250,7 @@ def procesar_y_enviar():
         return f"En <b>{nombre_ramo}</b>: <i>&ldquo;{msg_base}&rdquo;</i>"
 
     estado_local = evaluar_participacion_ramo("Local", count_local, semilla=1)
+    estado_inter = evaluar_participacion_ramo("Internacional", count_inter, semilla=4)
     estado_vida = evaluar_participacion_ramo("Vida", count_vida, semilla=2)
     estado_auto = evaluar_participacion_ramo("Auto, Hogar y Empresa", count_auto, semilla=3)
 
@@ -261,10 +262,12 @@ def procesar_y_enviar():
     else:
         box_bg, box_border, box_color = "#f0fdf4", "#22c55e", "#166534"
 
+    # Cuadro de Participación por Producto (con Internacional resaltado y sin mención de la meta de 10 en los textos)
     mensaje_dinamico_atencion = f"""
     <div style="background-color: {box_bg}; border-left: 5px solid {box_border}; padding: 18px 22px; margin-top: 20px; margin-bottom: 16px; border-radius: 6px; font-size: 17px; color: {box_color}; text-align: left; line-height: 1.6;">
-        <div style="font-weight: bold; margin-bottom: 14px; font-size: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 8px;">💡 ¿Cómo vamos en cada ramo?</div>
+        <div style="font-weight: bold; margin-bottom: 14px; font-size: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 8px;">Participación por Producto:</div>
         <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);">{estado_local}</div>
+        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08); background-color: rgba(255, 255, 255, 0.7); padding: 8px 12px; border-radius: 4px; border-left: 4px solid #3182ce;"><strong>🌐 Internacional ({count_inter} miembro{'s' if count_inter != 1 else ''}):</strong> {estado_inter}</div>
         <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);">{estado_vida}</div>
         <div>{estado_auto}</div>
     </div>
@@ -319,23 +322,24 @@ def procesar_y_enviar():
     texto_dinamico = f"""
     <div style="font-family: Arial, sans-serif; color: #1e293b; text-align: left;">
         <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">🔥 EQUIPO MEGAPODEROSOS</div>
-        <div style="font-size: 22px; font-weight: bold; color: #334155; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; text-align: left;">📊 Así va nuestra producción de {mes_actual.capitalize()}</div>
+        <!-- Título actualizado a Numeritos del mes -->
+        <div style="font-size: 22px; font-weight: bold; color: #334155; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; text-align: left;">📊 Numeritos del mes de {mes_actual.capitalize()}</div>
         
         <table style="width: 100%; border-collapse: collapse; font-size: 19px; line-height: 1.6; text-align: left;">
             <tr>
                 <td style="width: 50%; vertical-align: top; padding-right: 16px; padding-bottom: 20px; text-align: left;">
                     <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 3 &mdash; LOCAL</div>
                     <div style="color: #334155; text-align: left;">
-                        1. {format_top_item(top_local[0]['intermediario'], 'local', top_local[0]['val_local'])}<br><br>
-                        2. {format_top_item(top_local[1]['intermediario'], 'local', top_local[1]['val_local'])}<br><br>
+                        1. {format_top_item(top_local[0]['intermediario'], 'local', top_local[0]['val_local'])}<br>
+                        2. {format_top_item(top_local[1]['intermediario'], 'local', top_local[1]['val_local'])}<br>
                         3. {format_top_item(top_local[2]['intermediario'], 'local', top_local[2]['val_local'])}
                     </div>
                 </td>
                 <td style="width: 50%; vertical-align: top; padding-left: 16px; padding-bottom: 20px; text-align: left;">
                     <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 3 &mdash; INTERNACIONAL</div>
                     <div style="color: #334155; text-align: left;">
-                        1. {format_top_item(top_inter[0]['intermediario'], 'inter', top_inter[0]['val_inter'])}<br><br>
-                        2. {format_top_item(top_inter[1]['intermediario'], 'inter', top_inter[1]['val_inter'])}<br><br>
+                        1. {format_top_item(top_inter[0]['intermediario'], 'inter', top_inter[0]['val_inter'])}<br>
+                        2. {format_top_item(top_inter[1]['intermediario'], 'inter', top_inter[1]['val_inter'])}<br>
                         3. {format_top_item(top_inter[2]['intermediario'], 'inter', top_inter[2]['val_inter'])}
                     </div>
                 </td>
@@ -344,16 +348,16 @@ def procesar_y_enviar():
                 <td style="width: 50%; vertical-align: top; padding-right: 16px; padding-top: 10px; text-align: left;">
                     <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 3 &mdash; VIDA</div>
                     <div style="color: #334155; text-align: left;">
-                        1. {format_top_item(top_vida[0]['intermediario'], 'vida', top_vida[0]['val_vida'])}<br><br>
-                        2. {format_top_item(top_vida[1]['intermediario'], 'vida', top_vida[1]['val_vida'])}<br><br>
+                        1. {format_top_item(top_vida[0]['intermediario'], 'vida', top_vida[0]['val_vida'])}<br>
+                        2. {format_top_item(top_vida[1]['intermediario'], 'vida', top_vida[1]['val_vida'])}<br>
                         3. {format_top_item(top_vida[2]['intermediario'], 'vida', top_vida[2]['val_vida'])}
                     </div>
                 </td>
                 <td style="width: 50%; vertical-align: top; padding-left: 16px; padding-top: 10px; text-align: left;">
                     <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 3 &mdash; AUTO, HOGAR Y EMPRESA</div>
                     <div style="color: #334155; text-align: left;">
-                        1. {format_top_item(top_auto[0]['intermediario'], 'auto', top_auto[0]['val_auto'])}<br><br>
-                        2. {format_top_item(top_auto[1]['intermediario'], 'auto', top_auto[1]['val_auto'])}<br><br>
+                        1. {format_top_item(top_auto[0]['intermediario'], 'auto', top_auto[0]['val_auto'])}<br>
+                        2. {format_top_item(top_auto[1]['intermediario'], 'auto', top_auto[1]['val_auto'])}<br>
                         3. {format_top_item(top_auto[2]['intermediario'], 'auto', top_auto[2]['val_auto'])}
                     </div>
                 </td>
@@ -407,7 +411,8 @@ def procesar_y_enviar():
     """
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"Reporte de Producción de {mes_actual.capitalize()} - MEGAPODEROSOS"
+    # Asunto actualizado sin la palabra "Reporte de"
+    msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS"
     msg["From"] = sender_email
     msg["To"] = recipient_email
     msg.attach(MIMEText(html_content, "html"))
