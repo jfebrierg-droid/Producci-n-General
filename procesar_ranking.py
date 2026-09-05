@@ -2,7 +2,7 @@
 """
 Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (fallback de API Keys)
-y un motor combinatorio avanzado de más de 1,000 variaciones de mensajes motivacionales.
+y un motor combinatorio optimizado para mensajes cortos, retadores y motivadores.
 """
 
 from datetime import datetime
@@ -37,100 +37,88 @@ LISTA_MAESTRA_AGENTES = [
     "Eddy Concepcion", "Yolanda Cabrera", "Paula Herrera", "Rafael Capellan", "Salvador Martinez"
 ]
 
-# --- MOTOR COMBINATORIO DE MENSAJES (>1,000 COMBINACIONES ÚNICAS) ---
+# --- MOTOR COMBINATORIO DE MENSAJES CORTOS Y RETADORES (SIN CLICHÉS) ---
 BANCO_BAJO = {
     "aperturas": [
-        "Analizando cómo vamos en este segmento,",
-        "Revisando los números actuales de este ramo,",
-        "Viendo el comportamiento del equipo en este producto,",
-        "Haciendo una pausa para evaluar este indicador,",
-        "Para nadie es un secreto que en este ramo"
+        "El tablero exige más carácter hoy.",
+        "Tenemos terreno valioso por recuperar,",
+        "Los números piden un golpe de timón,",
+        "Es hora de sacudir este marcador"
     ],
     "nucleos": [
-        "tenemos un margen de mejora gigante y toca ponerse las pilas para revertir este inicio",
-        "estamos por debajo de nuestro potencial real y necesitamos apretar el paso con actitud",
-        "el tablero nos pide un cambio de ritmo urgente y salir a buscar esas cotizaciones pendientes",
-        "tenemos tarea pendiente y hay que redoblar esfuerzos para activar esta cartera",
-        "las oportunidades están ahí esperando, solo falta dar el primer toque de puerta con energía"
+        "¡despertemos ese potencial oculto!",
+        "¡demostremos nuestra verdadera casta comercial!",
+        "¡es el momento exacto para dar el rebase!",
+        "¡a buscar esas cotizaciones con hambre de triunfo!"
     ],
     "cierres": [
-        "¡Confié plenamente en la capacidad de este equipo para darle la vuelta!",
-        "¡Sé de qué estamos hechos los MEGAPODEROSOS, a meterle toda la fuerza!",
-        "¡Vamos a demostrar nuestra casta comercial esta misma semana!",
-        "¡Es momento de sacar el carácter y poner los números donde deben estar!",
-        "¡A mover el teléfono y arrancar con fuerza este tramo!"
+        "¡A por todas!",
+        "¡Demostremos quién manda!",
+        "¡El momento de reaccionar es ya!",
+        "¡A romper el hielo!"
     ]
 }
 
 BANCO_MEDIO = {
     "aperturas": [
-        "El pulso del equipo en este ramo",
-        "Viendo el ritmo que llevamos en este segmento,",
-        "Analizando el avance de la semana en este producto,",
-        "El esfuerzo constante que se ve reflejado aquí",
-        "Paso a paso estamos consolidando el trabajo en este ramo y"
+        "Buen ritmo de trabajo,",
+        "Estamos estables en este segmento,",
+        "La inercia es positiva,",
+        "Vamos avanzando con constancia,"
     ],
     "nucleos": [
-        "nos muestra un desempeño estable que demuestra el compromiso diario de todos",
-        "camina con buen paso y una disciplina comercial que da gusto ver",
-        "mantiene una inercia positiva muy interesante que debemos cuidar y potenciar",
-        "refleja el enfoque correcto aunque todavía tenemos espacio para un último empujón",
-        "va tomando forma sólida gracias al trabajo coordinado del grupo"
+        "¡subamos la marcha para romper récords!",
+        "¡apretemos el paso hacia la cima!",
+        "¡es hora de acelerar a fondo!",
+        "¡mantengamos el pulso ganador!"
     ],
     "cierres": [
-        "¡A mantenernos firmes para asegurar un cierre de mes extraordinario!",
-        "¡Sigamos con esa misma energía rumbo a la meta establecida!",
-        "¡Excelente constancia, vamos a mantener el pie en el acelerador!",
-        "¡Este es el camino correcto, sigamos sumando con orgullo!",
-        "¡A consolidar estos resultados con el talento que nos caracteriza!"
+        "¡A por el primer lugar!",
+        "¡Nadie nos para!",
+        "¡A mantener el acelerador a fondo!",
+        "¡A consolidar la meta!"
     ]
 }
 
 BANCO_ALTO = {
     "aperturas": [
-        "¡Lo que estamos logrando en este ramo",
-        "¡Qué nivel tan impresionante estamos mostrando en este segmento,",
-        "¡El rendimiento colectivo en este producto",
-        "¡Imparables y con una energía desbordante,",
-        "¡De 10 absoluto el trabajo que se está haciendo en este ramo y"
+        "¡Imparables en la cancha,",
+        "¡Nivel brutal de producción,",
+        "¡Liderazgo absoluto y categoría,",
+        "¡Qué manera de dominar este ramo,"
     ],
     "nucleos": [
-        "es simplemente digno de aplaudir y refleja el verdadero ADN de los MEGAPODEROSOS",
-        "supera cualquier expectativa demostrando la categoría y experiencia de este equipo",
-        "marca un precedente brutal de lo que somos capaces cuando nos lo proponemos",
-        "está rompiendo esquemas gracias a la entrega y el profesionalismo de cada uno",
-        "nos posiciona en lo más alto dejando claro quién manda en la cancha"
+        "¡este es el verdadero ADN MEGAPODEROSO!",
+        "¡dejando claro quién manda en el terreno!",
+        "¡marcando un precedente histórico!",
+        "¡demostrando una categoría superior!"
     ],
     "cierres": [
-        "¡Sigan volando alto y comiéndose el resto del año con este mismo hambre de triunfo!",
-        "¡Esto es liderazgo puro, a disfrutar el éxito y seguir inspirando!",
-        "¡Qué manera tan brutal de trabajar, sigamos haciendo historia!",
-        "¡Aplausos de pie para todos los involucrados, a mantener la cima!",
-        "¡Con esta misma pasión nadie nos para!"
+        "¡A volar alto!",
+        "¡A disfrutar la cima sin bajar la guardia!",
+        "¡A devorarse el resto del mes!",
+        "¡Esto es ganar con autoridad!"
     ]
 }
 
 BANCO_INTERNACIONAL = {
     "aperturas": [
-        "Tratándose de nuestro producto internacional,",
-        "En cuanto al ramo internacional, reconocido por su alta exigencia,",
-        "Evaluando el terreno internacional,",
-        "Mirando de frente al reto internacional,",
-        "Sabemos que el segmento internacional es uno de los más retadores y"
+        "El mercado internacional es de titanes,",
+        "Romper esquemas fuera de casa",
+        "Este reto exige jerarquía,",
+        "Conquistar este mercado exclusivo"
     ],
     "nucleos": [
-        "cada paso al frente cuenta el doble y merece todo nuestro reconocimiento",
-        "ponerse la camiseta aquí demuestra una visión comercial de otro nivel",
-        "romper el hielo en este producto exige una disciplina y destreza superior",
-        "cada gestión exitosa en este campo resalta el esfuerzo titánico del equipo",
-        "enfrentar este desafío tan complejo demuestra el calibre de nuestros agentes"
+        "¡demuestra el calibre de nuestros agentes!",
+        "¡se conquista con audacia y disciplina!",
+        "¡eleva la vara al máximo nivel!",
+        "¡deja huella en las grandes ligas!"
     ],
     "cierres": [
-        "¡Valoramos enormemente ese esfuerzo extra que marca la diferencia!",
-        "¡A seguir conquistando este mercado tan exclusivo con orgullo!",
-        "¡Su valentía ante los retos más difíciles nos enorgullece a todos!",
-        "¡Sigamos abriendo brecha donde pocos se atreven!",
-        "¡Un reconocimiento especial por asumir este gran desafío con categoría!"
+        "¡A seguir conquistando!",
+        "¡Vamos con todo por más!",
+        "¡Orgullo puro MEGAPODEROSO!",
+        "¡A romper fronteras!"
     ]
 }
 
@@ -139,7 +127,7 @@ def generar_mensaje_combinatorio(banco, semilla_extra=0):
     idx_a = (semana + semilla_extra) % len(banco["aperturas"])
     idx_n = (semana * 3 + semilla_extra) % len(banco["nucleos"])
     idx_c = (semana * 7 + semilla_extra) % len(banco["cierres"])
-    return f"{banco['aperturas'][idx_a]} {banco['nucleos'][idx_n]}. {banco['cierres'][idx_c]}"
+    return f"{banco['aperturas'][idx_a]} {banco['nucleos'][idx_n]} {banco['cierres'][idx_c]}"
 
 def format_moneda(valor):
     if valor < 0:
@@ -302,21 +290,17 @@ def procesar_y_enviar():
         if ramo_key == "inter":
             if count == 0:
                 msg_base = generar_mensaje_combinatorio(BANCO_BAJO, semilla_extra=semilla)
-                contexto = "Aún no tenemos participantes en este ramo. ¡Es la oportunidad perfecta para romper el hielo en uno de los productos más retadores!"
             else:
                 msg_base = generar_mensaje_combinatorio(BANCO_INTERNACIONAL, semilla_extra=semilla)
-                contexto = f"Tenemos <b>{count}</b> persona{'s' if count != 1 else ''} participando, resaltando el gran esfuerzo por ser uno de los productos más retadores."
         else:
             if count < 10:
                 msg_base = generar_mensaje_combinatorio(BANCO_BAJO, semilla_extra=semilla)
-                contexto = f"Tenemos solo <b>{count}</b> persona{'s' if count != 1 else ''} participando, por lo que hay que ponerse las pilas."
             elif 10 <= count <= 15:
                 msg_base = generar_mensaje_combinatorio(BANCO_MEDIO, semilla_extra=semilla)
-                contexto = f"Tenemos <b>{count}</b> personas participando. ¡Vamos avanzando con buen ritmo!"
             else:
                 msg_base = generar_mensaje_combinatorio(BANCO_ALTO, semilla_extra=semilla)
-                contexto = f"Tenemos <b>{count}</b> personas participando, demostrando que sí se puede."
-        return f"{contexto} <i>&ldquo;{msg_base}&rdquo;</i>"
+        
+        return f"<b>{count}</b> activos. <i>&ldquo;{msg_base}&rdquo;</i>"
 
     estado_local = evaluar_participacion_ramo("local", count_local, semilla=1)
     estado_inter = evaluar_participacion_ramo("inter", count_inter, semilla=4)
