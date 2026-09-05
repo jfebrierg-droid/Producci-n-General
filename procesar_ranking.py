@@ -1,20 +1,136 @@
 from datetime import datetime
+import io
 import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import google.generativeai as genai
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload
+
+# Configuración de APIs
+GOOGLE_API_KEY = os.environ.get(
+    "GOOGLE_API_KEY"
+)  # Tu API Key de Gemini / Google AI Studio
+genai.configure(api_key=GOOGLE_API_KEY)
+
+# ID de la carpeta de Google Drive donde está el reporte
+FOLDER_ID = "1Nzq9YFjRqQgQqjjKZqqZ7abm0cm0zzf5"
+NOMBRE_ARCHIVO = "reporte_diario.png"
+
+
+def buscar_y_descargar_de_drive(output_path="ranking_actual.jpg"):
+  """Se conecta a Google Drive, busca el archivo 'reporte_diario.png'
+
+  dentro de la carpeta específica y lo descarga automáticamente.
+  """
+  try:
+    # Nota: Asegúrate de tener configuradas tus credenciales de service account o entorno de Google Drive
+    # Si usas credenciales de Google Cloud, puedes autenticarte así:
+    SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
+    # Si utilizas un archivo JSON de credenciales:
+    # creds = Credentials.from_service_account_file('credentials.json', scopes=SCOPES)
+    # service = build('drive', 'v3', credentials=creds)
+
+    # Si estás ejecutando en un entorno con credenciales por defecto de Google Cloud / OAuth:
+    service = build("drive", "v3")
+
+    # Consulta para buscar el archivo exacto dentro de la carpeta
+    query = f"name = '{NOMBRE_ARCHIVO}' and '{FOLDER_ID}' in parents and trashed = false"
+    results = (
+        service.files()
+        .list(q=query, spaces="drive", fields="files(id, name)")
+        .execute()
+    )
+    items = results.get("files", [])
+
+    if not items:
+      print(
+          f"❌ No se encontró el archivo '{NOMBRE_ARCHIVO}' en la carpeta de"
+          " Google Drive."
+      )
+      return None
+
+    file_id = items[0]["id"]
+    print(
+        f"📁 Archivo encontrado en Google Drive (ID: {file_id}). Descargando..."
+    )
+
+    # Descargar el archivo
+    request = service.files().get_media(fileId=file_id)
+    fh = io.FileIO(output_path, "wb")
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while not done:
+      status, done = downloader.next_chunk()
+
+    print(f"✅ Imagen descargada exitosamente como: {output_path}")
+    return output_path
+
+  except Exception as e:
+    print(f"⚠️ Error al conectar o descargar desde Google Drive: {e}")
+    return None
+
+
+def extraer_datos_con_gemini(image_path):
+  """Utiliza Gemini Vision para leer la imagen recién descargada de Drive
+
+  y extraer todos los valores tabulares de los intermediarios en formato JSON.
+  """
+  model = genai.GenerativeModel("gemini-2.5-flash")
+
+  prompt = (
+      "Analiza esta imagen de reporte de producción. Extrae todos los"
+      " intermediarios/asesores y sus valores numéricos para cada columna:"
+      " 'local', 'inter' (Internacional), 'vida', y 'auto' (Auto, Hogar y"
+      " Empresa). Devuelve la respuesta ÚNICAMENTE como una lista de"
+      " diccionarios en Python estricta, con las claves: 'intermediario',"
+      " 'local', 'inter', 'vida', 'auto'. Los valores deben ser cadenas de"
+      " texto tal cual se ven (ej. '124,082.18' o '0.00' o '-73,122.26'). No"
+      " omitas a ningún asesor de la lista."
+  )
+
+  # Subir el archivo temporalmente a Gemini para análisis visual
+  sample_file = genai.upload_file(image_path)
+
+  response = model.generate_content([sample_file, prompt])
+  print(
+      "🤖 Datos extraídos y leídos directamente de la imagen por Gemini Vision."
+  )
+
+  # Parsear el texto devuelto por Gemini para convertirlo en una lista ejecutable de Python
+  texto_respuesta = response.text.strip()
+  # Limpieza básica por si el modelo incluye bloques de código markdown ```python ... ```
+  if "```python" in texto_respuesta:
+    texto_respuesta = texto_respuesta.split("```python")[1].split("```")[0]
+  elif "```" in texto_respuesta:
+    texto_respuesta = texto_respuesta.split("```")[1].split("```")[0]
+
+  try:
+    datos_ranking = eval(texto_respuesta.strip())
+    return datos_ranking
+  except Exception as err:
+    print(f"Error al parsear la respuesta de Gemini: {err}")
+    return []
 
 
 def parse_monto(valor_str):
-  """Convierte cadenas como '115,507.18' o '-73,122.26' a un float de Python"""
+  """Convierte cadenas como '124,082.18' o '-73,122.26' a un float de Python"""
   try:
-    return float(str(valor_str).replace(",", ""))
+    limpio = (
+        str(valor_str)
+        .replace("$", "")
+        .replace(" ", "")
+        .replace(",", "")
+        .strip()
+    )
+    return float(limpio)
   except ValueError:
     return 0.0
 
 
 def obtener_meta(ramo):
-  """Retorna la meta mínima exigida según el ramo"""
   if ramo == "local":
     return 30000.0
   elif ramo == "inter":
@@ -27,16 +143,13 @@ def obtener_meta(ramo):
 
 
 def cumple_meta(ramo, valor_num):
-  """Retorna True si el valor alcanza o supera la meta mínima de su ramo"""
   return valor_num >= obtener_meta(ramo)
 
 
 def obtener_color(ramo, valor_num):
-  """Retorna el color de fondo y de texto según el formato suave de la imagen"""
   color_verde = "background-color: #dcfce7; color: #15803d;"
   color_naranja = "background-color: #ffedd5; color: #c2410c;"
   color_rojo = "background-color: #ffe4e6; color: #b91c1c;"
-
   meta = obtener_meta(ramo)
 
   if valor_num >= meta:
@@ -51,409 +164,42 @@ def procesar_y_enviar():
   sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
   password = os.environ.get("EMAIL_PASSWORD", "AQUI_TU_CONTRASEÑA_DE_APLICACION")
   recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
-
-  # URL directa de la imagen del banner alojada en ImgBB
   BANNER_URL = "https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg"
 
-  # Lista de miembros del equipo
-  datos_ranking = [
-      {
-          "intermediario": "Luisa Gonzalez",
-          "local": "28,326.00",
-          "inter": "12,915.53",
-          "vida": "910.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Marcos Adames",
-          "local": "14,173.00",
-          "inter": "0.00",
-          "vida": "520.00",
-          "auto": "12,566.53",
-      },
-      {
-          "intermediario": "Nicauris Benitez",
-          "local": "0.00",
-          "inter": "21,332.92",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Angela Vidal",
-          "local": "9,755.25",
-          "inter": "0.00",
-          "vida": "260.00",
-          "auto": "3,542.62",
-      },
-      {
-          "intermediario": "Ninfa Perez",
-          "local": "8,660.00",
-          "inter": "0.00",
-          "vida": "180.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Ana Veloz",
-          "local": "7,186.75",
-          "inter": "0.00",
-          "vida": "260.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Dioselina Ramos",
-          "local": "7,015.00",
-          "inter": "0.00",
-          "vida": "130.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Wilfredo Vicente",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "5,417.90",
-      },
-      {
-          "intermediario": "Joan Danis",
-          "local": "4,610.00",
-          "inter": "0.00",
-          "vida": "180.00",
-          "auto": "596.07",
-      },
-      {
-          "intermediario": "Eddy Concepcion",
-          "local": "3,530.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Maria De La Cruz",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "36.02",
-      },
-      {
-          "intermediario": "Leomayra Alcantara",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "-319.89",
-      },
-      {
-          "intermediario": "Estefania Villegas",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "-4,329.56",
-      },
-      {
-          "intermediario": "Julissa Rosario",
-          "local": "0.00",
-          "inter": "24,756.24",
-          "vida": "0.00",
-          "auto": "-73,122.26",
-      },
-      {
-          "intermediario": "Milvio Espinal",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Delkis Perez",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Sory Morla",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Indhira Mora",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Luis T Ortiz",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Ruddy Arias",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Indhira Santos",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Mariela de León Minaya",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Mery Lopez",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Yudelka Cuevas",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Vladimil Herrera",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Orquidea Feliz",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Marisol Payano",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Jairo Martinez",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Alsiwin Ruiz",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Estarlin Acosta",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Eleuterio Fernandez",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Angel Matos",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Ingrid Beras",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Kevin Ramirez",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Eduardo Hernandez",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Wanda Peña",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Belkis Sanchez",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Aranechi Tejeda",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Felix Morillo",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Hander Perez",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Amalfi Julissa Rodriguez",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Charles Furment",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Angela Valerio",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Hugo Cruz",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Jose Terrero",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Maribel Fernandez",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Esperanza Regalado",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "John Adams",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Maria Soriano",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Albertina Febles",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Franklin Graterol",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Cirilo Fermin",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Yolanda Cabrera",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-      {
-          "intermediario": "Paula Herrera",
-          "local": "0.00",
-          "inter": "0.00",
-          "vida": "0.00",
-          "auto": "0.00",
-      },
-  ]
+  # PASO 1: Descargar siempre el reporte fresco desde Google Drive
+  imagen_local = buscar_y_descargar_de_drive("reporte_diario.png")
+  if not imagen_local:
+    print("❌ Proceso abortado: no se pudo obtener la imagen de Google Drive.")
+    return
 
-  # Procesar valores aplicando transformaciones
+  # PASO 2: Extraer datos automáticamente usando IA sobre la imagen descargada
+  datos_ranking = extraer_datos_con_gemini(imagen_local)
+  if not datos_ranking:
+    print(
+        "❌ Proceso abortado: no se pudieron extraer los datos de la imagen."
+    )
+    return
+
+  # PASO 3: Procesar valores aplicando las fórmulas correctas
+  # - Local y Vida: directos
+  # - Internacional: dividido por 61.0
+  # - Auto, Hogar y Empresa: multiplicado por 12.0
   datos_procesados = []
   for item in datos_ranking:
-    val_local = parse_monto(item["local"])
-    val_inter = parse_monto(item["inter"]) / 61.0
-    val_vida = parse_monto(item["vida"])
-    val_auto = parse_monto(item["auto"]) * 12.0
+    val_local = parse_monto(item.get("local", "0"))
+    val_inter = parse_monto(item.get("inter", "0")) / 61.0
+    val_vida = parse_monto(item.get("vida", "0"))
+    val_auto = parse_monto(item.get("auto", "0")) * 12.0
 
     datos_procesados.append({
-        "intermediario": item["intermediario"],
+        "intermediario": item.get("intermediario", "Desconocido"),
         "val_local": val_local,
         "val_inter": val_inter,
         "val_vida": val_vida,
         "val_auto": val_auto,
     })
 
-  # Extraer Top 3 por cada categoría de manera independiente
+  # PASO 4: Extraer Top 3 independientes por categoría
   top_local = sorted(
       datos_procesados, key=lambda x: x["val_local"], reverse=True
   )[:3]
@@ -467,7 +213,6 @@ def procesar_y_enviar():
       datos_procesados, key=lambda x: x["val_auto"], reverse=True
   )[:3]
 
-  # Función para formatear el item del Top 3
   def format_top_item(item, ramo, valor):
     if cumple_meta(ramo, valor):
       return (
@@ -477,7 +222,6 @@ def procesar_y_enviar():
     else:
       meta = obtener_meta(ramo)
       if ramo == "auto":
-        # No se menciona lo que le falta en Auto, Hogar y Empresa
         return (
             f"{item} 🏃‍♂️ <span style='color: #64748b; font-weight:"
             f" normal;'>(${valor:,.2f})</span>"
@@ -490,7 +234,7 @@ def procesar_y_enviar():
             f" ${falta:,.2f}</span>"
         )
 
-  # Obtener el nombre del mes actual en español de forma dinámica
+  # Mes dinámico en español
   meses_es = {
       1: "enero",
       2: "febrero",
@@ -507,19 +251,17 @@ def procesar_y_enviar():
   }
   mes_actual = meses_es.get(datetime.now().month, "mes")
 
-  # Orden para la tabla completa (prioridad: Local > Internacional > Vida > Auto)
+  # Ordenar tabla general
   datos_procesados.sort(
       key=lambda x: (x["val_local"], x["val_inter"], x["val_vida"], x["val_auto"]),
       reverse=True,
   )
 
-  # Calcular totales generales
   tot_local = sum(item["val_local"] for item in datos_procesados)
   tot_inter = sum(item["val_inter"] for item in datos_procesados)
   tot_vida = sum(item["val_vida"] for item in datos_procesados)
   tot_auto = sum(item["val_auto"] for item in datos_procesados)
 
-  # Construir HTML de las filas de la pizarra completa
   filas_html = ""
   for fila in datos_procesados:
     val_local = fila["val_local"]
@@ -527,22 +269,16 @@ def procesar_y_enviar():
     val_vida = fila["val_vida"]
     val_auto = fila["val_auto"]
 
-    style_local = obtener_color("local", val_local)
-    style_inter = obtener_color("inter", val_inter)
-    style_vida = obtener_color("vida", val_vida)
-    style_auto = obtener_color("auto", val_auto)
-
     filas_html += f"""
         <tr>
             <td style="background-color: #ffffff; color: #1e293b; padding: 8px; font-weight: bold; border: 1px solid #cbd5e1; text-align: left;">{fila['intermediario']}</td>
-            <td style="{style_local} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_local:,.2f}</td>
-            <td style="{style_inter} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_inter:,.2f}</td>
-            <td style="{style_vida} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_vida:,.2f}</td>
-            <td style="{style_auto} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_auto:,.2f}</td>
+            <td style="{obtener_color('local', val_local)} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_local:,.2f}</td>
+            <td style="{obtener_color('inter', val_inter)} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_inter:,.2f}</td>
+            <td style="{obtener_color('vida', val_vida)} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_vida:,.2f}</td>
+            <td style="{obtener_color('auto', val_auto)} padding: 8px; text-align: right; border: 1px solid #cbd5e1; font-weight: bold;">${val_auto:,.2f}</td>
         </tr>
         """
 
-  # Bloque de texto superior con mes dinámico corregido
   texto_dinamico = f"""
     <div style="font-family: Arial, sans-serif; color: #1e293b;">
         <div style="font-size: 16px; font-weight: bold; color: #0284c7; margin-bottom: 6px; letter-spacing: 0.5px;">
@@ -590,32 +326,22 @@ def procesar_y_enviar():
                 </td>
             </tr>
         </table>
-        
-        <div style="margin-top: 12px; font-size: 12px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 10px; text-align: center;">
-            ¡A seguir dándolo todo en cada ramo! A continuación, la pizarra general:
-        </div>
     </div>
     """
 
   html_content = f"""
     <!DOCTYPE html>
     <html>
-    <head>
-        <meta charset="utf-8">
-    </head>
-    <body style="font-family: Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 10px; text-align: left;">
-        <div style="max-width: 850px; margin: 0; text-align: left; font-size: 0; line-height: 0;">
-            
-            <!-- Tarjeta de Encabezado con Fondo Blanco e impacto visual -->
-            <div style="background-color: #ffffff; color: #1e293b; padding: 20px 24px; font-size: 13px; line-height: 1.5; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 12px; border-radius: 8px; border-left: 5px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 10px;">
+        <div style="max-width: 850px; margin: 0;">
+            <div style="background-color: #ffffff; padding: 20px 24px; border: 1px solid #cbd5e1; margin-bottom: 12px; border-radius: 8px; border-left: 5px solid #0284c7;">
                 {texto_dinamico}
             </div>
 
-            <!-- Banner Superior -->
-            <img src="{BANNER_URL}" alt="Banner Ranking de Producción" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; margin: 0 0 12px 0; padding: 0; border-radius: 6px;">
+            <img src="{BANNER_URL}" alt="Banner" style="width: 100%; max-width: 850px; display: block; border-radius: 6px; margin-bottom: 12px;">
 
-            <!-- Tabla de Producción (Pizarra completa) -->
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin: 0; padding: 0; line-height: normal; border-radius: 6px; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; border-radius: 6px; overflow: hidden;">
                 <thead>
                     <tr style="background-color: #0d1527; color: #ffffff;">
                         <th style="padding: 10px; text-align: left; border: 1px solid #2d3748;">Intermediario</th>
@@ -636,29 +362,28 @@ def procesar_y_enviar():
                     </tr>
                 </tbody>
             </table>
-
         </div>
     </body>
     </html>
     """
 
+  # PASO 5: Envío del correo electrónico
   msg = MIMEMultipart("alternative")
   msg["Subject"] = "Producción General - MEGAPODEROSOS"
   msg["From"] = sender_email
   msg["To"] = recipient_email
-
   msg.attach(MIMEText(html_content, "html"))
 
   try:
     server = smtplib.SMTP("smtp.gmail.com", 587)
     server.starttls()
     server.login(sender_email, password)
-    destinatarios = [
-        email.strip() for email in recipient_email.split(",") if email.strip()
-    ]
-    server.sendmail(sender_email, destinatarios, msg.as_string())
+    server.sendmail(sender_email, recipient_email.split(","), msg.as_string())
     server.quit()
-    print("¡Correo enviado exitosamente!")
+    print(
+        "🚀 ¡Correo con el reporte actualizado desde Google Drive enviado"
+        " exitosamente!"
+    )
   except Exception as e:
     print(f"Error al enviar el correo: {e}")
 
