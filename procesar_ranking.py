@@ -386,7 +386,7 @@ def procesar_y_enviar():
                 <a href="https://ibb.co/N21Ljnxt"><img src="https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg" alt="Banner-Ranking-de-Producci-n-1" border="0" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;" /></a>
             </div>
 
-            <!-- Tabla de Producción (Pizarra completa con los 55 miembros) -->
+            <!-- Tabla de Producción (Pizarra completa) -->
             <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin: 0; padding: 0; line-height: normal; border-radius: 6px; overflow: hidden;">
                 <thead>
                     <tr style="background-color: #0d1527; color: #ffffff;">
