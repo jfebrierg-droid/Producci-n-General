@@ -2,7 +2,7 @@
 """
 Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4 -> 3 -> 2 -> 1),
-reintentos automáticos para errores 503, respaldo de modelos y mensajes dinámicos con sabor dominicano profesional.
+reintentos automáticos para errores 503, respaldo de modelos y mensajes cortos con sabor dominicano natural.
 """
 
 from datetime import datetime
@@ -40,95 +40,94 @@ LISTA_MAESTRA_AGENTES = [
     "Eddy Concepcion", "Yolanda Cabrera", "Paula Herrera", "Rafael Capellan", "Salvador Martinez"
 ]
 
-# --- BANCO DE MENSAJES CON ESTILO DOMINICANO RESPETUOSO Y MOTIVADOR PARA VENTAS ---
+# --- BANCO DE MENSAJES CORTOS Y CON SABOR DOMINICANO NATURAL ---
 BANCO_BAJO = {
     "aperturas": [
-        "Mi gente, tenemos terreno valioso esperando que metamos mano,",
-        "El marcador nos pide dar ese paso al frente con gallardía,",
-        "Hay espacio de sobra para repuntar con nuestra acostumbrada calidad,",
-        "La pista está lista y nuestros agentes tienen talento de sobra,"
+        "Mi gente, hay que meterle mano a esto,",
+        "Pilas puestas por aquí,",
+        "Vamos a activarnos con energía,",
+        "Tenemos terreno por buscar,"
     ],
     "nucleos": [
-        "¡vamos a ponernos las pilas y buscar esas cotizaciones con hambre de triunfo!",
-        "¡a darle con todo y prender los motores de la producción!",
-        "¡es hora de buscar ese rebase con energía positiva y enfoque total!",
-        "¡a calentar la cancha con actitud de ganadores!"
+        "a salir a la calle a buscar esas cotizaciones.",
+        "a movernos rápido para levantar este número.",
+        "a darle calor a este ramo que está frío.",
+        "a buscar ese cliente con hambre de triunfo."
     ],
     "cierres": [
-        "¡A romper el hielo mi gente!",
-        "¡El momento de darle vuelta a esto es ahora mismo!",
-        "¡A demostrar de qué estamos hechos los verdaderos profesionales!",
-        "¡Con fe, disciplina y a buscar esos clientes!"
+        "¡A darle con todo!",
+        "¡A despertar mi gente!",
+        "¡A meter el acelerador!",
+        "¡Manos a la obra!"
     ]
 }
 
 BANCO_MEDIO = {
     "aperturas": [
-        "Vamos marchando firme en la ruta correcta,",
-        "El ritmo de trabajo está sólido y constante,",
-        "La maquinaria va rodando a buen paso por el camino seguro,",
-        "Estamos estables y con el pulso firme en la jugada,"
+        "Vamos caminando bien,",
+        "El paso está firme,",
+        "Estamos al pie del cañón,",
+        "Buen ritmo mi gente,"
     ],
     "nucleos": [
-        "¡vamos a apretar el paso para romper récords este mes!",
-        "¡a meterle velocidad extra para alcanzar la cima con distinción!",
-        "¡a mantener el enfoque absoluto y consolidar la meta!",
-        "¡el equipo va sonando bien, a darle con fuerza y elegancia!"
+        "¡a meterle un chin más de presión para llegar arriba!",
+        "¡a apretar el paso y asegurar la meta!",
+        "¡a mantener el enfoque y cerrar con fuerza!",
+        "¡a dar ese chin extra que falta!"
     ],
     "cierres": [
-        "¡A mantener el acelerador a fondo!",
-        "¡Nadie nos frena, vamos firmes por más!",
-        "¡A coronar esa meta con orgullo y dedicación!",
-        "¡A cerrar este tramo con broche de oro!"
+        "¡A fondo mi gente!",
+        "¡Nadie se detiene!",
+        "¡A coronar el mes!",
+        "¡Sigamos así!"
     ]
 }
 
 BANCO_ALTO = {
     "aperturas": [
-        "¡Qué clase de nivelazo y bendición estamos viendo en la cancha,",
-        "¡Imparables, dando cátedra de cómo se hace producción con categoría,",
-        "¡Demostrando la verdadera casta de campeones que nos representa,",
-        "¡Qué manera tan fina y dura de dominar este terreno,"
+        "¡Qué nivelazo de equipo,",
+        "¡Duro y sin bajar la guardia,",
+        "¡Imparables mi gente,",
+        "¡Qué manera de lucirse,"
     ],
     "nucleos": [
-        "¡este es el verdadero ADN MEGAPODEROSOS en su máxima expresión!",
-        "¡dejando claro por qué somos los líderes indiscutibles del juego!",
-        "¡marcando un precedente que nos llena de orgullo a todos!",
-        "¡elevando la vara bien alto con profesionalismo puro!"
+        "¡esto sí es fajarse con orgullo!",
+        "¡dejando el listón bien alto como debe ser!",
+        "¡demostrando por qué somos los número uno!",
+        "¡un verdadero orgullo para todos!"
     ],
     "cierres": [
-        "¡A disfrutar la cima con humildad y hambre de más!",
-        "¡A devorarse el resto del mes con ese swing ganador!",
-        "¡Esto es jugar en las grandes ligas con altura!",
-        "¡A seguir brillando con luz propia, familia!"
+        "¡A disfrutar la cima!",
+        "¡A seguir rompiendo esquemas!",
+        "¡Eso se llama trabajar con ganas!",
+        "¡A mantener ese swing ganador!"
     ]
 }
 
 BANCO_INTERNACIONAL = {
     "aperturas": [
-        "Las grandes ligas internacionales exigen categoría y gallardía,",
-        "Conquistar terreno fuera de nuestras fronteras requiere altura,",
-        "Este mercado exclusivo pide el toque fino de nuestros mejores talentos,",
-        "Brillar en el escenario internacional demuestra nuestra capacidad,"
+        "Fuera del país se juega fuerte,",
+        "El terreno internacional exige presencia,",
+        "Atravesando fronteras con categoría,",
+        "El mercado de afuera pide acción,"
     ],
     "nucleos": [
-        "¡muestra el calibre superior de nuestra gente en el exterior!",
-        "¡se conquista con disciplina, estrategia y visión clara!",
-        "¡eleva el estándar al nivel más alto posible!",
-        "¡deja una huella bien marcada más allá de nuestras costas!"
+        "¡a demostrar de qué estamos hechos allá fuera!",
+        "¡a dejar nuestra bandera en alto con fuerza!",
+        "¡a conquistar mercados con el corazón!",
+        "¡a sonar duro en el extranjero!"
     ],
     "cierres": [
-        "¡A seguir conquistando nuevos horizontes!",
-        "¡Vamos con todo por más metas globales!",
-        "¡Orgullo puro de los MEGAPODEROSOS en ultramar!",
-        "¡A romper fronteras con elegancia y distinción!"
+        "¡A romper fronteras!",
+        "¡A seguir conquistando!",
+        "¡Orgullo total afuera!",
+        "¡A brillar en grande!"
     ]
 }
 
 def generar_mensaje_combinatorio(banco, semilla_extra=0):
     ahora = datetime.now()
-    # Semilla única basada en la semana del año + el año actual multiplicando las combinaciones
-    # Esto garantiza una rotación amplísima que no se repetirá en muchos años.
+    # Combinación basada en la semana y el año actual para garantizar unicidad por años
     semilla_tiempo = ahora.isocalendar()[1] + (ahora.year * 52) + semilla_extra
     idx_a = semilla_tiempo % len(banco["aperturas"])
     idx_n = (semilla_tiempo * 3) % len(banco["nucleos"])
@@ -191,7 +190,7 @@ def obtener_datos_desde_drive_imagen(file_id):
         
         for modelo in modelos_a_probar:
             exito_modelo = False
-            for intento in range(3): # Hasta 3 reintentos por modelo si hay saturación
+            for intento in range(3):
                 try:
                     print(f"Intentando con API Key #{4 - index}, modelo {modelo} (intento {intento + 1})...")
                     response = client.models.generate_content(
