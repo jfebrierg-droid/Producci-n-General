@@ -64,7 +64,7 @@ LISTA_MAESTRA_AGENTES = [
     "Albertina Febles",
     "Franklin Graterol",
     "Cirilo Fermin",
-    "Eddy Concepción",
+    "Eddy Concepcion",
     "Yolanda Cabrera",
     "Paula Herrera",
     "Rafael Capellan",
