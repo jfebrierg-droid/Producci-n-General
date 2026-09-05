@@ -1,2 +1,4 @@
 requests
 resend
+google-generativeai
+pillow
