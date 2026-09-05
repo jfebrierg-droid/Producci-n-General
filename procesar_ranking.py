@@ -12,11 +12,8 @@ def parse_monto(valor_str):
 
 def obtener_color(ramo, valor_num):
     """ Retorna el color de fondo y de texto según el formato suave de la imagen """
-    # Verde: fondo verde menta con texto verde oscuro
     color_verde = "background-color: #dcfce7; color: #15803d;"
-    # Naranja: fondo naranja suave con texto naranja/marrón intenso
     color_naranja = "background-color: #ffedd5; color: #c2410c;"
-    # Rojo: fondo rosado claro con texto rojo oscuro
     color_rojo = "background-color: #ffe4e6; color: #b91c1c;"
 
     if ramo == "local":
@@ -119,7 +116,7 @@ def procesar_y_enviar():
         {"intermediario": "Paula Herrera", "local": "0.00", "inter": "0.00", "vida": "0.00", "auto": "0.00"}
     ]
 
-    # Procesar valores aplicando la división entre 61 en Internacional y la multiplicación por 12 en Auto
+    # Procesar valores aplicando transformaciones
     datos_procesados = []
     for item in datos_ranking:
         val_local = parse_monto(item["local"])
@@ -135,23 +132,25 @@ def procesar_y_enviar():
             "val_auto": val_auto
         })
 
-    # Ordenar de mayor a menor según prioridad: Local > Internacional > Vida > Auto
+    # Extraer Top 3 por cada categoría de manera independiente
+    top_local = sorted(datos_procesados, key=lambda x: x["val_local"], reverse=True)[:3]
+    top_inter = sorted(datos_procesados, key=lambda x: x["val_inter"], reverse=True)[:3]
+    top_vida = sorted(datos_procesados, key=lambda x: x["val_vida"], reverse=True)[:3]
+    top_auto = sorted(datos_procesados, key=lambda x: x["val_auto"], reverse=True)[:3]
+
+    # Orden para la tabla completa (prioridad: Local > Internacional > Vida > Auto)
     datos_procesados.sort(
-        key=lambda x: (
-            x["val_local"],
-            x["val_inter"],
-            x["val_vida"],
-            x["val_auto"]
-        ),
+        key=lambda x: (x["val_local"], x["val_inter"], x["val_vida"], x["val_auto"]),
         reverse=True
     )
 
-    # Calcular totales
+    # Calcular totales generales
     tot_local = sum(item["val_local"] for item in datos_procesados)
     tot_inter = sum(item["val_inter"] for item in datos_procesados)
     tot_vida = sum(item["val_vida"] for item in datos_procesados)
     tot_auto = sum(item["val_auto"] for item in datos_procesados)
 
+    # Construir HTML de las filas de la pizarra completa
     filas_html = ""
     for fila in datos_procesados:
         val_local = fila["val_local"]
@@ -174,6 +173,34 @@ def procesar_y_enviar():
         </tr>
         """
 
+    # Generar texto dinámico con el Top 3 incluido automáticamente
+    texto_dinamico = f"""
+    ¡Hola, equipo <b>MEGAPODEROSOS</b>! 🚀<br><br>
+    Compartimos el reporte oficial de Humano Seguros. ¡Un reconocimiento especial a nuestros líderes destacados en este periodo!<br><br>
+    
+    🏆 <b>TOP 3 - LOCAL:</b><br>
+    1. {top_local[0]['intermediario']} (${top_local[0]['val_local']:,.2f})<br>
+    2. {top_local[1]['intermediario']} (${top_local[1]['val_local']:,.2f})<br>
+    3. {top_local[2]['intermediario']} (${top_local[2]['val_local']:,.2f})<br><br>
+
+    🏆 <b>TOP 3 - INTERNACIONAL:</b><br>
+    1. {top_inter[0]['intermediario']} (${top_inter[0]['val_inter']:,.2f})<br>
+    2. {top_inter[1]['intermediario']} (${top_inter[1]['val_inter']:,.2f})<br>
+    3. {top_inter[2]['intermediario']} (${top_inter[2]['val_inter']:,.2f})<br><br>
+
+    🏆 <b>TOP 3 - VIDA:</b><br>
+    1. {top_vida[0]['intermediario']} (${top_vida[0]['val_vida']:,.2f})<br>
+    2. {top_vida[1]['intermediario']} (${top_vida[1]['val_vida']:,.2f})<br>
+    3. {top_vida[2]['intermediario']} (${top_vida[2]['val_vida']:,.2f})<br><br>
+
+    🏆 <b>TOP 3 - AUTO, HOGAR Y EMPRESA:</b><br>
+    1. {top_auto[0]['intermediario']} (${top_auto[0]['val_auto']:,.2f})<br>
+    2. {top_auto[1]['intermediario']} (${top_auto[1]['val_auto']:,.2f})<br>
+    3. {top_auto[2]['intermediario']} (${top_auto[2]['val_auto']:,.2f})<br><br>
+
+    ¡A seguir dando el máximo en cada ramo! A continuación, el detalle completo del banner y la pizarra general:
+    """
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -183,10 +210,15 @@ def procesar_y_enviar():
     <body style="font-family: Arial, sans-serif; background-color: #ffffff; margin: 0; padding: 10px; text-align: left;">
         <div style="max-width: 850px; margin: 0; text-align: left; font-size: 0; line-height: 0;">
             
-            <!-- Banner Superior Pegado -->
+            <!-- Bloque de Texto Dinámico con el Top 3 (PRIMERO) -->
+            <div style="background-color: #0d1527; color: #f8fafc; padding: 15px 20px; font-size: 13px; line-height: 1.5; font-family: Arial, sans-serif; border-bottom: 2px solid #3b82f6; text-align: left; margin-bottom: 10px; border-radius: 6px;">
+                {texto_dinamico}
+            </div>
+
+            <!-- Banner Superior -->
             <img src="{BANNER_URL}" alt="Banner Ranking de Producción" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; margin: 0; padding: 0;">
 
-            <!-- Tabla de Producción -->
+            <!-- Tabla de Producción (Pizarra completa intacta) -->
             <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin: 0; padding: 0; line-height: normal;">
                 <thead>
                     <tr style="background-color: #0d1527; color: #ffffff;">
@@ -201,10 +233,10 @@ def procesar_y_enviar():
                     {filas_html}
                     <tr style="font-weight: bold; font-size: 13px;">
                         <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: left;">Total General</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; text-align: right; border: 1px solid #2d3748;">${tot_local:,.2f}</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; text-align: right; border: 1px solid #2d3748;">${tot_inter:,.2f}</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; text-align: right; border: 1px solid #2d3748;">${tot_vida:,.2f}</td>
-                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; text-align: right; border: 1px solid #2d3748;">${tot_auto:,.2f}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">${tot_local:,.2f}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">${tot_inter:,.2f}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">${tot_vida:,.2f}</td>
+                        <td style="background-color: #0d1527; color: #ffffff; padding: 10px; border: 1px solid #2d3748; text-align: right;">${tot_auto:,.2f}</td>
                     </tr>
                 </tbody>
             </table>
