@@ -7,14 +7,13 @@ import os
 import smtplib
 import urllib.request
 
-# ID del archivo reporte_diario.png en Google Drive
-# (Asegúrate de que el archivo en Drive tenga permisos de "Cualquier persona con el enlace puede ver")
-FILE_ID = "1Nzq9YFjRqQgQqjjKZqqZ7abm0cm0zzf5"
+# ID correcto del archivo en Google Drive
+FILE_ID = "1YmAVaDyplF6CQ_gk2NZsEmLyjFpcFH9Y"
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 
 
 def descargar_desde_drive(output_path="reporte_diario.png"):
-  """Descarga la imagen directamente desde Google Drive usando librerías nativas de Python"""
+  """Descarga la imagen directamente desde Google Drive usando librerías nativas"""
   try:
     url = f"https://drive.google.com/uc?export=download&id={FILE_ID}"
     print("📁 Descargando reporte fresco desde Google Drive...")
@@ -43,7 +42,7 @@ def extraer_datos_con_gemini_rest(image_path):
       image_bytes = image_file.read()
       image_base64 = base64.b64encode(image_bytes).decode("utf-8")
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GOOGLE_API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GOOGLE_API_KEY}"
 
     prompt = (
         "Analiza esta imagen de reporte de producción. Extrae todos los"
@@ -145,18 +144,18 @@ def obtener_color(ramo, valor_num):
 
 
 def procesar_y_enviar():
-  sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
-  password = os.environ.get("EMAIL_PASSWORD", "AQUI_TU_CONTRASEÑA_DE_APLICACION")
-  recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
+  sender_email = os.environ.get("EMAIL_USER")
+  password = os.environ.get("EMAIL_PASSWORD")
+  recipient_email = os.environ.get("EMAIL_RECIPIENT", sender_email)
   BANNER_URL = "https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg"
 
-  # PASO 1: Descarga directa desde Drive sin librerías externas
+  # PASO 1: Descarga directa desde Drive
   imagen_local = descargar_desde_drive("reporte_diario.png")
   if not imagen_local:
     print("❌ Proceso abortado: no se pudo obtener la imagen de Google Drive.")
     return
 
-  # PASO 2: Lectura automática con Gemini Vision mediante REST
+  # PASO 2: Lectura automática con Gemini Vision (REST)
   datos_ranking = extraer_datos_con_gemini_rest(imagen_local)
   if not datos_ranking:
     print(
@@ -164,16 +163,26 @@ def procesar_y_enviar():
     )
     return
 
-  # PASO 3: Procesamiento y fórmulas
+  # PASO 3: Procesamiento, fórmulas y EXCLUSIÓN de Cliente Directo Megacentro
   datos_procesados = []
   for item in datos_ranking:
+    nombre = item.get("intermediario", "Desconocido")
+
+    # FILTRO EXPLÍCITO: Omitir "Cliente Directo Megacentro" o filas de totales globales que traiga la imagen
+    if (
+        "megacentro" in nombre.lower()
+        or "cliente directo" in nombre.lower()
+        or "total general" in nombre.lower()
+    ):
+      continue
+
     val_local = parse_monto(item.get("local", "0"))
     val_inter = parse_monto(item.get("inter", "0")) / 61.0
     val_vida = parse_monto(item.get("vida", "0"))
     val_auto = parse_monto(item.get("auto", "0")) * 12.0
 
     datos_procesados.append({
-        "intermediario": item.get("intermediario", "Desconocido"),
+        "intermediario": nombre,
         "val_local": val_local,
         "val_inter": val_inter,
         "val_vida": val_vida,
@@ -236,6 +245,7 @@ def procesar_y_enviar():
       reverse=True,
   )
 
+  # Totales calculados exclusivamente con los miembros del equipo filtrados
   tot_local = sum(item["val_local"] for item in datos_procesados)
   tot_inter = sum(item["val_inter"] for item in datos_procesados)
   tot_vida = sum(item["val_vida"] for item in datos_procesados)
@@ -346,7 +356,7 @@ def procesar_y_enviar():
     </html>
     """
 
-  # PASO 5: Envío del correo
+  # PASO 5: Envío del correo HTML
   msg = MIMEMultipart("alternative")
   msg["Subject"] = "Producción General - MEGAPODEROSOS"
   msg["From"] = sender_email
@@ -359,7 +369,7 @@ def procesar_y_enviar():
     server.login(sender_email, password)
     server.sendmail(sender_email, recipient_email.split(","), msg.as_string())
     server.quit()
-    print("🚀 ¡Correo con el reporte actualizado desde Drive enviado con éxito!")
+    print("🚀 ¡Correo enviado con éxito (sin Cliente Directo Megacentro)!")
   except Exception as e:
     print(f"Error al enviar el correo: {e}")
 
