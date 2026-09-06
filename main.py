@@ -15,7 +15,7 @@ from google.genai import types
 # Configuración de credenciales desde las variables de entorno de GitHub Secrets
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
+EMAIL_PASS = os.getenv("EMAIL_PASSWORD")
 
 # Rutas de trabajo
 LOCAL_DIR = "./Devoluciones de Reembolso - Automate"
