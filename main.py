@@ -12,21 +12,20 @@ from email import encoders
 from google import genai
 from google.genai import types
 
-# Configuración de credenciales desde las variables de entorno de GitHub Secrets
+# Configuración de credenciales desde las variables de entorno
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASSWORD")
+EMAIL_PASS = os.getenv("EMAIL_PASSWORD") # Actualizado para coincidir con tu secreto de GitHub
 
 # Rutas de trabajo
 LOCAL_DIR = "./Devoluciones de Reembolso - Automate"
-EXCEL_PATH = "./maestro_intermediarios.xlsx" # Asegúrate de que coincida con el nombre de tu Excel en el repo
+EXCEL_PATH = "./maestro_intermediarios.xlsx"
 
 def extraer_intermediario_con_gemini(pdf_path):
     """Utiliza Gemini para extraer el texto de la 'Vía:' desde el PDF."""
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
         
-        # Subir el archivo PDF a la API de Gemini
         print(f"Subiendo {pdf_path} a Gemini para análisis...")
         uploaded_file = client.files.upload(file=pdf_path)
         
@@ -59,8 +58,6 @@ def buscar_correo_en_excel(intermediario):
     
     try:
         df = pd.read_excel(EXCEL_PATH)
-        # Asumiendo columnas estándar como 'Intermediario' y 'Correo' (ajusta los nombres si difieren en tu archivo)
-        # Hacemos una búsqueda insensible a mayúsculas/minúsculas o coincidencias parciales
         match = df[df['Intermediario'].str.contains(intermediario, case=False, na=False)]
         
         if not match.empty:
@@ -78,14 +75,14 @@ def reenviar_correo_original(destinatario_final, pdf_filename, intermediario_nom
     """Busca el correo original en el buzón y lo reenvía con todos sus anexos."""
     try:
         # Conexión IMAP para buscar el correo entrante reciente
-        mail = imaplib.IMAP4_SSL("imap.gmail.com") # O tu servidor de correo corporativo IMAP
+        mail = imaplib.IMAP4_SSL("imap.gmail.com") # Ajusta esto si usas el servidor IMAP de Humano
         mail.login(EMAIL_USER, EMAIL_PASS)
         mail.select("inbox")
 
         # Buscamos correos recientes que contengan el nombre del archivo adjunto
         status, messages = mail.search(None, f'(SUBJECT "{os.path.basename(pdf_filename)}")')
         if status != "OK" or not messages[0]:
-            # Búsqueda alternativa por los últimos correos recibidos
+            # Búsqueda alternativa por los últimos correos no leídos
             status, messages = mail.search(None, "UNSEEN")
         
         if status == "OK" and messages[0]:
@@ -100,23 +97,23 @@ def reenviar_correo_original(destinatario_final, pdf_filename, intermediario_nom
                     nuevo_correo = MIMEMultipart()
                     nuevo_correo['From'] = EMAIL_USER
                     nuevo_correo['To'] = destinatario_final
-                    nuevo_correo['Cc'] = "jfebrier@humano.com.do"
+                    nuevo_correo['Cc'] = "jfebrier@humano.com.do" # Mantenemos CC por estructura
                     nuevo_correo['Subject'] = f"PRUEBA - Reembolso Procesado - {os.path.basename(pdf_filename)} - {intermediario_nombre}"
 
-                    # Cuerpo del mensaje indicando el reenvío automático
+                    # Cuerpo del mensaje
                     cuerpo = f"Estimado intermediario,\n\nAdjunto encontrará el documento de reembolso procesado correspondiente a la vía: {intermediario_nombre}.\n\nAtentamente,\nHumano Seguros"
                     nuevo_correo.attach(MIMEText(cuerpo, 'plain'))
 
-                    # Copiar todos los adjuntos del correo original + el PDF procesado
-                    destinatarios_envio = [destinatario_final, "jfebrier@humano.com.do"]
+                    # Evitamos correos duplicados al enviador si TO y CC son el mismo en la prueba
+                    destinatarios_envio = list(set([destinatario_final, "jfebrier@humano.com.do"]))
                     
+                    # Copiar todos los adjuntos del correo original
                     for part in original_msg.walk():
                         if part.get_content_maintype() == 'multipart':
                             continue
                         if part.get('Content-Disposition') is None:
                             continue
                         
-                        # Extraer adjunto original
                         filename = part.get_filename()
                         if filename:
                             attachment_data = part.get_payload(decode=True)
@@ -127,11 +124,11 @@ def reenviar_correo_original(destinatario_final, pdf_filename, intermediario_nom
                             nuevo_correo.attach(p)
 
                     # Enviar a través de SMTP
-                    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server: # O tu servidor SMTP corporativo
+                    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server: # Ajusta si usas SMTP de Humano
                         server.login(EMAIL_USER, EMAIL_PASS)
                         server.sendmail(EMAIL_USER, destinatarios_envio, nuevo_correo.as_string())
                     
-                    print(f"Correo reenviado exitosamente a {destinatario_final} con copia a jfebrier@humano.com.do")
+                    print(f"Correo reenviado exitosamente a {destinatario_final}")
                     mail.logout()
                     return True
         
@@ -159,22 +156,19 @@ def main():
         # 1. Extraer intermediario con Gemini
         intermediario = extraer_intermediario_con_gemini(pdf_path)
         if not intermediario:
-            continue
+            intermediario = "Desconocido"
             
-        # 2. Buscar correo en el archivo Excel maestro
-        correo_destino = buscar_correo_en_excel(intermediario)
-        if not correo_destino:
-            # En modo pruebas, si no se encuentra en el Excel, lo mandamos a jfebrier para validar
-            correo_destino = "jfebrier@humano.com.do"
-            print(f"Intermediario no mapeado. Redirigiendo a prueba: {correo_destino}")
+        # 2. MODO PRUEBA: Forzamos el envío a jfebrier@humano.com.do
+        correo_destino = "jfebrier@humano.com.do"
+        print(f"Modo de prueba activado: Ignorando Excel. El correo se enviará a {correo_destino}")
             
         # 3. Reenviar correo con todos sus anexos
         exito = reenviar_correo_original(correo_destino, pdf_path, intermediario)
         
         if exito:
-            # Opcional: Eliminar o mover el PDF procesado para no repetirlo
+            # Eliminar el PDF de la cola local
             os.remove(pdf_path)
-            print(f"Archivo {pdf_path} procesado y eliminado de la cola local.")
+            print(f"Archivo {pdf_path} procesado y eliminado.")
 
 if __name__ == "__main__":
     main()
