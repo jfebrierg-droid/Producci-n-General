@@ -14,15 +14,10 @@ import pandas as pd
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # Credenciales de correo (leídas de las variables de entorno de GitHub)
-EMAIL_USER = os.environ.get(
-    "EMAIL_USER", "jfebrier@humano.com.do"
-)  # Correo remitente
-EMAIL_PASS = os.environ.get(
-    "EMAIL_PASS"
-)  # Contraseña o App Password configurada en Secrets
+EMAIL_USER = os.environ.get("EMAIL_USER", "jfebrier@humano.com.do")
+EMAIL_PASS = os.environ.get("EMAIL_PASS")
 
 # Rutas de las carpetas y archivos
-# Nota: Asegúrate de que el Excel esté en la raíz de tu repositorio o ajusta la ruta.
 EXCEL_PATH = (
     "Contactos_Cumpleanos_Megacentro_Automatizacion_ULTIMA_VERSION_10000_MENSAJES.xlsx"
 )
@@ -69,38 +64,45 @@ def procesar_reembolsos():
     print("No se pudo identificar el destinatario en el PDF.")
     return
 
-  # 3. Buscar el correo electrónico en el archivo Excel maestro
+  # 3. Buscar el correo electrónico en el archivo Excel maestro (para verificar lógica)
   try:
     df = pd.read_excel(EXCEL_PATH)
-    # Filtra buscando coincidencia con el nombre extraído (ajusta los nombres de columnas de tu Excel si es necesario)
     resultado = df[
         df["Nombre"].astype(str).str.contains(nombre_via, case=False, na=False)
     ]
 
     if resultado.empty:
-      print(f"No se encontró el contacto '{nombre_via}' en el Excel maestro.")
-      return
-
-    correo_destino = resultado.iloc[0]["Correo"]
-    print(f"Correo destino encontrado: {correo_destino}")
+      print(
+          f"Aviso: No se encontró el contacto '{nombre_via}' en el Excel"
+          " maestro, pero se procederá con la prueba."
+      )
+    else:
+      correo_encontrado = resultado.iloc[0]["Correo"]
+      print(
+          f"Contacto localizado en Excel. Correo asociado que se enviaría en"
+          f" producción: {correo_encontrado}"
+      )
 
   except Exception as e:
     print(f"Error al leer el archivo Excel: {e}")
     return
 
-  # 4. Reenviar el correo usando SMTP (Office 365) con copia (CC)
+  # 4. PRUEBA: Reenviar el correo exclusivamente a jfebrier@humano.com.do con el nuevo formato de asunto
   try:
     msg = MIMEMultipart()
     msg["From"] = EMAIL_USER
-    msg["To"] = correo_destino
-    msg["Cc"] = "jfebrier@humano.com.do"
+    msg["To"] = "jfebrier@humano.com.do"
+
+    # Asunto actualizado con el nombre del intermediario separado por guion
     msg["Subject"] = (
-        f"Reenvío Automático de Reembolso - {os.path.basename(archivo_reciente)}"
+        f"PRUEBA - Reembolso Procesado - {os.path.basename(archivo_reciente)} -"
+        f" {nombre_via}"
     )
 
     cuerpo = (
-        f"Estimado/a,\n\nAdjunto encontrará el documento de reembolso"
-        f" procesado para: {nombre_via}.\n\nSaludos cordiales."
+        f"Hola José,\n\nEsta es una prueba de envío exclusivo para"
+        f" jfebrier@humano.com.do.\nNombre extraído de la Vía en el PDF:"
+        f" {nombre_via}\n\nSaludos cordiales."
     )
     msg.attach(MIMEText(cuerpo, "plain"))
 
@@ -120,17 +122,13 @@ def procesar_reembolsos():
     server.starttls()
     server.login(EMAIL_USER, EMAIL_PASS)
 
-    # Enviar a destinatario principal y al CC
-    destinatarios = [correo_destino, "jfebrier@humano.com.do"]
-    server.sendmail(EMAIL_USER, destinatarios, msg.as_string())
+    # Enviar únicamente a tu correo de prueba
+    server.sendmail(EMAIL_USER, "jfebrier@humano.com.do", msg.as_string())
     server.quit()
-    print(
-        "¡Correo reenviado exitosamente a su destino con copia a"
-        " jfebrier@humano.com.do!"
-    )
+    print("¡Correo de prueba enviado exitosamente solo a jfebrier@humano.com.do!")
 
   except Exception as e:
-    print(f"Error al enviar el correo a través de SMTP: {e}")
+    print(f"Error al enviar el correo de prueba: {e}")
 
 
 if __name__ == "__main__":
