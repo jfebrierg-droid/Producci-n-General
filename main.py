@@ -1,135 +1,180 @@
-import glob
 import os
+import glob
+import pandas as pd
 import smtplib
-from email import encoders
-from email.mime.base import MIMEBase
+import imaplib
+import email
+from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 from google import genai
-import pandas as pd
+from google.genai import types
 
-# ==========================================
-# CONFIGURACIÓN DE CREDENCIALES Y RUTAS
-# ==========================================
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+# Configuración de credenciales desde las variables de entorno de GitHub Secrets
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASS = os.getenv("EMAIL_PASS")
 
-# Credenciales de correo (leídas de las variables de entorno de GitHub)
-EMAIL_USER = os.environ.get("EMAIL_USER", "jfebrier@humano.com.do")
-EMAIL_PASS = os.environ.get("EMAIL_PASS")
+# Rutas de trabajo
+LOCAL_DIR = "./Devoluciones de Reembolso - Automate"
+EXCEL_PATH = "./maestro_intermediarios.xlsx" # Asegúrate de que coincida con el nombre de tu Excel en el repo
 
-# Rutas de las carpetas y archivos
-EXCEL_PATH = (
-    "Contactos_Cumpleanos_Megacentro_Automatizacion_ULTIMA_VERSION_10000_MENSAJES.xlsx"
-)
-CARPETA_PDFS = "./Devoluciones de Reembolso - Automate"
+def extraer_intermediario_con_gemini(pdf_path):
+    """Utiliza Gemini para extraer el texto de la 'Vía:' desde el PDF."""
+    try:
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        
+        # Subir el archivo PDF a la API de Gemini
+        print(f"Subiendo {pdf_path} a Gemini para análisis...")
+        uploaded_file = client.files.upload(file=pdf_path)
+        
+        prompt = (
+            "Analiza este documento de reembolso de Humano Seguros. "
+            "Busca el campo 'Vía:' o el nombre del corredor / intermediario asociado. "
+            "Devuelve ÚNICAMENTE el nombre exacto del intermediario o corredor encontrado, sin texto adicional."
+        )
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[uploaded_file, prompt]
+        )
+        
+        intermediario = response.text.strip()
+        print(f"Intermediario detectado: {intermediario}")
+        
+        # Limpiar el archivo de los servidores de Gemini
+        client.files.delete(name=uploaded_file.name)
+        return intermediario
+    except Exception as e:
+        print(f"Error al procesar el PDF con Gemini: {e}")
+        return None
 
+def buscar_correo_en_excel(intermediario):
+    """Busca el correo del intermediario en el archivo Excel maestro."""
+    if not os.path.exists(EXCEL_PATH):
+        print(f"Error: No se encuentra el archivo Excel maestro en {EXCEL_PATH}")
+        return None
+    
+    try:
+        df = pd.read_excel(EXCEL_PATH)
+        # Asumiendo columnas estándar como 'Intermediario' y 'Correo' (ajusta los nombres si difieren en tu archivo)
+        # Hacemos una búsqueda insensible a mayúsculas/minúsculas o coincidencias parciales
+        match = df[df['Intermediario'].str.contains(intermediario, case=False, na=False)]
+        
+        if not match.empty:
+            correo = match.iloc[0]['Correo']
+            print(f"Correo encontrado para '{intermediario}': {correo}")
+            return correo
+        else:
+            print(f"No se encontró coincidencia en el Excel para el intermediario: {intermediario}")
+            return None
+    except Exception as e:
+        print(f"Error leyendo el archivo Excel: {e}")
+        return None
 
-def procesar_reembolsos():
-  print("Iniciando procesamiento de reembolsos...")
+def reenviar_correo_original(destinatario_final, pdf_filename, intermediario_nombre):
+    """Busca el correo original en el buzón y lo reenvía con todos sus anexos."""
+    try:
+        # Conexión IMAP para buscar el correo entrante reciente
+        mail = imaplib.IMAP4_SSL("imap.gmail.com") # O tu servidor de correo corporativo IMAP
+        mail.login(EMAIL_USER, EMAIL_PASS)
+        mail.select("inbox")
 
-  # 1. Buscar el PDF más reciente en la carpeta designada
-  if not os.path.exists(CARPETA_PDFS):
-    os.makedirs(CARPETA_PDFS, exist_ok=True)
+        # Buscamos correos recientes que contengan el nombre del archivo adjunto
+        status, messages = mail.search(None, f'(SUBJECT "{os.path.basename(pdf_filename)}")')
+        if status != "OK" or not messages[0]:
+            # Búsqueda alternativa por los últimos correos recibidos
+            status, messages = mail.search(None, "UNSEEN")
+        
+        if status == "OK" and messages[0]:
+            latest_email_id = messages[0].split()[-1]
+            status, msg_data = mail.fetch(latest_email_id, "(RFC822)")
+            
+            for response_part in msg_data:
+                if isinstance(response_part, tuple):
+                    original_msg = email.message_from_bytes(response_part[1])
+                    
+                    # Construir nuevo mensaje de reenvío
+                    nuevo_correo = MIMEMultipart()
+                    nuevo_correo['From'] = EMAIL_USER
+                    nuevo_correo['To'] = destinatario_final
+                    nuevo_correo['Cc'] = "jfebrier@humano.com.do"
+                    nuevo_correo['Subject'] = f"PRUEBA - Reembolso Procesado - {os.path.basename(pdf_filename)} - {intermediario_nombre}"
 
-  archivos_pdf = glob.glob(os.path.join(CARPETA_PDFS, "*.pdf"))
-  if not archivos_pdf:
-    print("No se encontraron archivos PDF nuevos para procesar.")
-    return
+                    # Cuerpo del mensaje indicando el reenvío automático
+                    cuerpo = f"Estimado intermediario,\n\nAdjunto encontrará el documento de reembolso procesado correspondiente a la vía: {intermediario_nombre}.\n\nAtentamente,\nHumano Seguros"
+                    nuevo_correo.attach(MIMEText(cuerpo, 'plain'))
 
-  # Seleccionar el archivo PDF más reciente
-  archivo_reciente = max(archivos_pdf, key=os.path.getctime)
-  print(f"Procesando archivo: {archivo_reciente}")
+                    # Copiar todos los adjuntos del correo original + el PDF procesado
+                    destinatarios_envio = [destinatario_final, "jfebrier@humano.com.do"]
+                    
+                    for part in original_msg.walk():
+                        if part.get_content_maintype() == 'multipart':
+                            continue
+                        if part.get('Content-Disposition') is None:
+                            continue
+                        
+                        # Extraer adjunto original
+                        filename = part.get_filename()
+                        if filename:
+                            attachment_data = part.get_payload(decode=True)
+                            p = MIMEBase('application', 'octet-stream')
+                            p.set_payload(attachment_data)
+                            encoders.encode_base64(p)
+                            p.add_header('Content-Disposition', f'attachment; filename="{filename}"')
+                            nuevo_correo.attach(p)
 
-  # 2. Extraer texto usando la API oficial de Gemini
-  client = genai.Client(api_key=GEMINI_API_KEY)
-  with open(archivo_reciente, "rb") as f:
-    uploaded_file = client.files.upload(
-        file=f, config={"mime_type": "application/pdf"}
-    )
+                    # Enviar a través de SMTP
+                    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server: # O tu servidor SMTP corporativo
+                        server.login(EMAIL_USER, EMAIL_PASS)
+                        server.sendmail(EMAIL_USER, destinatarios_envio, nuevo_correo.as_string())
+                    
+                    print(f"Correo reenviado exitosamente a {destinatario_final} con copia a jfebrier@humano.com.do")
+                    mail.logout()
+                    return True
+        
+        mail.logout()
+        print("No se pudo localizar el correo original para reenviar los anexos.")
+        return False
+    except Exception as e:
+        print(f"Error en el reenvío del correo: {e}")
+        return False
 
-  prompt = (
-      "Analiza este documento PDF de reembolso y extrae únicamente el texto"
-      " exacto que se encuentra en la línea 'Vía:' (por ejemplo:"
-      " Julissa Rosario Antigua/Jose Manuel Febrier Garcia). Devuelve solo el"
-      " nombre limpio sin texto adicional ni explicaciones."
-  )
-
-  response = client.models.generate_content(
-      model="gemini-2.5-flash", contents=[uploaded_file, prompt]
-  )
-  nombre_via = response.text.strip()
-  print(f"Nombre extraído de la línea Vía: {nombre_via}")
-
-  if not nombre_via:
-    print("No se pudo identificar el destinatario en el PDF.")
-    return
-
-  # 3. Buscar el correo electrónico en el archivo Excel maestro (para verificar lógica)
-  try:
-    df = pd.read_excel(EXCEL_PATH)
-    resultado = df[
-        df["Nombre"].astype(str).str.contains(nombre_via, case=False, na=False)
-    ]
-
-    if resultado.empty:
-      print(
-          f"Aviso: No se encontró el contacto '{nombre_via}' en el Excel"
-          " maestro, pero se procederá con la prueba."
-      )
-    else:
-      correo_encontrado = resultado.iloc[0]["Correo"]
-      print(
-          f"Contacto localizado en Excel. Correo asociado que se enviaría en"
-          f" producción: {correo_encontrado}"
-      )
-
-  except Exception as e:
-    print(f"Error al leer el archivo Excel: {e}")
-    return
-
-  # 4. PRUEBA: Reenviar el correo exclusivamente a jfebrier@humano.com.do con el nuevo formato de asunto
-  try:
-    msg = MIMEMultipart()
-    msg["From"] = EMAIL_USER
-    msg["To"] = "jfebrier@humano.com.do"
-
-    # Asunto actualizado con el nombre del intermediario separado por guion
-    msg["Subject"] = (
-        f"PRUEBA - Reembolso Procesado - {os.path.basename(archivo_reciente)} -"
-        f" {nombre_via}"
-    )
-
-    cuerpo = (
-        f"Hola José,\n\nEsta es una prueba de envío exclusivo para"
-        f" jfebrier@humano.com.do.\nNombre extraído de la Vía en el PDF:"
-        f" {nombre_via}\n\nSaludos cordiales."
-    )
-    msg.attach(MIMEText(cuerpo, "plain"))
-
-    # Adjuntar el archivo PDF original
-    with open(archivo_reciente, "rb") as attachment:
-      part = MIMEBase("application", "octet-stream")
-      part.set_payload(attachment.read())
-      encoders.encode_base64(part)
-      part.add_header(
-          "Content-Disposition",
-          f"attachment; filename= {os.path.basename(archivo_reciente)}",
-      )
-      msg.attach(part)
-
-    # Conexión al servidor SMTP de Office 365
-    server = smtplib.SMTP("smtp.office365.com", 587)
-    server.starttls()
-    server.login(EMAIL_USER, EMAIL_PASS)
-
-    # Enviar únicamente a tu correo de prueba
-    server.sendmail(EMAIL_USER, "jfebrier@humano.com.do", msg.as_string())
-    server.quit()
-    print("¡Correo de prueba enviado exitosamente solo a jfebrier@humano.com.do!")
-
-  except Exception as e:
-    print(f"Error al enviar el correo de prueba: {e}")
-
+def main():
+    print("Iniciando procesamiento de reembolsos...")
+    
+    # Buscar archivos PDF en la ruta de trabajo local
+    patron = os.path.join(LOCAL_DIR, "*.pdf")
+    archivos_pdf = glob.glob(patron)
+    
+    if not archivos_pdf:
+        print("No se encontraron archivos PDF nuevos para procesar.")
+        return
+    
+    for pdf_path in archivos_pdf:
+        print(f"\nProcesando archivo: {pdf_path}")
+        
+        # 1. Extraer intermediario con Gemini
+        intermediario = extraer_intermediario_con_gemini(pdf_path)
+        if not intermediario:
+            continue
+            
+        # 2. Buscar correo en el archivo Excel maestro
+        correo_destino = buscar_correo_en_excel(intermediario)
+        if not correo_destino:
+            # En modo pruebas, si no se encuentra en el Excel, lo mandamos a jfebrier para validar
+            correo_destino = "jfebrier@humano.com.do"
+            print(f"Intermediario no mapeado. Redirigiendo a prueba: {correo_destino}")
+            
+        # 3. Reenviar correo con todos sus anexos
+        exito = reenviar_correo_original(correo_destino, pdf_path, intermediario)
+        
+        if exito:
+            # Opcional: Eliminar o mover el PDF procesado para no repetirlo
+            os.remove(pdf_path)
+            print(f"Archivo {pdf_path} procesado y eliminado de la cola local.")
 
 if __name__ == "__main__":
-  procesar_reembolsos()
+    main()
