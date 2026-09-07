@@ -6,28 +6,35 @@ import openpyxl
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 def generar_con_gemini(pdf_stream, prompt):
     """
-    Inicializa y procesa el PDF con la API Key usando la configuración estándar directa.
+    Procesa el PDF utilizando el nuevo SDK oficial de Google GenAI.
     """
     api_key = os.environ.get("GEMINI_API_REEMBOLSO")
     if not api_key:
         raise ValueError("❌ No se encontró la variable GEMINI_API_REEMBOLSO en los secretos.")
     
-    # Configuración limpia de la API Key
-    genai.configure(api_key=api_key.strip())
+    # Inicializar cliente con el nuevo SDK oficial
+    client = genai.Client(api_key=api_key.strip())
     
-    # Usamos el modelo estándar y estable para procesamiento de documentos
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    
-    print("🔄 Subiendo PDF a Gemini para análisis...")
+    print("🔄 Subiendo PDF a Gemini para análisis con el nuevo cliente...")
     pdf_stream.seek(0)
-    sample_file = genai.upload_file(pdf_stream, mime_type="application/pdf")
+    
+    # Subir archivo usando el gestor de archivos del nuevo SDK
+    uploaded_file = client.files.upload(
+        file=pdf_stream,
+        config=types.UploadFileConfig(mime_type="application/pdf")
+    )
     
     print("🤖 Generando respuesta con Gemini...")
-    response = model.generate_content([sample_file, prompt])
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=[uploaded_file, prompt]
+    )
+    
     return response.text.strip()
 
 def get_drive_service():
