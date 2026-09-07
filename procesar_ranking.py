@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Script: procesar_ranking.py
-Descripción: Procesamiento de ranking por IA, conversión de HTML a imagen (compatible con GitHub Actions) y envío de correo con adjunto.
+Descripción: Procesamiento de ranking por IA, banner local en Base64 con el nombre exacto del repositorio, conversión a imagen y envío de correo.
 """
 
 from datetime import datetime
@@ -10,6 +10,7 @@ import os
 import re
 import smtplib
 import time
+import base64
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
@@ -45,6 +46,14 @@ def format_moneda(valor):
     if valor < 0:
         return f"-${abs(valor):,.2f}"
     return f"${valor:,.2f}"
+
+def obtener_imagen_base64(ruta_imagen):
+    """Convierte una imagen local a formato Base64 para embeberla de forma segura en HTML."""
+    if os.path.exists(ruta_imagen):
+        with open(ruta_imagen, "rb") as f:
+            encoded = base64.b64encode(f.read()).decode("utf-8")
+            return f"data:image/jpeg;base64,{encoded}"
+    return ""
 
 def obtener_datos_desde_drive_imagen(file_id):
     url = f"https://drive.google.com/uc?export=download&id={file_id}"
@@ -306,6 +315,9 @@ def procesar_y_enviar():
     </div>
     """
 
+    # Usamos el nombre exacto del archivo de la imagen que está en el repositorio
+    banner_base64 = obtener_imagen_base64("Banner Ranking de Producción - 1.jpg")
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -315,9 +327,7 @@ def procesar_y_enviar():
             <div style="background-color: #ffffff; color: #1e293b; padding: 24px 28px; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 16px; border-radius: 8px; border-left: 6px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                 {texto_dinamico}
             </div>
-            <div style="margin-bottom: 16px; text-align: left;">
-                <a href="https://ibb.co/N21Ljnxt"><img src="https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg" alt="Banner" border="0" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;" /></a>
-            </div>
+            {"<div style='margin-bottom: 16px; text-align: left;'><img src='" + banner_base64 + "' alt='Banner' style='width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;' /></div>" if banner_base64 else ""}
             <table style="width: 100%; border-collapse: collapse; font-size: 19px; margin: 0; padding: 0; border-radius: 6px; overflow: hidden; text-align: left;">
                 <thead>
                     <tr style="background-color: #0d1527; color: #ffffff; text-align: left;">
@@ -344,7 +354,7 @@ def procesar_y_enviar():
     </html>
     """
 
-    # --- 1. PRIMERO: Generar la imagen del HTML (con flags optimizados para GitHub Actions) ---
+    # --- 1. PRIMERO: Generar la imagen del HTML ---
     image_filename = f"ranking_{mes_actual}.png"
     print("Transformando el contenido del correo en una imagen...")
     try:
@@ -367,10 +377,8 @@ def procesar_y_enviar():
     msg["From"] = sender_email
     msg["To"] = recipient_email
     
-    # Adjuntar el contenido HTML del correo
     msg.attach(MIMEText(html_content, "html"))
 
-    # Adjuntar la imagen generada al mensaje
     if os.path.exists(image_filename):
         try:
             with open(image_filename, "rb") as f:
