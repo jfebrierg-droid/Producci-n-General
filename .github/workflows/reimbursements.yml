@@ -27,6 +27,6 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-          GOOGLE_DRIVE_FOLDER_ID: "1gGpIQGveFGIEzVWfwRqpmg89nOtcue6H"
+          GOOGLE_DRIVE_FOLDER_ID: "1gGplQGveFGlEzVWfwRqpmg89nOtcue6H"
         run: |
           python main.py
