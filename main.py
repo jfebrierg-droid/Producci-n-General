@@ -3,39 +3,32 @@ import io
 import json
 import pandas as pd
 import openpyxl
-import google.generativeai as genai
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
+import google.generativeai as genai
 
-# Llave oficial configurada en los secretos de GitHub
-GEMINI_KEYS_ENV_VARS = ["GEMINI_API_REEMBOLSO"]
-
-def generar_con_gemini_rotativo(pdf_stream, prompt):
+def generar_con_gemini(pdf_stream, prompt):
     """
-    Procesa el contenido con Gemini utilizando la llave de API configurada.
+    Inicializa y procesa el PDF con la API Key usando la configuración estándar directa.
     """
-    keys_disponibles = [os.environ.get(var) for var in GEMINI_KEYS_ENV_VARS if os.environ.get(var)]
+    api_key = os.environ.get("GEMINI_API_REEMBOLSO")
+    if not api_key:
+        raise ValueError("❌ No se encontró la variable GEMINI_API_REEMBOLSO en los secretos.")
     
-    if not keys_disponibles:
-        raise ValueError("❌ No se encontró la llave 'GEMINI_API_REEMBOLSO' configurada en los secretos de GitHub.")
-
-    api_key = keys_disponibles[0]
-    try:
-        print("🔄 Procesando con Gemini usando la llave 'GEMINI_API_REEMBOLSO'...")
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        
-        # Subir archivo al entorno temporal de Gemini
-        pdf_stream.seek(0)
-        sample_file = genai.upload_file(pdf_stream, mime_type="application/pdf")
-        
-        response = model.generate_content([sample_file, prompt])
-        resultado = response.text.strip()
-        print("✅ ¡Gemini respondió con éxito!")
-        return resultado
-    except Exception as e:
-        raise Exception(f"❌ Error al conectar con Gemini: {e}")
+    # Configuración limpia de la API Key
+    genai.configure(api_key=api_key.strip())
+    
+    # Usamos el modelo estándar y estable para procesamiento de documentos
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    
+    print("🔄 Subiendo PDF a Gemini para análisis...")
+    pdf_stream.seek(0)
+    sample_file = genai.upload_file(pdf_stream, mime_type="application/pdf")
+    
+    print("🤖 Generando respuesta con Gemini...")
+    response = model.generate_content([sample_file, prompt])
+    return response.text.strip()
 
 def get_drive_service():
     creds_json = json.loads(os.environ["GOOGLE_CREDENTIALS_JSON"])
@@ -73,7 +66,7 @@ def main():
         print(f"🆔 ID de carpeta: {folder_id}")
         print(f"==================================================")
     except Exception as e:
-        print(f"❌ Error crítico: La cuenta de servicio NO tiene acceso a la carpeta. Detalles: {e}")
+        print(f"❌ Error crítico en Google Drive: {e}")
         return
 
     query = f"'{folder_id}' in parents and trashed = false"
@@ -118,10 +111,10 @@ def main():
         )
         
         try:
-            nombre_extraido = generar_con_gemini_rotativo(pdf_stream, prompt)
+            nombre_extraido = generar_con_gemini(pdf_stream, prompt)
             print(f"🤖 Gemini extrajo: {nombre_extraido}")
         except Exception as err:
-            print(f"❌ No se pudo procesar '{pdf_name}': {err}")
+            print(f"❌ Error al procesar con Gemini: {err}")
             continue
         
         correo_destino = buscar_correo_en_excel(nombre_extraido)
