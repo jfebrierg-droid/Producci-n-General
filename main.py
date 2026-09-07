@@ -6,7 +6,7 @@ from google import genai
 # Cargar la llave de Gemini desde los secretos de GitHub
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Rutas de trabajo actualizadas
+# Rutas basadas en la estructura exacta de tu repositorio
 LOCAL_DIR = "./Devoluciones de Reembolso - Automate"
 EXCEL_PATH = "./Contactos_Cumpleanos_Megacentro_Automatizacion_ULTIMA_VERSION_10000_MENSAJES (1).xlsx"
 
@@ -47,7 +47,7 @@ def buscar_correo_en_excel(intermediario):
     try:
         df = pd.read_excel(EXCEL_PATH)
         
-        # Buscamos coincidencias flexibles con el primer nombre y apellido
+        # Buscamos coincidencias flexibles con el primer nombre y apellido en la columna 'Nombre'
         match = df[df['Nombre'].astype(str).str.contains(intermediario, case=False, na=False)]
         
         if not match.empty:
@@ -83,7 +83,7 @@ def main():
         if not intermediario:
             intermediario = "Desconocido"
             
-        # 2. Buscar el correo en el Excel maestro
+        # 2. Buscar el correo en el Excel maestro usando columnas 'Nombre' y 'Correo'
         correo_destino = buscar_correo_en_excel(intermediario)
         
         # Si no se encuentra, por seguridad se redirige a tu correo
@@ -91,7 +91,7 @@ def main():
             print(f"Aviso: No se halló el correo para '{intermediario}'. Redirigiendo a jfebrier@humano.com.do por defecto.")
             correo_destino = "jfebrier@humano.com.do"
             
-        # 3. Guardar el resultado en el archivo de texto para que Power Automate lo lea
+        # 3. Guardar el resultado en un archivo de texto (*_destino.txt) para Power Automate
         base_name = os.path.splitext(pdf_path)[0]
         txt_output_path = f"{base_name}_destino.txt"
         
