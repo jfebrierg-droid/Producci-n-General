@@ -41,99 +41,6 @@ LISTA_MAESTRA_AGENTES = [
     "Eddy Concepcion", "Yolanda Cabrera", "Paula Herrera", "Rafael Capellan", "Salvador Martinez"
 ]
 
-# --- BANCO DE MENSAJES ULTRA CORTOS Y DE PURA MOTIVACIÓN DOMINICANA ---
-BANCO_BAJO = {
-    "aperturas": [
-        "¡Mi gente, a ponernos las pilas y",
-        "¡A despertar y",
-        "¡A moverse rápido que",
-        "¡A fajarse con energía y"
-    ],
-    "nucleos": [
-        "meter mano con esos clientes!",
-        "buscar esos números para levantar esto!",
-        "hay terreno virgen esperando por nosotros!",
-        "darle calor a este ramo que está frío!"
-    ],
-    "cierres": [
-        "¡A darle con tó!",
-        "¡A romper el hielo!",
-        "¡Manos a la obra!",
-        "¡A meter el acelerador!"
-    ]
-}
-
-BANCO_MEDIO = {
-    "aperturas": [
-        "¡Vamos bien, pero",
-        "¡Paso firme mi gente,",
-        "¡Nadie se detiene,",
-        "¡Estamos activos,"
-    ],
-    "nucleos": [
-        "hay que dar un chin más para llegar arriba!",
-        "a meterle presión para asegurar la meta!",
-        "a mantener el ritmo y cerrar con fuerza!",
-        "a dar ese extra que nos falta hoy!"
-    ],
-    "cierres": [
-        "¡A fondo mi gente!",
-        "¡A coronar el mes!",
-        "¡Sigamos así!",
-        "¡A cerrar con fuerza!"
-    ]
-}
-
-BANCO_ALTO = {
-    "aperturas": [
-        "¡Pero ustedes están en alta mi gente,",
-        "¡Mi gente, ustedes están rompiendo,",
-        "¡Imparables por aquí,",
-        "¡Duro y sin aflojar mi gente,"
-    ],
-    "nucleos": [
-        "barriendo con to' por ahí!",
-        "demostrando quiénes son los duros de verdad!",
-        "trabajando con un swing que no coge corte!",
-        "dejando a to' el mundo atrás!"
-    ],
-    "cierres": [
-        "¡A seguir sumando sin aflojar!",
-        "¡A mantener el enfoque hasta el final!",
-        "¡Orgullo total y a seguir!",
-        "¡A mantener ese ritmo duro!"
-    ]
-}
-
-BANCO_INTERNACIONAL = {
-    "aperturas": [
-        "¡Mi gente, a asegurar a los nuestros con cobertura mundial,",
-        "¡A ofrecer esa protección internacional aquí mismo en el patio,",
-        "¡Duro con el seguro de afuera para nuestra gente,",
-        "¡A colocar esas pólizas globales aquí en casa,"
-    ],
-    "nucleos": [
-        "para que tengan salud de primera en cualquier parte del mundo!",
-        "ofreciendo esa tranquilidad internacional sin salir del país!",
-        "protegiendo a los clientes de aquí con cobertura de nivel mundial!",
-        "vendiendo ese blindaje internacional que tanto busca nuestra gente!"
-    ],
-    "cierres": [
-        "¡A seguir sumando sin aflojar!",
-        "¡A mantener el enfoque hasta el final!",
-        "¡A darle con tó' y sin bajar el ritmo!",
-        "¡A seguir trabajando duro!"
-    ]
-}
-
-def generar_mensaje_combinatorio(banco, semilla_extra=0):
-    ahora = datetime.now()
-    semilla_tiempo = ahora.isocalendar()[1] + (ahora.year * 52) + semilla_extra
-    idx_a = semilla_tiempo % len(banco["aperturas"])
-    idx_n = (semilla_tiempo * 3) % len(banco["nucleos"])
-    idx_c = (semilla_tiempo * 7) % len(banco["cierres"])
-    return f"{banco['aperturas'][idx_a]} {banco['nucleos'][idx_n]} {banco['cierres'][idx_c]}"
-
 def format_moneda(valor):
     if valor < 0:
         return f"-${abs(valor):,.2f}"
@@ -303,50 +210,6 @@ def procesar_y_enviar():
             "val_auto": val_auto
         })
 
-    count_local = sum(1 for x in datos_procesados if x["val_local"] > 0)
-    count_inter = sum(1 for x in datos_procesados if x["val_inter"] > 0)
-    count_vida = sum(1 for x in datos_procesados if x["val_vida"] > 0)
-    count_auto = sum(1 for x in datos_procesados if x["val_auto"] > 0)
-
-    def evaluar_participacion_ramo(ramo_key, count, semilla):
-        if ramo_key == "inter":
-            if count == 0:
-                msg_base = generar_mensaje_combinatorio(BANCO_BAJO, semilla_extra=semilla)
-            else:
-                msg_base = generar_mensaje_combinatorio(BANCO_INTERNACIONAL, semilla_extra=semilla)
-        else:
-            if count < 10:
-                msg_base = generar_mensaje_combinatorio(BANCO_BAJO, semilla_extra=semilla)
-            elif 10 <= count <= 15:
-                msg_base = generar_mensaje_combinatorio(BANCO_MEDIO, semilla_extra=semilla)
-            else:
-                msg_base = generar_mensaje_combinatorio(BANCO_ALTO, semilla_extra=semilla)
-        
-        return f"<b>{count}</b> activos. <i>&ldquo;{msg_base}&rdquo;</i>"
-
-    estado_local = evaluar_participacion_ramo("local", count_local, semilla=1)
-    estado_inter = evaluar_participacion_ramo("inter", count_inter, semilla=4)
-    estado_vida = evaluar_participacion_ramo("vida", count_vida, semilla=2)
-    estado_auto = evaluar_participacion_ramo("auto", count_auto, semilla=3)
-
-    counts = [count_local, count_vida, count_auto]
-    if any(c < 10 for c in counts):
-        box_bg, box_border, box_color = "#fffbeb", "#f59e0b", "#92400e"
-    elif any(10 <= c <= 15 for c in counts):
-        box_bg, box_border, box_color = "#fefce8", "#eab308", "#854d0e"
-    else:
-        box_bg, box_border, box_color = "#f0fdf4", "#22c55e", "#166534"
-
-    mensaje_dinamico_atencion = f"""
-    <div style="background-color: {box_bg}; border-left: 5px solid {box_border}; padding: 18px 22px; margin-top: 20px; margin-bottom: 16px; border-radius: 6px; font-size: 17px; color: {box_color}; text-align: left; line-height: 1.6;">
-        <div style="font-weight: bold; margin-bottom: 14px; font-size: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 8px;">Participación por Producto:</div>
-        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Local 🩺:</strong> {estado_local}</div>
-        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Internacional ✈️:</strong> {estado_inter}</div>
-        <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed rgba(0,0,0,0.08);"><strong>Vida ❤️:</strong> {estado_vida}</div>
-        <div><strong>Auto, Hogar y Empresa 🚗:</strong> {estado_auto}</div>
-    </div>
-    """
-
     top_local = sorted(datos_procesados, key=lambda x: x["val_local"], reverse=True)[:3]
     top_inter = sorted(datos_procesados, key=lambda x: x["val_inter"], reverse=True)[:3]
     top_vida = sorted(datos_procesados, key=lambda x: x["val_vida"], reverse=True)[:3]
@@ -436,8 +299,6 @@ def procesar_y_enviar():
                 </td>
             </tr>
         </table>
-
-        {mensaje_dinamico_atencion}
         
         <div style="margin-top: 16px; font-size: 19px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: left; font-weight: bold;">
             A continuación, el detalle completo de la producción:
