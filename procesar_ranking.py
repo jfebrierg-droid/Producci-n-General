@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Script: procesar_ranking.py
-Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4 -> 3 -> 2 -> 1),
-reintentos automáticos para errores 503, respaldo de modelos, mensajes cortos dominicanos
-con el estilo criollo en todos los ramos, emojis alegóricos por producto y el emoji de músculo para quienes cumplen la meta.
+Descripción: Procesamiento de ranking por IA, envío de correo y conversión automática del HTML a imagen.
 """
 
 from datetime import datetime
@@ -17,6 +15,7 @@ from email.mime.text import MIMEText
 from PIL import Image
 import requests
 from google import genai
+from html2image import Html2Image  # Librería para convertir HTML a imagen sin complicaciones
 
 # --- CONFIGURACIÓN DE MULTI-CUENTAS (Orden de prioridad estricto: 4 -> 3 -> 2 -> 1) ---
 API_KEYS_GEMINI = [
@@ -258,7 +257,7 @@ def procesar_y_enviar():
 
     texto_dinamico = f"""
     <div style="font-family: Arial, sans-serif; color: #1e293b; text-align: left;">
-        <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">🔥 EQUIPO MEGAPODEROSO 💪</div>
+        <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">🔥 EQUIPO MEGAPODEROSOS 💪</div>
         <div style="font-size: 22px; font-weight: bold; color: #334155; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; text-align: left;">📊 Numeritos del mes de {mes_actual.capitalize()}</div>
         
         <table style="width: 100%; border-collapse: collapse; font-size: 19px; line-height: 1.6; text-align: left;">
@@ -344,6 +343,7 @@ def procesar_y_enviar():
     </html>
     """
 
+    # Enviar correo electrónico
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
     msg["From"] = sender_email
@@ -360,6 +360,21 @@ def procesar_y_enviar():
         print("¡Correo enviado con éxito!")
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
+        return
+
+    # --- PASO POSTERIOR: Convertir el HTML del correo en una imagen PNG ---
+    print("Transformando el contenido del correo en una imagen...")
+    try:
+        hti = Html2Image(output_path='.')
+        # Definimos un ancho fijo de 890 píxeles para que la captura salga limpia y ordenada
+        hti.screenshot(
+            html_str=html_content, 
+            save_as=f"ranking_{mes_actual}.png", 
+            size=(890, 1400)
+        )
+        print(f"¡Imagen generada con éxito como 'ranking_{mes_actual}.png'!")
+    except Exception as e:
+        print(f"Error al generar la imagen desde el HTML: {e}")
 
 if __name__ == "__main__":
     procesar_y_enviar()
