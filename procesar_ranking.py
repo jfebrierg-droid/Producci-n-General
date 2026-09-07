@@ -58,7 +58,7 @@ def obtener_datos_desde_drive_imagen(file_id):
     print("Descargando imagen desde Google Drive...")
     response = requests.get(url, timeout=30)
     if response.status_code != 200:
-        raise Exception("No se pudo descargar la imagen de Google Drive.")
+        raise Exception(f"No se pudo descargar la imagen de Google Drive. Código HTTP: {response.status_code}")
 
     image_path = "temp_ranking_drive.jpg"
     with open(image_path, "wb") as f:
@@ -81,32 +81,40 @@ def obtener_datos_desde_drive_imagen(file_id):
     Reglas importantes:
     - Incluye a TODOS los intermediarios visibles en la imagen.
     - Si un intermediario no tiene valor o aparece en cero/vacío, asigna el valor como "0.00".
-    - Devuelve ÚNICAMENTE el bloque JSON válido, sin texto adicional.
+    - Devuelve ÚNICAMENTE o exclusivamente el bloque JSON válido, sin texto adicional.
     """
 
-    modelos_a_probar = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']
+    modelos_a_probar = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
     texto_respuesta = None
 
     for index, api_key in enumerate(API_KEYS_GEMINI):
-        if not api_key: continue
+        if not api_key: 
+            continue
         client = genai.Client(api_key=api_key)
         for modelo in modelos_a_probar:
             try:
+                print(f"Intentando procesar con el modelo {modelo} (Key #{index + 1})...")
                 response = client.models.generate_content(model=modelo, contents=[img, prompt])
-                texto_respuesta = response.text
-                break
-            except Exception:
+                if response and response.text:
+                    texto_respuesta = response.text
+                    break
+            except Exception as e:
+                print(f" -> Falló con {modelo}: {e}")
                 continue
-        if texto_respuesta: break
+        if texto_respuesta: 
+            break
 
-    if os.path.exists(image_path): os.remove(image_path)
-    if not texto_respuesta: raise Exception("Error al procesar con IA.")
+    if os.path.exists(image_path): 
+        os.remove(image_path)
+        
+    if not texto_respuesta: 
+        raise Exception("Error al procesar con IA: Ningún modelo pudo generar una respuesta válida.")
 
     match = re.search(r"\[.*\]", texto_respuesta, re.DOTALL)
     if match:
         return json.loads(match.group(0))
     else:
-        raise Exception("No se pudo interpretar la respuesta como JSON.")
+        raise Exception(f"No se pudo interpretar la respuesta como JSON. Respuesta recibida:\n{texto_respuesta}")
 
 def parse_monto(valor_str):
     try:
@@ -236,10 +244,9 @@ def procesar_y_enviar():
     </div>
     """
 
-    # Cargamos el Base64 EXCLUSIVAMENTE para generar la imagen limpia y completa
     banner_base64 = obtener_imagen_base64("Banner Ranking de Producción - 1.jpg")
 
-    # HTML exclusivo para la CAPTURA DE IMAGEN (usa Base64 para que la foto salga perfecta)
+    # HTML exclusivo para generar la CAPTURA DE IMAGEN completa (con Base64)
     html_para_imagen = f"""
     <!DOCTYPE html>
     <html>
@@ -276,7 +283,7 @@ def procesar_y_enviar():
     </html>
     """
 
-    # HTML limpio para el CORREO ELECTRÓNICO (sin código gigante Base64)
+    # HTML limpio para el CUERPO DEL CORREO (sin códigos largos)
     html_para_correo = f"""
     <!DOCTYPE html>
     <html>
@@ -294,9 +301,9 @@ def procesar_y_enviar():
     </html>
     """
 
-    # --- 1. Generar la imagen con altura extendida (3200px) para que NUNCA salga cortada ---
+    # --- 1. Generar la imagen con altura extendida (3200px) para evitar cortes ---
     image_filename = f"ranking_{mes_actual}.png"
-    print("Transformando el contenido del correo en una imagen completa...")
+    print("Transformando el contenido en una imagen completa y limpia...")
     try:
         hti = Html2Image(
             output_path='.',
@@ -305,7 +312,7 @@ def procesar_y_enviar():
         hti.screenshot(
             html_str=html_para_imagen, 
             save_as=image_filename, 
-            size=(890, 3200) # Altura aumentada para evitar cortes
+            size=(890, 3200)
         )
         print(f"¡Imagen generada con éxito como '{image_filename}'!")
     except Exception as e:
