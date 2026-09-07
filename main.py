@@ -2,10 +2,9 @@ import os
 import io
 import json
 import pandas as pd
-import openpyxl
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
+from googleapiclient.http import MediaIoBaseDownload
 from google import genai
 from google.genai import types
 
@@ -38,9 +37,15 @@ def generar_con_gemini(pdf_stream, prompt):
 def get_drive_service():
     creds_json = json.loads(os.environ["GOOGLE_CREDENTIALS_JSON"])
     creds = service_account.Credentials.from_service_account_info(
-        creds_json, scopes=["https://www.googleapis.com/auth/drive"]
+        creds_json, scopes=[
+            "https://www.googleapis.com/auth/drive",
+            "https://www.googleapis.com/auth/documents" # Scope necesario para Google Docs
+        ]
     )
-    return build("drive", "v3", credentials=creds)
+    # Necesitamos tanto el servicio de Drive como el de Docs
+    drive_service = build("drive", "v3", credentials=creds)
+    docs_service = build("docs", "v1", credentials=creds)
+    return drive_service, docs_service
 
 def buscar_correo_en_excel(nombre_extraido):
     try:
@@ -59,11 +64,11 @@ def buscar_correo_en_excel(nombre_extraido):
     return "soporte.reembolso@humano.com.do"
 
 def main():
-    service = get_drive_service()
+    drive_service, docs_service = get_drive_service()
     folder_id = os.environ["GOOGLE_DRIVE_FOLDER_ID"]
     
     try:
-        folder_info = service.files().get(fileId=folder_id, fields="name", supportsAllDrives=True).execute()
+        folder_info = drive_service.files().get(fileId=folder_id, fields="name", supportsAllDrives=True).execute()
         folder_name = folder_info.get("name", "Desconocida")
         print(f"==================================================")
         print(f"🔎 CONECTADO A GOOGLE DRIVE")
@@ -75,7 +80,7 @@ def main():
         return
 
     query = f"'{folder_id}' in parents and trashed = false"
-    results = service.files().list(q=query, pageSize=100, fields="files(id, name, mimeType)", includeItemsFromAllDrives=True, supportsAllDrives=True).execute()
+    results = drive_service.files().list(q=query, pageSize=100, fields="files(id, name, mimeType)", includeItemsFromAllDrives=True, supportsAllDrives=True).execute()
     files = results.get("files", [])
     
     print(f"\n📋 Total de elementos encontrados en '{folder_name}': {len(files)}")
@@ -85,8 +90,8 @@ def main():
     
     pdf_files = [f for f in files if "pdf" in f["mimeType"].lower() or f["name"].lower().endswith(".pdf")]
     
-    # Mapear archivos existentes para ver si ya tienen su _destino.txt creado previamente
-    existing_txts = {f["name"]: f["id"] for f in files if f["name"].endswith("_destino.txt")}
+    # Ahora buscamos documentos de Google en lugar de archivos .txt
+    existing_docs = {f["name"]: f["id"] for f in files if f["mimeType"] == "application/vnd.google-apps.document"}
     
     if not pdf_files:
         print("⚠️ Advertencia: No se detectaron archivos PDF válidos en esta carpeta.")
@@ -95,15 +100,15 @@ def main():
     for file in pdf_files:
         pdf_name = file["name"]
         base_name = os.path.splitext(pdf_name)[0]
-        txt_expected_name = f"{base_name}_destino.txt"
+        doc_expected_name = f"{base_name}_destino" # Nombre sin extensión para el Google Doc
         
-        if txt_expected_name in existing_txts:
-            print(f"⏭️ Omitiendo '{pdf_name}' porque ya tiene su archivo de salida '{txt_expected_name}'.")
+        if doc_expected_name in existing_docs:
+            print(f"⏭️ Omitiendo '{pdf_name}' porque ya tiene su documento de salida '{doc_expected_name}'.")
             continue
             
         print(f"\n🚀 ¡Procesando nuevo PDF detectado: '{pdf_name}'!")
         
-        request = service.files().get_media(fileId=file["id"])
+        request = drive_service.files().get_media(fileId=file["id"])
         pdf_stream = io.BytesIO()
         downloader = MediaIoBaseDownload(pdf_stream, request)
         done = False
@@ -127,40 +132,35 @@ def main():
         correo_destino = buscar_correo_en_excel(nombre_extraido)
         print(f"📧 Correo mapeado: {correo_destino}")
         
-        media = MediaIoBaseUpload(
-            io.BytesIO(correo_destino.encode("utf-8")), 
-            mimetype="text/plain", 
-            resumable=False
-        )
-        
-        # Truco técnico: Si por alguna razón el archivo ya existía de un intento anterior fallido, lo actualizamos. 
-        # Si no existe, creamos un archivo Google Doc vacío nativo o intentamos la creación estándar.
+        # --- NUEVA ESTRATEGIA: Crear un Google Doc (0 bytes de cuota) ---
+        print(f"📝 Creando Documento de Google nativo para evitar límites de almacenamiento...")
         try:
-            if txt_expected_name in existing_txts:
-                file_id_to_update = existing_txts[txt_expected_name]
-                service.files().update(
-                    fileId=file_id_to_update,
-                    media_body=media,
-                    supportsAllDrives=True
-                ).execute()
-                print(f"✅ ¡Archivo de salida actualizado con éxito: '{txt_expected_name}'!")
-            else:
-                file_metadata = {
-                    "name": txt_expected_name,
-                    "parents": [folder_id]
+            # 1. Crear el Google Doc vacío en la carpeta destino
+            file_metadata = {
+                'name': doc_expected_name,
+                'mimeType': 'application/vnd.google-apps.document',
+                'parents': [folder_id]
+            }
+            doc = drive_service.files().create(body=file_metadata, supportsAllDrives=True).execute()
+            doc_id = doc.get('id')
+            
+            # 2. Escribir el correo electrónico dentro del documento usando la API de Google Docs
+            requests = [
+                {
+                    'insertText': {
+                        'location': {
+                            'index': 1,
+                        },
+                        'text': correo_destino
+                    }
                 }
-                service.files().create(
-                    body=file_metadata, 
-                    media_body=media, 
-                    fields="id",
-                    supportsAllDrives=True
-                ).execute()
-                print(f"✅ ¡Archivo de salida creado con éxito: '{txt_expected_name}'!")
+            ]
+            docs_service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
+            
+            print(f"✅ ¡Documento de salida creado y escrito con éxito: '{doc_expected_name}'!")
+            
         except Exception as drive_err:
-            print(f"⚠️ Aviso de Drive (Restricción de cuota de la cuenta de servicio): {drive_err}")
-            print("💡 Alternativa aplicada: Como la cuenta de servicio no puede crear archivos nuevos en carpetas personales de Drive,")
-            print("   por favor crea manualmente un archivo de texto vacío en tu carpeta de Drive llamado igual que el esperado (ej: 'tu_archivo_destino.txt').")
-            print("   Una vez creado, la cuenta de servicio SÍ tiene permiso para editarlo y escribir dentro el correo electrónico automáticamente.")
+            print(f"❌ Error al crear el Documento de Google: {drive_err}")
             raise drive_err
 
 if __name__ == "__main__":
