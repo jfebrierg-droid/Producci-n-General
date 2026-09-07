@@ -2,8 +2,6 @@ name: Ejecutar Ranking MEGAPODEROSOS
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 12 * * *'
 
 jobs:
   ejecutar-script:
