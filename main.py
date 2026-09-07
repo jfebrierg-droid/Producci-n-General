@@ -8,40 +8,34 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
-# Lista con el nombre del secreto exacto que acabamos de crear en GitHub
-GEMINI_KEYS_ENV_VARS = ["GEMINI_API_REEMBOLSO", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4"]
+# Llave oficial configurada en los secretos de GitHub
+GEMINI_KEYS_ENV_VARS = ["GEMINI_API_REEMBOLSO"]
 
 def generar_con_gemini_rotativo(pdf_stream, prompt):
     """
-    Intenta procesar el contenido con Gemini utilizando múltiples API Keys en orden.
-    Si una llave falla, pasa automáticamente a la siguiente.
+    Procesa el contenido con Gemini utilizando la llave de API configurada.
     """
     keys_disponibles = [os.environ.get(var) for var in GEMINI_KEYS_ENV_VARS if os.environ.get(var)]
     
     if not keys_disponibles:
-        raise ValueError("❌ No se encontró ninguna llave de Gemini configurada en los secretos de GitHub con los nombres esperados.")
+        raise ValueError("❌ No se encontró la llave 'GEMINI_API_REEMBOLSO' configurada en los secretos de GitHub.")
 
-    ultimo_error = None
-    for i, api_key in enumerate(keys_disponibles, 1):
-        try:
-            print(f"🔄 Intentando procesar con Gemini usando la llave #{i}...")
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-2.5-flash")
-            
-            # Subir archivo al entorno temporal de Gemini
-            pdf_stream.seek(0)
-            sample_file = genai.upload_file(pdf_stream, mime_type="application/pdf")
-            
-            response = model.generate_content([sample_file, prompt])
-            resultado = response.text.strip()
-            print(f"✅ ¡Gemini respondió con éxito usando la llave #{i}!")
-            return resultado
-        except Exception as e:
-            print(f"⚠️ La llave #{i} falló. Detalle: {e}")
-            ultimo_error = e
-            continue
-            
-    raise Exception(f"❌ Todas las API Keys de Gemini fallaron. Último error: {ultimo_error}")
+    api_key = keys_disponibles[0]
+    try:
+        print("🔄 Procesando con Gemini usando la llave 'GEMINI_API_REEMBOLSO'...")
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-2.5-flash")
+        
+        # Subir archivo al entorno temporal de Gemini
+        pdf_stream.seek(0)
+        sample_file = genai.upload_file(pdf_stream, mime_type="application/pdf")
+        
+        response = model.generate_content([sample_file, prompt])
+        resultado = response.text.strip()
+        print("✅ ¡Gemini respondió con éxito!")
+        return resultado
+    except Exception as e:
+        raise Exception(f"❌ Error al conectar con Gemini: {e}")
 
 def get_drive_service():
     creds_json = json.loads(os.environ["GOOGLE_CREDENTIALS_JSON"])
@@ -127,7 +121,7 @@ def main():
             nombre_extraido = generar_con_gemini_rotativo(pdf_stream, prompt)
             print(f"🤖 Gemini extrajo: {nombre_extraido}")
         except Exception as err:
-            print(f"❌ No se pudo procesar '{pdf_name}' con ninguna API Key de Gemini: {err}")
+            print(f"❌ No se pudo procesar '{pdf_name}': {err}")
             continue
         
         correo_destino = buscar_correo_en_excel(nombre_extraido)
