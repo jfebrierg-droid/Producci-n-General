@@ -17,13 +17,11 @@ def generar_con_gemini(pdf_stream, prompt):
     if not api_key:
         raise ValueError("❌ No se encontró la variable GEMINI_API_REEMBOLSO en los secretos.")
     
-    # Inicializar cliente con el nuevo SDK oficial
     client = genai.Client(api_key=api_key.strip())
     
     print("🔄 Subiendo PDF a Gemini para análisis con el nuevo cliente...")
     pdf_stream.seek(0)
     
-    # Subir archivo usando el gestor de archivos del nuevo SDK
     uploaded_file = client.files.upload(
         file=pdf_stream,
         config=types.UploadFileConfig(mime_type="application/pdf")
@@ -128,6 +126,7 @@ def main():
         print(f"📧 Correo mapeado: {correo_destino}")
         
         txt_content = io.BytesIO(correo_destino.encode("utf-8"))
+        # Añadimos supportsAllDrives por seguridad en los parámetros de subida
         media = MediaIoBaseUpload(txt_content, mimetype="text/plain", resumable=True)
         
         file_metadata = {
@@ -135,7 +134,12 @@ def main():
             "parents": [folder_id]
         }
         
-        service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+        service.files().create(
+            body=file_metadata, 
+            media_body=media, 
+            fields="id",
+            supportsAllDrives=True
+        ).execute()
         print(f"✅ ¡Archivo de salida creado con éxito: '{txt_expected_name}'!")
 
 if __name__ == "__main__":
