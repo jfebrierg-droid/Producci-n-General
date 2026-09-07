@@ -1,8 +1,8 @@
 name: Procesar Reembolsos Google Drive
 
 on:
-  schedule:
-    - cron: '*/10 * * * *'
+  repository_dispatch:
+    types: [procesar_reembolso]
   workflow_dispatch:
 
 jobs:
