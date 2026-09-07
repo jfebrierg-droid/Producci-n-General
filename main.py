@@ -63,7 +63,7 @@ def main():
     folder_id = os.environ["GOOGLE_DRIVE_FOLDER_ID"]
     
     try:
-        folder_info = service.files().get(fileId=folder_id, fields="name").execute()
+        folder_info = service.files().get(fileId=folder_id, fields="name", supportsAllDrives=True).execute()
         folder_name = folder_info.get("name", "Desconocida")
         print(f"==================================================")
         print(f"🔎 CONECTADO A GOOGLE DRIVE")
@@ -75,7 +75,7 @@ def main():
         return
 
     query = f"'{folder_id}' in parents and trashed = false"
-    results = service.files().list(q=query, pageSize=100, fields="files(id, name, mimeType)").execute()
+    results = service.files().list(q=query, pageSize=100, fields="files(id, name, mimeType)", includeItemsFromAllDrives=True, supportsAllDrives=True).execute()
     files = results.get("files", [])
     
     print(f"\n📋 Total de elementos encontrados en '{folder_name}': {len(files)}")
@@ -125,14 +125,19 @@ def main():
         correo_destino = buscar_correo_en_excel(nombre_extraido)
         print(f"📧 Correo mapeado: {correo_destino}")
         
-        txt_content = io.BytesIO(correo_destino.encode("utf-8"))
-        # Añadimos supportsAllDrives por seguridad en los parámetros de subida
-        media = MediaIoBaseUpload(txt_content, mimetype="text/plain", resumable=True)
-        
+        # Crear un archivo de texto plano utilizando inserción directa sin chunks pesados para evitar bloqueos de cuota
         file_metadata = {
             "name": txt_expected_name,
-            "parents": [folder_id]
+            "parents": [folder_id],
+            "mimeType": "text/plain"
         }
+        
+        media = MediaIoBaseUpload(
+            io.BytesIO(correo_destino.encode("utf-8")), 
+            mimetype="text/plain", 
+            chunksize=1024*1024,
+            resumable=False
+        )
         
         service.files().create(
             body=file_metadata, 
