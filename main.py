@@ -8,8 +8,8 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
-# Lista de variables de entorno de las API Keys de Gemini disponibles
-GEMINI_KEYS_ENV_VARS = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4"]
+# Lista con el nombre del secreto exacto que acabamos de crear en GitHub
+GEMINI_KEYS_ENV_VARS = ["GEMINI_API_REEMBOLSO", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4"]
 
 def generar_con_gemini_rotativo(pdf_stream, prompt):
     """
@@ -19,7 +19,7 @@ def generar_con_gemini_rotativo(pdf_stream, prompt):
     keys_disponibles = [os.environ.get(var) for var in GEMINI_KEYS_ENV_VARS if os.environ.get(var)]
     
     if not keys_disponibles:
-        raise ValueError("❌ No se encontró ninguna GEMINI_API_KEY configurada en los secretos de GitHub.")
+        raise ValueError("❌ No se encontró ninguna llave de Gemini configurada en los secretos de GitHub con los nombres esperados.")
 
     ultimo_error = None
     for i, api_key in enumerate(keys_disponibles, 1):
@@ -52,7 +52,6 @@ def get_drive_service():
 
 def buscar_correo_en_excel(nombre_extraido):
     try:
-        # Nombre exacto de tu archivo Excel de contactos
         excel_filename = "Contactos_Cumpleanos_Megacentro_Automatizacion_ULTIMA_VERSION_10000_MENSAJES (1).xlsx"
         df = pd.read_excel(excel_filename, sheet_name=0)
         
@@ -71,7 +70,6 @@ def main():
     service = get_drive_service()
     folder_id = os.environ["GOOGLE_DRIVE_FOLDER_ID"]
     
-    # 1. Verificar conexión a la carpeta de Google Drive
     try:
         folder_info = service.files().get(fileId=folder_id, fields="name").execute()
         folder_name = folder_info.get("name", "Desconocida")
@@ -84,7 +82,6 @@ def main():
         print(f"❌ Error crítico: La cuenta de servicio NO tiene acceso a la carpeta. Detalles: {e}")
         return
 
-    # 2. Listar elementos en la carpeta
     query = f"'{folder_id}' in parents and trashed = false"
     results = service.files().list(q=query, pageSize=100, fields="files(id, name, mimeType)").execute()
     files = results.get("files", [])
@@ -94,7 +91,6 @@ def main():
         print(f"   - [Elemento] Nombre: '{f['name']}' | Tipo: {f['mimeType']}")
     print("-" * 50)
     
-    # Filtrar PDFs y archivos de texto existentes
     pdf_files = [f for f in files if "pdf" in f["mimeType"].lower() or f["name"].lower().endswith(".pdf")]
     txt_filenames = [f["name"] for f in files if f["name"].endswith("_destino.txt")]
     
@@ -113,7 +109,6 @@ def main():
             
         print(f"\n🚀 ¡Procesando nuevo PDF detectado: '{pdf_name}'!")
         
-        # Descargar el PDF
         request = service.files().get_media(fileId=file["id"])
         pdf_stream = io.BytesIO()
         downloader = MediaIoBaseDownload(pdf_stream, request)
@@ -123,7 +118,6 @@ def main():
             
         pdf_stream.seek(0)
         
-        # Procesamiento con Gemini rotando llaves en caso de fallo
         prompt = (
             "Extrae únicamente el nombre de la persona que aparece en el campo 'Vía' o solicitante. "
             "Trunca el resultado estrictamente al Primer Nombre y Primer Apellido, ignorando rutas o nombres secundarios."
@@ -136,11 +130,9 @@ def main():
             print(f"❌ No se pudo procesar '{pdf_name}' con ninguna API Key de Gemini: {err}")
             continue
         
-        # Buscar correo en el Excel actualizado
         correo_destino = buscar_correo_en_excel(nombre_extraido)
         print(f"📧 Correo mapeado: {correo_destino}")
         
-        # Crear y subir el archivo _destino.txt
         txt_content = io.BytesIO(correo_destino.encode("utf-8"))
         media = MediaIoBaseUpload(txt_content, mimetype="text/plain", resumable=True)
         
