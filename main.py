@@ -21,6 +21,7 @@ def get_drive_service():
 
 def buscar_correo_en_excel(nombre_extraido):
     try:
+        # ⚠️ RECUERDA: Cambia "tu_archivo_excel.xlsx" por el nombre real de tu archivo en el repositorio
         df = pd.read_excel("tu_archivo_excel.xlsx", sheet_name=0)
         for _, row in df.iterrows():
             nombre_excel = str(row.iloc[0]).strip().lower()
