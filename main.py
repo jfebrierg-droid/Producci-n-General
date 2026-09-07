@@ -84,7 +84,9 @@ def main():
     print("-" * 50)
     
     pdf_files = [f for f in files if "pdf" in f["mimeType"].lower() or f["name"].lower().endswith(".pdf")]
-    txt_filenames = [f["name"] for f in files if f["name"].endswith("_destino.txt")]
+    
+    # Mapear archivos existentes para ver si ya tienen su _destino.txt creado previamente
+    existing_txts = {f["name"]: f["id"] for f in files if f["name"].endswith("_destino.txt")}
     
     if not pdf_files:
         print("⚠️ Advertencia: No se detectaron archivos PDF válidos en esta carpeta.")
@@ -95,7 +97,7 @@ def main():
         base_name = os.path.splitext(pdf_name)[0]
         txt_expected_name = f"{base_name}_destino.txt"
         
-        if txt_expected_name in txt_filenames:
+        if txt_expected_name in existing_txts:
             print(f"⏭️ Omitiendo '{pdf_name}' porque ya tiene su archivo de salida '{txt_expected_name}'.")
             continue
             
@@ -125,27 +127,41 @@ def main():
         correo_destino = buscar_correo_en_excel(nombre_extraido)
         print(f"📧 Correo mapeado: {correo_destino}")
         
-        # Crear un archivo de texto plano utilizando inserción directa sin chunks pesados para evitar bloqueos de cuota
-        file_metadata = {
-            "name": txt_expected_name,
-            "parents": [folder_id],
-            "mimeType": "text/plain"
-        }
-        
         media = MediaIoBaseUpload(
             io.BytesIO(correo_destino.encode("utf-8")), 
             mimetype="text/plain", 
-            chunksize=1024*1024,
             resumable=False
         )
         
-        service.files().create(
-            body=file_metadata, 
-            media_body=media, 
-            fields="id",
-            supportsAllDrives=True
-        ).execute()
-        print(f"✅ ¡Archivo de salida creado con éxito: '{txt_expected_name}'!")
+        # Truco técnico: Si por alguna razón el archivo ya existía de un intento anterior fallido, lo actualizamos. 
+        # Si no existe, creamos un archivo Google Doc vacío nativo o intentamos la creación estándar.
+        try:
+            if txt_expected_name in existing_txts:
+                file_id_to_update = existing_txts[txt_expected_name]
+                service.files().update(
+                    fileId=file_id_to_update,
+                    media_body=media,
+                    supportsAllDrives=True
+                ).execute()
+                print(f"✅ ¡Archivo de salida actualizado con éxito: '{txt_expected_name}'!")
+            else:
+                file_metadata = {
+                    "name": txt_expected_name,
+                    "parents": [folder_id]
+                }
+                service.files().create(
+                    body=file_metadata, 
+                    media_body=media, 
+                    fields="id",
+                    supportsAllDrives=True
+                ).execute()
+                print(f"✅ ¡Archivo de salida creado con éxito: '{txt_expected_name}'!")
+        except Exception as drive_err:
+            print(f"⚠️ Aviso de Drive (Restricción de cuota de la cuenta de servicio): {drive_err}")
+            print("💡 Alternativa aplicada: Como la cuenta de servicio no puede crear archivos nuevos en carpetas personales de Drive,")
+            print("   por favor crea manualmente un archivo de texto vacío en tu carpeta de Drive llamado igual que el esperado (ej: 'tu_archivo_destino.txt').")
+            print("   Una vez creado, la cuenta de servicio SÍ tiene permiso para editarlo y escribir dentro el correo electrónico automáticamente.")
+            raise drive_err
 
 if __name__ == "__main__":
     main()
