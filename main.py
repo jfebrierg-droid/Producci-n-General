@@ -8,9 +8,40 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
-# Configurar la API de Gemini
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-model = genai.GenerativeModel("gemini-2.5-flash")
+# Lista de variables de entorno de las API Keys de Gemini disponibles
+GEMINI_KEYS_ENV_VARS = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4"]
+
+def generar_con_gemini_rotativo(pdf_stream, prompt):
+    """
+    Intenta procesar el contenido con Gemini utilizando múltiples API Keys en orden.
+    Si una llave falla, pasa automáticamente a la siguiente.
+    """
+    keys_disponibles = [os.environ.get(var) for var in GEMINI_KEYS_ENV_VARS if os.environ.get(var)]
+    
+    if not keys_disponibles:
+        raise ValueError("❌ No se encontró ninguna GEMINI_API_KEY configurada en los secretos de GitHub.")
+
+    ultimo_error = None
+    for i, api_key in enumerate(keys_disponibles, 1):
+        try:
+            print(f"🔄 Intentando procesar con Gemini usando la llave #{i}...")
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel("gemini-2.5-flash")
+            
+            # Subir archivo al entorno temporal de Gemini
+            pdf_stream.seek(0)
+            sample_file = genai.upload_file(pdf_stream, mime_type="application/pdf")
+            
+            response = model.generate_content([sample_file, prompt])
+            resultado = response.text.strip()
+            print(f"✅ ¡Gemini respondió con éxito usando la llave #{i}!")
+            return resultado
+        except Exception as e:
+            print(f"⚠️ La llave #{i} falló. Detalle: {e}")
+            ultimo_error = e
+            continue
+            
+    raise Exception(f"❌ Todas las API Keys de Gemini fallaron. Último error: {ultimo_error}")
 
 def get_drive_service():
     creds_json = json.loads(os.environ["GOOGLE_CREDENTIALS_JSON"])
@@ -21,8 +52,10 @@ def get_drive_service():
 
 def buscar_correo_en_excel(nombre_extraido):
     try:
-        # ⚠️ RECUERDA: Cambia "tu_archivo_excel.xlsx" por el nombre real de tu archivo en el repositorio
-        df = pd.read_excel("tu_archivo_excel.xlsx", sheet_name=0)
+        # Nombre exacto de tu archivo Excel de contactos
+        excel_filename = "Contactos_Cumpleanos_Megacentro_Automatizacion_ULTIMA_VERSION_10000_MENSAJES (1).xlsx"
+        df = pd.read_excel(excel_filename, sheet_name=0)
+        
         for _, row in df.iterrows():
             nombre_excel = str(row.iloc[0]).strip().lower()
             if nombre_extraido.strip().lower() in nombre_excel:
@@ -38,7 +71,7 @@ def main():
     service = get_drive_service()
     folder_id = os.environ["GOOGLE_DRIVE_FOLDER_ID"]
     
-    # 1. Verificar el nombre real de la carpeta que la cuenta de servicio está consultando
+    # 1. Verificar conexión a la carpeta de Google Drive
     try:
         folder_info = service.files().get(fileId=folder_id, fields="name").execute()
         folder_name = folder_info.get("name", "Desconocida")
@@ -48,10 +81,10 @@ def main():
         print(f"🆔 ID de carpeta: {folder_id}")
         print(f"==================================================")
     except Exception as e:
-        print(f"❌ Error crítico: La cuenta de servicio NO tiene acceso a la carpeta con ID '{folder_id}'. Detalles: {e}")
+        print(f"❌ Error crítico: La cuenta de servicio NO tiene acceso a la carpeta. Detalles: {e}")
         return
 
-    # 2. Listar absolutamente TODO lo que hay dentro de esa carpeta
+    # 2. Listar elementos en la carpeta
     query = f"'{folder_id}' in parents and trashed = false"
     results = service.files().list(q=query, pageSize=100, fields="files(id, name, mimeType)").execute()
     files = results.get("files", [])
@@ -61,7 +94,7 @@ def main():
         print(f"   - [Elemento] Nombre: '{f['name']}' | Tipo: {f['mimeType']}")
     print("-" * 50)
     
-    # Filtrar PDFs
+    # Filtrar PDFs y archivos de texto existentes
     pdf_files = [f for f in files if "pdf" in f["mimeType"].lower() or f["name"].lower().endswith(".pdf")]
     txt_filenames = [f["name"] for f in files if f["name"].endswith("_destino.txt")]
     
@@ -90,16 +123,20 @@ def main():
             
         pdf_stream.seek(0)
         
-        # Procesamiento con Gemini
-        sample_file = genai.upload_file(pdf_stream, mime_type="application/pdf")
+        # Procesamiento con Gemini rotando llaves en caso de fallo
         prompt = (
             "Extrae únicamente el nombre de la persona que aparece en el campo 'Vía' o solicitante. "
             "Trunca el resultado estrictamente al Primer Nombre y Primer Apellido, ignorando rutas o nombres secundarios."
         )
-        response = model.generate_content([sample_file, prompt])
-        nombre_extraido = response.text.strip()
-        print(f"🤖 Gemini extrajo: {nombre_extraido}")
         
+        try:
+            nombre_extraido = generar_con_gemini_rotativo(pdf_stream, prompt)
+            print(f"🤖 Gemini extrajo: {nombre_extraido}")
+        except Exception as err:
+            print(f"❌ No se pudo procesar '{pdf_name}' con ninguna API Key de Gemini: {err}")
+            continue
+        
+        # Buscar correo en el Excel actualizado
         correo_destino = buscar_correo_en_excel(nombre_extraido)
         print(f"📧 Correo mapeado: {correo_destino}")
         
