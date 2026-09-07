@@ -2,8 +2,8 @@ name: Procesar Reembolsos Google Drive
 
 on:
   schedule:
-    - cron: '*/10 * * * *' # Se ejecuta automáticamente cada 10 minutos
-  workflow_dispatch: # Permite ejecutarlo manualmente desde la pestaña Actions en GitHub
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
 
 jobs:
   run-python:
