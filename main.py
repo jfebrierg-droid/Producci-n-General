@@ -20,10 +20,6 @@ def get_drive_service():
     return build("drive", "v3", credentials=creds)
 
 def buscar_correo_en_excel(nombre_extraido):
-    """
-    Busca el nombre extraído en el Excel (Asegúrate de cambiar 'tu_archivo_excel.xlsx' 
-    por el nombre exacto de tu archivo en el repositorio).
-    """
     try:
         df = pd.read_excel("tu_archivo_excel.xlsx", sheet_name=0)
         for _, row in df.iterrows():
@@ -41,21 +37,35 @@ def main():
     service = get_drive_service()
     folder_id = os.environ["GOOGLE_DRIVE_FOLDER_ID"]
     
-    # Listar archivos de la carpeta
+    # 1. Verificar el nombre real de la carpeta que la cuenta de servicio está consultando
+    try:
+        folder_info = service.files().get(fileId=folder_id, fields="name").execute()
+        folder_name = folder_info.get("name", "Desconocida")
+        print(f"==================================================")
+        print(f"🔎 CONECTADO A GOOGLE DRIVE")
+        print(f"📂 Carpeta objetivo: '{folder_name}'")
+        print(f"🆔 ID de carpeta: {folder_id}")
+        print(f"==================================================")
+    except Exception as e:
+        print(f"❌ Error crítico: La cuenta de servicio NO tiene acceso a la carpeta con ID '{folder_id}'. Detalles: {e}")
+        return
+
+    # 2. Listar absolutamente TODO lo que hay dentro de esa carpeta
     query = f"'{folder_id}' in parents and trashed = false"
-    results = service.files().list(q=query, pageSize=50, fields="files(id, name, mimeType)").execute()
+    results = service.files().list(q=query, pageSize=100, fields="files(id, name, mimeType)").execute()
     files = results.get("files", [])
     
-    print(f"--- Archivos encontrados en Drive ---")
+    print(f"\n📋 Total de elementos encontrados en '{folder_name}': {len(files)}")
     for f in files:
-        print(f"-> Nombre: {f['name']} | Tipo: {f['mimeType']}")
-    print("-------------------------------------")
+        print(f"   - [Elemento] Nombre: '{f['name']}' | Tipo: {f['mimeType']}")
+    print("-" * 50)
     
-    pdf_files = [f for f in files if f["mimeType"] == "application/pdf"]
+    # Filtrar PDFs
+    pdf_files = [f for f in files if "pdf" in f["mimeType"].lower() or f["name"].lower().endswith(".pdf")]
     txt_filenames = [f["name"] for f in files if f["name"].endswith("_destino.txt")]
     
     if not pdf_files:
-        print("No se encontraron archivos PDF pendientes.")
+        print("⚠️ Advertencia: No se detectaron archivos PDF válidos en esta carpeta.")
         return
 
     for file in pdf_files:
@@ -64,12 +74,12 @@ def main():
         txt_expected_name = f"{base_name}_destino.txt"
         
         if txt_expected_name in txt_filenames:
-            print(f"Omitiendo '{pdf_name}' porque ya tiene su archivo _destino.txt creado.")
+            print(f"⏭️ Omitiendo '{pdf_name}' porque ya tiene su archivo de salida '{txt_expected_name}'.")
             continue
             
-        print(f"¡Procesando PDF nuevo: {pdf_name}!")
+        print(f"\n🚀 ¡Procesando nuevo PDF detectado: '{pdf_name}'!")
         
-        # Descargar PDF
+        # Descargar el PDF
         request = service.files().get_media(fileId=file["id"])
         pdf_stream = io.BytesIO()
         downloader = MediaIoBaseDownload(pdf_stream, request)
@@ -79,7 +89,7 @@ def main():
             
         pdf_stream.seek(0)
         
-        # Procesar con Gemini
+        # Procesamiento con Gemini
         sample_file = genai.upload_file(pdf_stream, mime_type="application/pdf")
         prompt = (
             "Extrae únicamente el nombre de la persona que aparece en el campo 'Vía' o solicitante. "
@@ -87,12 +97,12 @@ def main():
         )
         response = model.generate_content([sample_file, prompt])
         nombre_extraido = response.text.strip()
-        print(f"Gemini extrajo: {nombre_extraido}")
+        print(f"🤖 Gemini extrajo: {nombre_extraido}")
         
-        # Buscar correo y generar archivo de texto
         correo_destino = buscar_correo_en_excel(nombre_extraido)
-        print(f"Correo mapeado: {correo_destino}")
+        print(f"📧 Correo mapeado: {correo_destino}")
         
+        # Crear y subir el archivo _destino.txt
         txt_content = io.BytesIO(correo_destino.encode("utf-8"))
         media = MediaIoBaseUpload(txt_content, mimetype="text/plain", resumable=True)
         
@@ -102,7 +112,7 @@ def main():
         }
         
         service.files().create(body=file_metadata, media_body=media, fields="id").execute()
-        print(f"¡Creado y subido con éxito: {txt_expected_name}!")
+        print(f"✅ ¡Archivo de salida creado con éxito: '{txt_expected_name}'!")
 
 if __name__ == "__main__":
     main()
