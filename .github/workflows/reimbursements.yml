@@ -21,12 +21,12 @@ jobs:
       - name: Instalar dependencias
         run: |
           pip install --upgrade pip
-          pip install google-generativeai pandas openpyxl google-api-python-client google-auth
+          pip install google-genai pandas openpyxl google-api-python-client google-auth
 
       - name: Ejecutar script de procesamiento
         env:
           GEMINI_API_REEMBOLSO: ${{ secrets.GEMINI_API_REEMBOLSO }}
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-          GOOGLE_DRIVE_FOLDER_ID: "1gGplQGveFGlEzVWfwRqpmg89nOtcue6H"
+          GOOGLE_DRIVE_FOLDER_ID: "1gGpIQGveFGIEzVWfwRqpmg89nOtcue6H"
         run: |
           python main.py
