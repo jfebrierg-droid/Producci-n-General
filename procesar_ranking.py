@@ -84,7 +84,8 @@ def obtener_datos_desde_drive_imagen(file_id):
     - Devuelve ÚNICAMENTE o exclusivamente el bloque JSON válido, sin texto adicional.
     """
 
-    modelos_a_probar = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
+    # Modelos actualizados a la versión más reciente recomendada
+    modelos_a_probar = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']
     texto_respuesta = None
 
     for index, api_key in enumerate(API_KEYS_GEMINI):
@@ -246,7 +247,6 @@ def procesar_y_enviar():
 
     banner_base64 = obtener_imagen_base64("Banner Ranking de Producción - 1.jpg")
 
-    # HTML exclusivo para generar la CAPTURA DE IMAGEN completa (con Base64)
     html_para_imagen = f"""
     <!DOCTYPE html>
     <html>
@@ -283,7 +283,6 @@ def procesar_y_enviar():
     </html>
     """
 
-    # HTML limpio para el CUERPO DEL CORREO (sin códigos largos)
     html_para_correo = f"""
     <!DOCTYPE html>
     <html>
@@ -301,7 +300,6 @@ def procesar_y_enviar():
     </html>
     """
 
-    # --- 1. Generar la imagen con altura extendida (3200px) para evitar cortes ---
     image_filename = f"ranking_{mes_actual}.png"
     print("Transformando el contenido en una imagen completa y limpia...")
     try:
@@ -318,7 +316,6 @@ def procesar_y_enviar():
     except Exception as e:
         print(f"Error al generar la imagen: {e}")
 
-    # --- 2. Enviar correo electrónico limpio con la imagen adjunta ---
     msg = MIMEMultipart()
     msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
     msg["From"] = sender_email
