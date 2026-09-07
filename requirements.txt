@@ -4,3 +4,4 @@ google-generativeai
 pillow
 gdown
 google-genai
+html2image
