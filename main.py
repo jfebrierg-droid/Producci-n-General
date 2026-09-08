@@ -55,7 +55,8 @@ def buscar_correo_en_excel(nombre_extraido):
     except Exception as e:
         print(f"Error leyendo el Excel: {e}")
     
-    return "soporte.reembolso@humano.com.do"
+    # MODIFICACIÓN: Si no hay coincidencia exacta o falla, devolvemos None en lugar de un correo genérico
+    return None
 
 def main():
     service = get_drive_service()
@@ -120,10 +121,16 @@ def main():
             continue
         
         correo_destino = buscar_correo_en_excel(nombre_extraido)
+        
+        # MODIFICACIÓN: Validar si se encontró un correo válido en el Excel
+        if not correo_destino:
+            print(f"⚠️ El nombre extraído ('{nombre_extraido}') no coincide con ningún registro válido en el Excel.")
+            print(f"⏭️ Omitiendo renombrado para el archivo '{pdf_name}'. Se mantendrá con su nombre original.")
+            continue
+            
         print(f"📧 Correo mapeado: {correo_destino}")
         
-        # --- SOLUCIÓN DEFINITIVA: Renombrar el archivo existente para incluir el correo ---
-        # Esto no crea archivos nuevos, por lo que la cuenta de servicio tiene permiso total.
+        # --- Renombrar el archivo existente para incluir el correo solo si hubo coincidencia ---
         base_name = os.path.splitext(pdf_name)[0]
         nuevo_nombre_pdf = f"{base_name} [{correo_destino}].pdf"
         
