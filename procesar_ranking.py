@@ -14,6 +14,7 @@ import smtplib
 import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 from PIL import Image
 import requests
 from google import genai
@@ -226,7 +227,7 @@ def procesar_y_enviar():
                 return f"<b>{item}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(valor)})</span>"
             else:
                 falta = meta - valor
-                return f"<b>{item}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(valor)})</span><br><span style='font-size: 15px; color: #c2410c; font-weight: bold; padding-left: 20px;'>— Faltan {format_moneda(falta)} para la meta</span>"
+                return f"<b>{item}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(valor)})</span><br><span style='font-size: 15px; color: #c2410c; font-weight: bold; padding-left: 20px;'>— Te faltan {format_moneda(falta)} para ganar!!</span>"
 
     meses_es = {1: "enero", 2: "febrero", 3: "marzo", 4: "abril", 5: "mayo", 6: "junio", 7: "julio", 8: "agosto", 9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre"}
     mes_actual = meses_es.get(datetime.now().month, "mes")
@@ -316,7 +317,7 @@ def procesar_y_enviar():
                 {texto_dinamico}
             </div>
             <div style="margin-bottom: 16px; text-align: left;">
-                <a href="https://ibb.co/N21Ljnxt"><img src="https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg" alt="Banner" border="0" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;" /></a>
+                <img src="cid:banner_ranking" alt="Banner" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;" />
             </div>
             <table style="width: 100%; border-collapse: collapse; font-size: 19px; margin: 0; padding: 0; border-radius: 6px; overflow: hidden; text-align: left;">
                 <thead>
@@ -344,11 +345,27 @@ def procesar_y_enviar():
     </html>
     """
 
-    msg = MIMEMultipart("alternative")
+    msg = MIMEMultipart("related")
     msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
     msg["From"] = sender_email
     msg["To"] = recipient_email
-    msg.attach(MIMEText(html_content, "html"))
+
+    msg_alternative = MIMEMultipart("alternative")
+    msg_alternative.attach(MIMEText(html_content, "html"))
+    msg.attach(msg_alternative)
+
+    banner_path = "Banner Ranking de Producción - 1.jpg"
+    if os.path.exists(banner_path):
+        try:
+            with open(banner_path, "rb") as f:
+                img_data = f.read()
+            img_mime = MIMEImage(img_data)
+            img_mime.add_header('Content-ID', '<banner_ranking>')
+            img_mime.add_header('Content-Disposition', 'inline', filename=banner_path)
+            msg.attach(img_mime)
+            print("Banner adjuntado internamente por CID con éxito.")
+        except Exception as e:
+            print(f"No se pudo adjuntar el banner local: {e}")
 
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
