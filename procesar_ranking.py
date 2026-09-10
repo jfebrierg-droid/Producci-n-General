@@ -30,7 +30,7 @@ API_KEYS_GEMINI = [
 LISTA_MAESTRA_AGENTES = [
     "Milvio Espinal", "Delkis Perez", "Sory Morla", "Indhira Mora", "Luis T Ortiz",
     "Ruddy Arias", "Leomayra Alcantara", "Marcos Adames", "Maria De La Cruz", "Indhira Santos",
-    "Nicauris Benitez", "Mariela de León Minaya", "Mery Lopez", "Estefania Villegas (Rogers)", "Yudelfa Cuevas",
+    "Nicauris Benitez", "Mariela de León Minaya", "Mery Lopez", "Estefania Villegas (Roger)", "Yudelfa Cuevas",
     "Vladimil Herrera", "Orquidea Feliz", "Marisol Payano", "Jairo Martinez", "Alsiwin Ruiz",
     "Estarlin Acosta", "Eleuterio Fernandez", "Ninfa Perez", "Angel Matos", "Ingrid Beras",
     "Kevin Ramirez", "Eduardo Hernandez", "Ana Veloz", "Wanda Peña", "Joan Danis",
@@ -226,7 +226,7 @@ def procesar_y_enviar():
                 return f"<b>{item}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(valor)})</span>"
             else:
                 falta = meta - valor
-                return f"<b>{item}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(valor)})</span><br><span style='font-size: 15px; color: #c2410c; font-weight: bold; padding-left: 20px;'>— Te faltan {format_moneda(falta)} para ganar!</span>"
+                return f"<b>{item}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(valor)})</span><br><span style='font-size: 15px; color: #c2410c; font-weight: bold; padding-left: 20px;'>— Faltan {format_moneda(falta)} para la meta</span>"
 
     meses_es = {1: "enero", 2: "febrero", 3: "marzo", 4: "abril", 5: "mayo", 6: "junio", 7: "julio", 8: "agosto", 9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre"}
     mes_actual = meses_es.get(datetime.now().month, "mes")
