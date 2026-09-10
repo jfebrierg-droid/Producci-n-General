@@ -12,9 +12,7 @@ import os
 import re
 import smtplib
 import time
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
+from email.message import EmailMessage
 from PIL import Image
 import requests
 from google import genai
@@ -345,26 +343,30 @@ def procesar_y_enviar():
     </html>
     """
 
-    # Configuración MIME 'related' requerida para adjuntar recursos internos visibles (CID)
-    msg = MIMEMultipart("related")
+    # Construcción moderna y robusta usando EmailMessage (La solución definitiva para Outlook)
+    msg = EmailMessage()
     msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
     msg["From"] = sender_email
     msg["To"] = recipient_email
 
-    msg_alternative = MIMEMultipart("alternative")
-    msg_alternative.attach(MIMEText(html_content, "html"))
-    msg.attach(msg_alternative)
+    # Establecer el contenido principal en HTML
+    msg.set_content("Tu cliente de correo no soporta HTML.", subtype="plain")
+    msg.add_alternative(html_content, subtype="html")
 
     banner_path = "Banner Ranking de Producción - 1.jpg"
     if os.path.exists(banner_path):
         try:
             with open(banner_path, "rb") as f:
                 img_data = f.read()
-            img_mime = MIMEImage(img_data)
-            img_mime.add_header('Content-ID', '<banner_ranking>')
-            img_mime.add_header('Content-Disposition', 'inline', filename=banner_path)
-            msg.attach(img_mime)
-            print("Banner incrustado correctamente por CID.")
+            
+            # Incrustación correcta compatible con Outlook mediante cid
+            msg.get_payload()[1].add_related(
+                img_data,
+                maintype="image",
+                subtype="jpeg",
+                cid="banner_ranking"
+            )
+            print("Banner incrustado correctamente con EmailMessage (Compatible con Outlook).")
         except Exception as e:
             print(f"No se pudo adjuntar el banner local: {e}")
     else:
