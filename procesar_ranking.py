@@ -2,8 +2,8 @@
 """
 Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4 -> 3 -> 2 -> 1),
-reintentos automáticos para errores 503, respaldo de modelos, mensajes cortos dominicanos
-con el estilo criollo en todos los ramos, emojis alegóricos por producto y el emoji de músculo para quienes cumplen la meta.
+reintentos automáticos para errores 503, respaldo de modelos, estructura MIME robusta (MIMEMultipart)
+para compatibilidad total con Outlook y clientes estrictos.
 """
 
 from datetime import datetime
@@ -12,7 +12,9 @@ import os
 import re
 import smtplib
 import time
-from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 from PIL import Image
 import requests
 from google import genai
@@ -343,30 +345,35 @@ def procesar_y_enviar():
     </html>
     """
 
-    # Configuración limpia con EmailMessage para forzar multipart/related de forma nativa
-    msg = EmailMessage()
+    # --- ESTRUCTURA MIME MANUAL Y ROBUSTA (MIMEMultipart 'related' + 'alternative') ---
+    # Contenedor raíz multipart/related (Obligatorio para que Outlook reconozca imágenes incrustadas por CID)
+    msg = MIMEMultipart('related')
     msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
     msg["From"] = sender_email
     msg["To"] = recipient_email
 
-    # Definir contenido HTML principal
-    msg.set_content("Tu cliente de correo no soporta HTML.", subtype="plain")
-    msg.add_alternative(html_content, subtype="html")
+    # Contenedor multipart/alternative interno para texto plano y HTML
+    msg_alternative = MIMEMultipart('alternative')
+    msg.attach(msg_alternative)
 
+    # 1. Parte de Texto Plano (Respaldo)
+    msg_alternative.attach(MIMEText("Tu cliente de correo no soporta visualización en HTML.", "plain", "utf-8"))
+
+    # 2. Parte de HTML Principal
+    msg_alternative.attach(MIMEText(html_content, "html", "utf-8"))
+
+    # 3. Adjuntar la imagen con la cabecera Content-ID exacta en el contenedor related principal
     banner_path = "Banner Ranking de Producción - 1.jpg"
     if os.path.exists(banner_path):
         try:
             with open(banner_path, "rb") as f:
                 img_data = f.read()
             
-            # Corregido: Adjuntar directamente como recurso relacionado al mensaje HTML principal (índice 0 o get_payload()[0])
-            msg.get_payload()[0].add_related(
-                img_data,
-                maintype="image",
-                subtype="jpeg",
-                cid="banner_ranking"
-            )
-            print("Banner incrustado correctamente con enlace relacionado para Outlook.")
+            img = MIMEImage(img_data, "jpeg")
+            img.add_header("Content-ID", "<banner_ranking>")
+            img.add_header("Content-Disposition", "inline", filename="banner.jpg")
+            msg.attach(img)
+            print("Banner incrustado correctamente con estructura MIMEMultipart (100% compatible con Outlook).")
         except Exception as e:
             print(f"No se pudo adjuntar el banner local: {e}")
     else:
