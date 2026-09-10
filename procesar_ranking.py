@@ -309,6 +309,11 @@ def procesar_y_enviar():
     </div>
     """
 
+    # ============================================================
+    # BANNER: URL HTTPS PÚBLICA PARA COMPATIBILIDAD CON OUTLOOK
+    # ============================================================
+    BANNER_URL = "https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg"
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -318,14 +323,17 @@ def procesar_y_enviar():
             <div style="background-color: #ffffff; color: #1e293b; padding: 24px 28px; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 16px; border-radius: 8px; border-left: 6px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                 {texto_dinamico}
             </div>
+            <!-- Banner Superior - URL HTTPS pública compatible con Outlook -->
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin: 0 0 16px 0;">
                 <tr>
                     <td align="center" style="padding: 0;">
-                        <img src="cid:banner_ranking@megapoderosos"
-                             alt="Ranking de Producción - MEGAPODEROSOS"
-                             width="850"
-                             style="display:block; width:850px; height:auto; border:0; outline:none; text-decoration:none;"
-                             border="0" />
+                        <img
+                            src="{BANNER_URL}"
+                            alt="Ranking de Producción - MEGAPODEROSOS"
+                            width="850"
+                            style="display:block; width:850px; max-width:100%; height:auto; border:0; outline:none; text-decoration:none;"
+                            border="0"
+                        />
                     </td>
                 </tr>
             </table>
@@ -391,83 +399,14 @@ def procesar_y_enviar():
     )
 
     # ------------------------------------------------------------
-    # 2. CONTENEDOR RELATED PARA HTML + BANNER
+    # 2. HTML
     # ------------------------------------------------------------
-    msg_related = MIMEMultipart("related")
-    msg_related.set_param("type", "text/html")
-    msg.attach(msg_related)
-
-    # ------------------------------------------------------------
-    # 3. HTML
-    # ------------------------------------------------------------
-    html_content_outlook = html_content.replace(
-        "cid:banner_ranking",
-        "cid:banner_ranking@megapoderosos"
+    # El banner se carga desde una URL HTTPS pública.
+    # Esto evita los problemas de Content-ID que Outlook estaba
+    # presentando con la imagen inline.
+    msg.attach(
+        MIMEText(html_content, "html", "utf-8")
     )
-
-    msg_related.attach(
-        MIMEText(html_content_outlook, "html", "utf-8")
-    )
-
-    # ------------------------------------------------------------
-    # 4. UBICAR EL BANNER
-    # ------------------------------------------------------------
-    # Busca el archivo en la misma carpeta que procesar_ranking.py.
-    # Esto es especialmente importante en GitHub Actions.
-    banner_path = (
-        Path(__file__).resolve().parent /
-        "Banner Ranking de Producción - 1.jpg"
-    )
-
-    if not banner_path.exists():
-        print("ERROR: No se encontró el banner.")
-        print(f"Ruta buscada: {banner_path}")
-        print("Asegúrate de subir 'Banner Ranking de Producción - 1.jpg'")
-        print("al mismo directorio que procesar_ranking.py.")
-        return
-
-    # ------------------------------------------------------------
-    # 5. INSERTAR BANNER COMO RECURSO INLINE
-    # ------------------------------------------------------------
-    try:
-        with open(banner_path, "rb") as f:
-            img_data = f.read()
-
-        banner_img = MIMEImage(img_data, _subtype="jpeg")
-
-        # Debe coincidir EXACTAMENTE con el src del HTML.
-        banner_img.add_header(
-            "Content-ID",
-            "<banner_ranking@megapoderosos>"
-        )
-
-        # Inline, no attachment.
-        banner_img.add_header(
-            "Content-Disposition",
-            "inline",
-            filename="Banner_Ranking_Megapoderosos.jpg"
-        )
-
-        # Ayuda adicional para Outlook/Exchange.
-        banner_img.add_header(
-            "Content-Location",
-            "Banner_Ranking_Megapoderosos.jpg"
-        )
-
-        banner_img.add_header(
-            "X-Attachment-Id",
-            "banner_ranking@megapoderosos"
-        )
-
-        msg_related.attach(banner_img)
-
-        print("OK: Banner incrustado dentro de multipart/related.")
-        print(f"OK: Banner utilizado: {banner_path}")
-        print(f"OK: Tamaño del banner: {len(img_data):,} bytes")
-
-    except Exception as e:
-        print(f"ERROR preparando el banner: {e}")
-        return
 
     # ------------------------------------------------------------
     # 6. ENVÍO
