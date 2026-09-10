@@ -14,7 +14,6 @@ import smtplib
 import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
 from PIL import Image
 import requests
 from google import genai
@@ -259,7 +258,7 @@ def procesar_y_enviar():
 
     texto_dinamico = f"""
     <div style="font-family: Arial, sans-serif; color: #1e293b; text-align: left;">
-        <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">🔥 EQUIPO MEGAPODEROSO 💪</div>
+        <div style="font-size: 28px; font-weight: bold; color: #0284c7; margin-bottom: 14px; letter-spacing: 0.5px; text-align: left;">🔥 EQUIPO MEGAPODEROSOS 💪</div>
         <div style="font-size: 22px; font-weight: bold; color: #334155; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; text-align: left;">📊 Numeritos del mes de {mes_actual.capitalize()}</div>
         
         <table style="width: 100%; border-collapse: collapse; font-size: 19px; line-height: 1.6; text-align: left;">
@@ -307,6 +306,9 @@ def procesar_y_enviar():
     </div>
     """
 
+    # URL directa de descarga de la imagen en Google Drive a partir de tu ID (11pC_NkK7vsc2zM4knqMOMMWa-hff8yfD)
+    url_banner_publica = "https://drive.google.com/uc?export=view&id=11pC_NkK7vsc2zM4knqMOMMWa-hff8yfD"
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -317,7 +319,7 @@ def procesar_y_enviar():
                 {texto_dinamico}
             </div>
             <div style="margin-bottom: 16px; text-align: left;">
-                <img src="cid:banner_ranking" alt="Banner" width="850" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;" />
+                <img src="{url_banner_publica}" alt="Banner" width="850" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;" />
             </div>
             <table style="width: 100%; border-collapse: collapse; font-size: 19px; margin: 0; padding: 0; border-radius: 6px; overflow: hidden; text-align: left;">
                 <thead>
@@ -345,27 +347,12 @@ def procesar_y_enviar():
     </html>
     """
 
-    msg = MIMEMultipart("related")
+    msg = MIMEMultipart("alternative")
     msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
     msg["From"] = sender_email
     msg["To"] = recipient_email
 
-    msg_alternative = MIMEMultipart("alternative")
-    msg_alternative.attach(MIMEText(html_content, "html"))
-    msg.attach(msg_alternative)
-
-    banner_path = "Banner Ranking de Producción - 1.jpg"
-    if os.path.exists(banner_path):
-        try:
-            with open(banner_path, "rb") as f:
-                img_data = f.read()
-            img_mime = MIMEImage(img_data)
-            img_mime.add_header('Content-ID', '<banner_ranking>')
-            img_mime.add_header('Content-Disposition', 'inline', filename=banner_path)
-            msg.attach(img_mime)
-            print("Banner adjuntado internamente por CID con éxito.")
-        except Exception as e:
-            print(f"No se pudo adjuntar el banner local: {e}")
+    msg.attach(MIMEText(html_content, "html"))
 
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
