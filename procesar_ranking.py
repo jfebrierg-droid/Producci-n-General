@@ -343,13 +343,13 @@ def procesar_y_enviar():
     </html>
     """
 
-    # Construcción moderna y robusta usando EmailMessage (La solución definitiva para Outlook)
+    # Configuración limpia con EmailMessage para forzar multipart/related de forma nativa
     msg = EmailMessage()
     msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
     msg["From"] = sender_email
     msg["To"] = recipient_email
 
-    # Establecer el contenido principal en HTML
+    # Definir contenido HTML principal
     msg.set_content("Tu cliente de correo no soporta HTML.", subtype="plain")
     msg.add_alternative(html_content, subtype="html")
 
@@ -359,14 +359,14 @@ def procesar_y_enviar():
             with open(banner_path, "rb") as f:
                 img_data = f.read()
             
-            # Incrustación correcta compatible con Outlook mediante cid
-            msg.get_payload()[1].add_related(
+            # Corregido: Adjuntar directamente como recurso relacionado al mensaje HTML principal (índice 0 o get_payload()[0])
+            msg.get_payload()[0].add_related(
                 img_data,
                 maintype="image",
                 subtype="jpeg",
                 cid="banner_ranking"
             )
-            print("Banner incrustado correctamente con EmailMessage (Compatible con Outlook).")
+            print("Banner incrustado correctamente con enlace relacionado para Outlook.")
         except Exception as e:
             print(f"No se pudo adjuntar el banner local: {e}")
     else:
