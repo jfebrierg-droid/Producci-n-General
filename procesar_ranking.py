@@ -317,7 +317,7 @@ def procesar_y_enviar():
                 {texto_dinamico}
             </div>
             <div style="margin-bottom: 16px; text-align: left;">
-                <img src="cid:banner_ranking" alt="Banner" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;" />
+                <img src="cid:banner_ranking" alt="Banner" width="850" style="width: 100%; max-width: 850px; height: auto; display: block; border: 0; border-radius: 6px;" />
             </div>
             <table style="width: 100%; border-collapse: collapse; font-size: 19px; margin: 0; padding: 0; border-radius: 6px; overflow: hidden; text-align: left;">
                 <thead>
