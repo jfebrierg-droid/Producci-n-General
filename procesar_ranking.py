@@ -12,6 +12,7 @@ import os
 import re
 import smtplib
 import time
+from pathlib import Path
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
@@ -320,7 +321,11 @@ def procesar_y_enviar():
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin: 0 0 16px 0;">
                 <tr>
                     <td align="center" style="padding: 0;">
-                        <img src="cid:banner_ranking" alt="Banner MEGAPODEROSOS" width="850" style="display: block; width: 850px; max-width: 100%; height: auto; border: 0;" />
+                        <img src="cid:banner_ranking@megapoderosos"
+                             alt="Ranking de Producción - MEGAPODEROSOS"
+                             width="850"
+                             style="display:block; width:850px; height:auto; border:0; outline:none; text-decoration:none;"
+                             border="0" />
                     </td>
                 </tr>
             </table>
@@ -351,83 +356,121 @@ def procesar_y_enviar():
     """
 
     # ============================================================
-    # ENVÍO DEL CORREO - ESTRUCTURA MIME COMPATIBLE CON OUTLOOK
+    # ENVÍO DEL CORREO - ESTRUCTURA MIME ESPECÍFICA PARA OUTLOOK
     # ============================================================
 
-    # El mensaje raíz es multipart/related: contiene el HTML y la
-    # imagen incrustada que el HTML referencia mediante Content-ID.
-    msg = MIMEMultipart("related")
+    # IMPORTANTE:
+    # La estructura correcta es:
+    #
+    # multipart/alternative
+    #   ├── text/plain
+    #   └── multipart/related
+    #         ├── text/html
+    #         └── image/jpeg (Content-ID)
+    #
+    # Esta estructura evita que Outlook interprete la imagen inline
+    # como un adjunto separado o no encuentre el CID.
+
+    msg = MIMEMultipart("alternative")
 
     msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
     msg["From"] = sender_email
     msg["To"] = recipient_email
     msg["Date"] = formatdate(localtime=True)
 
-    # Content-ID único para evitar problemas de caché/interpretación
-    # en Outlook y otros clientes.
-    banner_cid = make_msgid(domain="megapoderosos.local")
-
-    # Parte alternativa: texto plano + HTML.
-    msg_alternative = MIMEMultipart("alternative")
-    msg.attach(msg_alternative)
-
+    # ------------------------------------------------------------
+    # 1. TEXTO PLANO
+    # ------------------------------------------------------------
     texto_plano = (
         f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS\n\n"
         "Este correo contiene información de producción del equipo."
     )
-    msg_alternative.attach(
+
+    msg.attach(
         MIMEText(texto_plano, "plain", "utf-8")
     )
 
-    # El HTML usa exactamente el mismo Content-ID que tendrá la imagen.
+    # ------------------------------------------------------------
+    # 2. CONTENEDOR RELATED PARA HTML + BANNER
+    # ------------------------------------------------------------
+    msg_related = MIMEMultipart("related")
+    msg_related.set_param("type", "text/html")
+    msg.attach(msg_related)
+
+    # ------------------------------------------------------------
+    # 3. HTML
+    # ------------------------------------------------------------
     html_content_outlook = html_content.replace(
         "cid:banner_ranking",
-        f"cid:{banner_cid.strip('<>')}"
+        "cid:banner_ranking@megapoderosos"
     )
 
-    msg_alternative.attach(
+    msg_related.attach(
         MIMEText(html_content_outlook, "html", "utf-8")
     )
 
     # ------------------------------------------------------------
-    # Banner incrustado como INLINE
+    # 4. UBICAR EL BANNER
     # ------------------------------------------------------------
-    banner_path = "Banner Ranking de Producción - 1.jpg"
+    # Busca el archivo en la misma carpeta que procesar_ranking.py.
+    # Esto es especialmente importante en GitHub Actions.
+    banner_path = (
+        Path(__file__).resolve().parent /
+        "Banner Ranking de Producción - 1.jpg"
+    )
 
-    if not os.path.exists(banner_path):
-        print(f"ERROR: No se encontró el banner: '{banner_path}'")
+    if not banner_path.exists():
+        print("ERROR: No se encontró el banner.")
+        print(f"Ruta buscada: {banner_path}")
+        print("Asegúrate de subir 'Banner Ranking de Producción - 1.jpg'")
+        print("al mismo directorio que procesar_ranking.py.")
         return
 
+    # ------------------------------------------------------------
+    # 5. INSERTAR BANNER COMO RECURSO INLINE
+    # ------------------------------------------------------------
     try:
         with open(banner_path, "rb") as f:
             img_data = f.read()
 
         banner_img = MIMEImage(img_data, _subtype="jpeg")
 
-        # Debe coincidir exactamente con el cid usado en el HTML.
-        banner_img.add_header("Content-ID", banner_cid)
+        # Debe coincidir EXACTAMENTE con el src del HTML.
+        banner_img.add_header(
+            "Content-ID",
+            "<banner_ranking@megapoderosos>"
+        )
+
+        # Inline, no attachment.
         banner_img.add_header(
             "Content-Disposition",
             "inline",
-            filename="Banner_Ranking.jpg"
+            filename="Banner_Ranking_Megapoderosos.jpg"
         )
 
-        # Ayuda a clientes que usan X-Attachment-Id para imágenes inline.
+        # Ayuda adicional para Outlook/Exchange.
+        banner_img.add_header(
+            "Content-Location",
+            "Banner_Ranking_Megapoderosos.jpg"
+        )
+
         banner_img.add_header(
             "X-Attachment-Id",
-            banner_cid.strip("<>")
+            "banner_ranking@megapoderosos"
         )
 
-        msg.attach(banner_img)
+        msg_related.attach(banner_img)
 
-        print("Banner incrustado correctamente como imagen INLINE.")
+        print("OK: Banner incrustado dentro de multipart/related.")
+        print(f"OK: Banner utilizado: {banner_path}")
+        print(f"OK: Tamaño del banner: {len(img_data):,} bytes")
 
     except Exception as e:
         print(f"ERROR preparando el banner: {e}")
         return
 
     # ------------------------------------------------------------
-    # Enviar por Gmail SMTP
+    # 6. ENVÍO
     # ------------------------------------------------------------
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
@@ -449,11 +492,14 @@ def procesar_y_enviar():
         )
 
         server.quit()
-        print("¡Correo enviado correctamente!")
-        print("El banner fue enviado incrustado para visualización en Outlook.")
+
+        print("==============================================")
+        print("¡CORREO ENVIADO CORRECTAMENTE!")
+        print("Banner configurado como INLINE para Outlook.")
+        print("==============================================")
 
     except Exception as e:
-        print(f"Error al enviar el correo: {e}")
+        print(f"ERROR al enviar el correo: {e}")
 
 
 if __name__ == "__main__":
