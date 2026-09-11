@@ -310,9 +310,11 @@ def procesar_y_enviar():
     """
 
     # ============================================================
-    # BANNER: URL HTTPS PÚBLICA PARA COMPATIBILIDAD CON OUTLOOK
+    # BANNER: URL RAW DE GITHUB PARA COMPATIBILIDAD CON OUTLOOK
     # ============================================================
-    BANNER_URL = "https://i.ibb.co/F4sBwq6m/Banner-Ranking-de-Producci-n-1.jpg"
+    # Nota: Asegúrate de reemplazar "TU_USUARIO", "TU_REPOSITORIO", "rama" y "ruta/al/banner.jpg"
+    # con los datos reales de tu repositorio de GitHub (usando el enlace "Raw").
+    BANNER_URL = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/rama/ruta/al/banner.jpg"
 
     html_content = f"""
     <!DOCTYPE html>
@@ -323,7 +325,7 @@ def procesar_y_enviar():
             <div style="background-color: #ffffff; color: #1e293b; padding: 24px 28px; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 16px; border-radius: 8px; border-left: 6px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                 {texto_dinamico}
             </div>
-            <!-- Banner Superior - URL HTTPS pública compatible con Outlook -->
+            <!-- Banner Superior - URL Raw de GitHub compatible con Outlook -->
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin: 0 0 16px 0;">
                 <tr>
                     <td align="center" style="padding: 0;">
@@ -366,19 +368,6 @@ def procesar_y_enviar():
     # ============================================================
     # ENVÍO DEL CORREO - ESTRUCTURA MIME ESPECÍFICA PARA OUTLOOK
     # ============================================================
-
-    # IMPORTANTE:
-    # La estructura correcta es:
-    #
-    # multipart/alternative
-    #   ├── text/plain
-    #   └── multipart/related
-    #         ├── text/html
-    #         └── image/jpeg (Content-ID)
-    #
-    # Esta estructura evita que Outlook interprete la imagen inline
-    # como un adjunto separado o no encuentre el CID.
-
     msg = MIMEMultipart("alternative")
 
     msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
@@ -401,15 +390,12 @@ def procesar_y_enviar():
     # ------------------------------------------------------------
     # 2. HTML
     # ------------------------------------------------------------
-    # El banner se carga desde una URL HTTPS pública.
-    # Esto evita los problemas de Content-ID que Outlook estaba
-    # presentando con la imagen inline.
     msg.attach(
         MIMEText(html_content, "html", "utf-8")
     )
 
     # ------------------------------------------------------------
-    # 6. ENVÍO
+    # 3. ENVÍO
     # ------------------------------------------------------------
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
@@ -434,7 +420,7 @@ def procesar_y_enviar():
 
         print("==============================================")
         print("¡CORREO ENVIADO CORRECTAMENTE!")
-        print("Banner configurado como INLINE para Outlook.")
+        print("Banner configurado con URL de GitHub (Raw).")
         print("==============================================")
 
     except Exception as e:
