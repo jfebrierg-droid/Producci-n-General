@@ -310,11 +310,9 @@ def procesar_y_enviar():
     """
 
     # ============================================================
-    # BANNER: URL RAW DE GITHUB PARA COMPATIBILIDAD CON OUTLOOK
+    # BANNER: URL DE GITHUB (RAW) ACTUALIZADA
     # ============================================================
-    # Nota: Asegúrate de reemplazar "TU_USUARIO", "TU_REPOSITORIO", "rama" y "ruta/al/banner.jpg"
-    # con los datos reales de tu repositorio de GitHub (usando el enlace "Raw").
-    BANNER_URL = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/rama/ruta/al/banner.jpg"
+    BANNER_URL = "https://raw.githubusercontent.com/jfebrierg-droid/Producci-n-General/refs/heads/main/Banner%20Ranking%20de%20Producci%C3%B3n%20-%201.jpg"
 
     html_content = f"""
     <!DOCTYPE html>
@@ -325,7 +323,7 @@ def procesar_y_enviar():
             <div style="background-color: #ffffff; color: #1e293b; padding: 24px 28px; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 16px; border-radius: 8px; border-left: 6px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                 {texto_dinamico}
             </div>
-            <!-- Banner Superior - URL Raw de GitHub compatible con Outlook -->
+            <!-- Banner Superior - URL de GitHub compatible con Outlook -->
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin: 0 0 16px 0;">
                 <tr>
                     <td align="center" style="padding: 0;">
@@ -420,7 +418,7 @@ def procesar_y_enviar():
 
         print("==============================================")
         print("¡CORREO ENVIADO CORRECTAMENTE!")
-        print("Banner configurado con URL de GitHub (Raw).")
+        print("Banner configurado con tu enlace de GitHub (Raw).")
         print("==============================================")
 
     except Exception as e:
