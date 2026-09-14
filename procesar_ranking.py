@@ -3,7 +3,7 @@
 Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4 -> 3 -> 2 -> 1),
 reintentos automáticos para errores 503, respaldo de modelos, estructura MIME robusta (MIMEMultipart)
-para compatibilidad total con Outlook y clientes estrictos + Seguimiento Individual limitado a 3 para pruebas.
+para compatibilidad total con Outlook y clientes estrictos.
 """
 
 from datetime import datetime
@@ -169,99 +169,6 @@ def obtener_color(ramo, valor_num):
     elif valor_num >= 1: return color_naranja
     else: return color_rojo
 
-def enviar_correos_seguimiento_individual(agentes_en_cero, mes_actual):
-    """
-    Envía un correo independiente en HTML a cada agente que tenga 0.00 en todos los renglones.
-    Incluye un tope máximo de 3 correos para fines de prueba.
-    """
-    if not agentes_en_cero:
-        print("No hay agentes con resultados en 0.00 para seguimiento individual.")
-        return
-
-    sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
-    password = os.environ.get("EMAIL_PASSWORD", "AQUI_TU_CONTRASEÑA_DE_APLICACION")
-    
-    # TOPE DE PRUEBA: Limitar el envío a un máximo de 3 agentes
-    limite_prueba = 3
-    agentes_a_procesar = agentes_en_cero[:limite_prueba]
-    
-    print(f"Total de agentes en 0.00 detectados: {len(agentes_en_cero)}. Aplicando tope de prueba: enviando solo a los primeros {len(agentes_a_procesar)}...")
-
-    try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login(sender_email, password)
-
-        for agente in agentes_a_procesar:
-            correo_destino = sender_email # En prueba se redirige al correo principal para validación
-
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = f"¡Te extrañamos en el ranking! Sumemos juntos este {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
-            msg["From"] = sender_email
-            msg["To"] = correo_destino
-            msg["Date"] = formatdate(localtime=True)
-
-            html_seguimiento = f"""
-            <!DOCTYPE html>
-            <html>
-            <head><meta charset="utf-8"></head>
-            <body style="font-family: Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; text-align: left;">
-                <div style="width: 100%; max-width: 650px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-                    <div style="font-size: 26px; font-weight: bold; color: #0284c7; margin-bottom: 15px;">🔥 EQUIPO MEGAPODEROSOS 💪</div>
-                    <div style="font-size: 20px; font-weight: bold; color: #334155; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
-                        Hola, {agente}
-                    </div>
-                    
-                    <p style="font-size: 17px; color: #475569; line-height: 1.6;">
-                        Revisando los cortes de producción correspondientes al mes de <b>{mes_actual.capitalize()}</b>, notamos que tus contadores se encuentran actualmente en <b>$0.00</b> en todos los renglones (Local, Internacional, Vida y Auto/Hogar/Empresa).
-                    </p>
-
-                    <div style="background-color: #f8fafc; border-left: 5px solid #0284c7; padding: 16px; margin: 20px 0; border-radius: 4px;">
-                        <p style="margin: 0; font-size: 16px; color: #1e293b; font-weight: bold;">📊 Tu Estado Actual:</p>
-                        <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #475569; font-size: 16px;">
-                            <li>Ramo Local: <b>$0.00</b></li>
-                            <li>Internacional: <b>$0.00</b></li>
-                            <li>Vida: <b>$0.00</b></li>
-                            <li>Auto, Hogar y Empresa: <b>$0.00</b></li>
-                        </ul>
-                    </div>
-
-                    <p style="font-size: 17px; color: #475569; line-height: 1.6;">
-                        Sabemos de tu gran capacidad y el talento que aportas al equipo. ¡Aún estás a tiempo de arrancar con fuerza, sumar tus primeros números y llevar al equipo a la cima! Cada póliza cuenta para alcanzar las metas colectivas.
-                    </p>
-
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="mailto:{sender_email}" style="background-color: #0284c7; color: #ffffff; padding: 14px 28px; text-decoration: none; font-size: 18px; font-weight: bold; border-radius: 6px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            ¡Quiero reportar producción hoy! 🚀
-                        </a>
-                    </div>
-
-                    <p style="font-size: 15px; color: #64748b; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; text-align: center;">
-                        Atentamente,<br>
-                        <b>Liderazgo - Equipo MEGAPODEROSOS</b><br>
-                        Humano Seguros
-                    </p>
-                </div>
-            </body>
-            </html>
-            """
-
-            msg.attach(MIMEText("Hola " + agente + ", nota de seguimiento de producción MEGAPODEROSOS.", "plain", "utf-8"))
-            msg.attach(MIMEText(html_seguimiento, "html", "utf-8"))
-
-            server.sendmail(sender_email, [correo_destino], msg.as_string())
-            print(f" -> [PRUEBA] Correo de seguimiento individual enviado con éxito a: {agente}")
-
-        server.quit()
-        print("==============================================")
-        print("¡PRUEBA DE CORREOS INDIVIDUALES FINALIZADA (MÁXIMO 3)!")
-        print("==============================================")
-
-    except Exception as e:
-        print(f"ERROR al enviar correos de seguimiento individual: {e}")
-
 def procesar_y_enviar():
     sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
     password = os.environ.get("EMAIL_PASSWORD", "AQUI_TU_CONTRASEÑA_DE_APLICACION")
@@ -280,8 +187,6 @@ def procesar_y_enviar():
         datos_extraidos_dict[nombre] = item
 
     datos_procesados = []
-    agentes_en_cero = []
-
     for agente in LISTA_MAESTRA_AGENTES:
         match_item = None
         for k, v in datos_extraidos_dict.items():
@@ -299,10 +204,6 @@ def procesar_y_enviar():
             val_inter = 0.0
             val_vida = 0.0
             val_auto = 0.0
-
-        # Detectar si todos los renglones están en 0.00
-        if val_local == 0.0 and val_inter == 0.0 and val_vida == 0.0 and val_auto == 0.0:
-            agentes_en_cero.append(agente)
 
         datos_procesados.append({
             "intermediario": agente,
@@ -408,6 +309,9 @@ def procesar_y_enviar():
     </div>
     """
 
+    # ============================================================
+    # BANNER: URL DE GITHUB (RAW) ACTUALIZADA
+    # ============================================================
     BANNER_URL = "https://raw.githubusercontent.com/jfebrierg-droid/Producci-n-General/refs/heads/main/Banner%20Ranking%20de%20Producci%C3%B3n%20-%201.jpg"
 
     html_content = f"""
@@ -419,6 +323,7 @@ def procesar_y_enviar():
             <div style="background-color: #ffffff; color: #1e293b; padding: 24px 28px; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 16px; border-radius: 8px; border-left: 6px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                 {texto_dinamico}
             </div>
+            <!-- Banner Superior - URL de GitHub compatible con Outlook -->
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin: 0 0 16px 0;">
                 <tr>
                     <td align="center" style="padding: 0;">
@@ -458,16 +363,38 @@ def procesar_y_enviar():
     </html>
     """
 
-    # Envío del correo general del Ranking
+    # ============================================================
+    # ENVÍO DEL CORREO - ESTRUCTURA MIME ESPECÍFICA PARA OUTLOOK
+    # ============================================================
     msg = MIMEMultipart("alternative")
+
     msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
     msg["From"] = sender_email
     msg["To"] = recipient_email
     msg["Date"] = formatdate(localtime=True)
 
-    msg.attach(MIMEText("Este correo contiene información de producción del equipo.", "plain", "utf-8"))
-    msg.attach(MIMEText(html_content, "html", "utf-8"))
+    # ------------------------------------------------------------
+    # 1. TEXTO PLANO
+    # ------------------------------------------------------------
+    texto_plano = (
+        f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS\n\n"
+        "Este correo contiene información de producción del equipo."
+    )
 
+    msg.attach(
+        MIMEText(texto_plano, "plain", "utf-8")
+    )
+
+    # ------------------------------------------------------------
+    # 2. HTML
+    # ------------------------------------------------------------
+    msg.attach(
+        MIMEText(html_content, "html", "utf-8")
+    )
+
+    # ------------------------------------------------------------
+    # 3. ENVÍO
+    # ------------------------------------------------------------
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.ehlo()
@@ -475,21 +402,27 @@ def procesar_y_enviar():
         server.ehlo()
         server.login(sender_email, password)
 
-        destinatarios = [email.strip() for email in recipient_email.split(",") if email.strip()]
-        server.sendmail(sender_email, destinatarios, msg.as_string())
+        destinatarios = [
+            email.strip()
+            for email in recipient_email.split(",")
+            if email.strip()
+        ]
+
+        server.sendmail(
+            sender_email,
+            destinatarios,
+            msg.as_string()
+        )
+
         server.quit()
 
         print("==============================================")
-        print("¡CORREO GENERAL ENVIADO CORRECTAMENTE!")
+        print("¡CORREO ENVIADO CORRECTAMENTE!")
+        print("Banner configurado con tu enlace de GitHub (Raw).")
         print("==============================================")
 
     except Exception as e:
-        print(f"ERROR al enviar el correo general: {e}")
-
-    # ============================================================
-    # EJECUCIÓN DE CORREOS INDIVIDUALES EN CERO (CON TOPE DE PRUEBA: 3)
-    # ============================================================
-    enviar_correos_seguimiento_individual(agentes_en_cero, mes_actual)
+        print(f"ERROR al enviar el correo: {e}")
 
 
 if __name__ == "__main__":
