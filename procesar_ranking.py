@@ -20,6 +20,8 @@ from email.utils import formatdate, make_msgid
 from PIL import Image
 import requests
 from google import genai
+import schedule
+import pytz
 
 # --- CONFIGURACIÓN DE MULTI-CUENTAS (Orden de prioridad estricto: 4 -> 3 -> 2 -> 1) ---
 API_KEYS_GEMINI = [
@@ -34,7 +36,7 @@ LISTA_MAESTRA_AGENTES = [
     "Milvio Espinal", "Delkis Perez", "Sory Morla", "Indhira Mora", "Luis T Ortiz",
     "Ruddy Arias", "Leomayra Alcantara", "Marcos Adames", "Maria De La Cruz", "Indhira Santos",
     "Nicauris Benitez", "Mariela de León Minaya", "Mery Lopez", "Estefania Villegas (Roger)", "Yudelfa Cuevas",
-    "Vladimil Herrera", "Orquidia Feliz", "Marisol Payano", "Jairo Martinez", "Alsiwin Ruiz",
+    "Vladimil Herrera", "Orquidea Feliz", "Marisol Payano", "Jairo Martinez", "Alsiwin Ruiz",
     "Estarlin Acosta", "Eleuterio Fernandez", "Ninfa Perez", "Angel Matos", "Ingrid Beras",
     "Kevin Ramirez", "Eduardo Hernandez", "Ana Veloz", "Wanda Peña", "Joan Danis",
     "Belkis Sanchez", "Aranechi Tejeda", "Angela Vidal", "Felix Morillo", "Hander Perez",
@@ -426,4 +428,17 @@ def procesar_y_enviar():
 
 
 if __name__ == "__main__":
-    procesar_y_enviar()
+    # Zona horaria de República Dominicana
+    tz_rd = pytz.timezone("America/Santo_Domingo")
+    
+    # Programar la ejecución para los lunes, miércoles y viernes a las 9:00 AM hora de RD
+    schedule.every().monday.at("09:00", tz=tz_rd).do(procesar_y_enviar)
+    schedule.every().wednesday.at("09:00", tz=tz_rd).do(procesar_y_enviar)
+    schedule.every().friday.at("09:00", tz=tz_rd).do(procesar_y_enviar)
+
+    print("Script programado. Ejecutándose automáticamente lunes, miércoles y viernes a las 9:00 AM (Hora de República Dominicana)...")
+
+    # Bucle infinito para mantener el script corriendo y comprobando el horario
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
