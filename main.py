@@ -81,27 +81,52 @@ def buscar_correo_en_excel(nombre_extraido):
     excel_filename = "Contactos_Cumpleanos_Megacentro_Automatizacion_ULTIMA_VERSION_10000_MENSAJES (1).xlsx"
     df = pd.read_excel(excel_filename, sheet_name=0)
 
-    # Limpiamos y separamos las palabras del nombre extraído para hacer una búsqueda flexible
+    # Limpiamos y separamos las palabras del nombre extraído
     palabras_extraidas = [
         p.strip().lower() for p in nombre_extraido.split() if len(p.strip()) > 2
     ]
+    if not palabras_extraidas:
+      return None
+
+    primer_nombre_extraido = palabras_extraidas[0]  # Ej: "cirilo"
+    mejor_coincidencia = None
+    max_coincidencias = 0
 
     for _, row in df.iterrows():
       nombre_excel = str(row.iloc[0]).strip().lower()
+      palabras_excel = [
+          p.strip().lower() for p in nombre_excel.split() if len(p.strip()) > 2
+      ]
 
-      # Verificamos si alguna palabra clave importante coincide en el registro de Excel
+      if not palabras_excel:
+        continue
+
+      primer_nombre_excel = palabras_excel[0]  # Ej: "jairo" o "cirilo"
+
+      # REGLA ESTRICTA: El primer nombre DEBE coincidir obligatoriamente
+      # para evitar que personas con el mismo apellido (ej. Martinez) se mezclen.
+      if primer_nombre_extraido != primer_nombre_excel:
+        continue
+
+      # Contamos cuántas palabras en total coinciden
       coincidencias = sum(
-          1 for palabra in palabras_extraidas if palabra in nombre_excel
+          1 for p in palabras_extraidas if p in palabras_excel
       )
 
-      if coincidencias >= 1:
+      if coincidencias > max_coincidencias:
+        max_coincidencias = coincidencias
         correo = str(row.iloc[5]).strip()
         if "@" in correo:
-          print(
-              f"✅ Coincidencia encontrada en Excel para '{nombre_extraido}'"
-              f" con el registro '{row.iloc[0]}'"
-          )
-          return correo
+          mejor_coincidencia = (correo, row.iloc[0])
+
+    if mejor_coincidencia:
+      correo_encontrado, nombre_en_excel = mejor_coincidencia
+      print(
+          f"✅ Coincidencia exacta validada para '{nombre_extraido}' con el"
+          f" registro de Excel '{nombre_en_excel}'"
+      )
+      return correo_encontrado
+
   except Exception as e:
     print(f"Error leyendo el Excel: {e}")
 
@@ -177,7 +202,6 @@ def main():
 
     pdf_stream.seek(0)
 
-    # Prompt actualizado para extraer el texto completo del campo Vía sin recortar arbitrariamente
     prompt = (
         "Extrae únicamente el nombre completo que aparece en el campo 'Vía' o"
         " solicitante (antes de cualquier barra '/' si hay varios)."
