@@ -16,7 +16,6 @@ def generar_con_gemini(pdf_stream, prompt):
 
   con soporte de respaldo automático entre múltiples API keys.
   """
-  # Lista de secretos a probar en orden de prioridad
   secretos_keys = ["GEMINI_API_REEMBOLSO", "GEMINI_API_REEMBOLSO_2"]
   api_keys_disponibles = []
 
@@ -33,7 +32,6 @@ def generar_con_gemini(pdf_stream, prompt):
 
   last_exception = None
 
-  # Intentar con cada clave disponible secuencialmente si ocurre un error de cuota
   for nombre_secreto, api_key in api_keys_disponibles:
     try:
       print(
@@ -67,7 +65,6 @@ def generar_con_gemini(pdf_stream, prompt):
       last_exception = err
       continue
 
-  # Si se probaron todas las llaves y ninguna funcionó, lanzamos el error
   raise last_exception
 
 
@@ -84,11 +81,26 @@ def buscar_correo_en_excel(nombre_extraido):
     excel_filename = "Contactos_Cumpleanos_Megacentro_Automatizacion_ULTIMA_VERSION_10000_MENSAJES (1).xlsx"
     df = pd.read_excel(excel_filename, sheet_name=0)
 
+    # Limpiamos y separamos las palabras del nombre extraído para hacer una búsqueda flexible
+    palabras_extraidas = [
+        p.strip().lower() for p in nombre_extraido.split() if len(p.strip()) > 2
+    ]
+
     for _, row in df.iterrows():
       nombre_excel = str(row.iloc[0]).strip().lower()
-      if nombre_extraido.strip().lower() in nombre_excel:
+
+      # Verificamos si alguna palabra clave importante coincide en el registro de Excel
+      coincidencias = sum(
+          1 for palabra in palabras_extraidas if palabra in nombre_excel
+      )
+
+      if coincidencias >= 1:
         correo = str(row.iloc[5]).strip()
         if "@" in correo:
+          print(
+              f"✅ Coincidencia encontrada en Excel para '{nombre_extraido}'"
+              f" con el registro '{row.iloc[0]}'"
+          )
           return correo
   except Exception as e:
     print(f"Error leyendo el Excel: {e}")
@@ -165,13 +177,13 @@ def main():
 
     pdf_stream.seek(0)
 
+    # Prompt actualizado para extraer el texto completo del campo Vía sin recortar arbitrariamente
     prompt = (
-        "Extrae únicamente el nombre de la persona que aparece en el campo"
-        " 'Vía' o solicitante. Trunca el resultado estrictamente al Primer"
-        " Nombre y Primer Apellido, ignorando rutas o nombres secundarios."
+        "Extrae únicamente el nombre completo que aparece en el campo 'Vía' o"
+        " solicitante (antes de cualquier barra '/' si hay varios)."
+        " Devuélvelo tal cual aparece, sin recortar los apellidos."
     )
 
-    # --- Bloque con reintentos y rotación de llaves ---
     max_intentos = 3
     nombre_extraido = None
 
