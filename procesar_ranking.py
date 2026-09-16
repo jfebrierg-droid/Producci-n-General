@@ -3,7 +3,7 @@
 Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4 -> 3 -> 2 -> 1),
 reintentos automáticos para errores 503, respaldo de modelos, estructura MIME robusta (MIMEMultipart)
-para compatibilidad total con Outlook y clientes estrictos. Incluye a Wilfredo Vicente en la lista maestra.
+para compatibilidad total con Outlook y clientes estrictos. Lista maestra actualizada con los miembros del listado.
 """
 
 from datetime import datetime
@@ -29,7 +29,7 @@ API_KEYS_GEMINI = [
     os.environ.get("GEMINI_API_KEY")
 ]
 
-# Lista maestra con TODOS los miembros del equipo MEGAPODEROSOS
+# Lista maestra actualizada con TODOS los miembros del equipo MEGAPODEROSOS
 LISTA_MAESTRA_AGENTES = [
     "Milvio Espinal", "Delkis Perez", "Sory Morla", "Indhira Mora", "Luis T Ortiz",
     "Ruddy Arias", "Leomayra Alcantara", "Marcos Adames", "Maria De La Cruz", "Indhira Santos",
@@ -39,7 +39,7 @@ LISTA_MAESTRA_AGENTES = [
     "Kevin Ramirez", "Eduardo Hernandez", "Ana Veloz", "Wanda Peña", "Joan Danis",
     "Belkis Sanchez", "Aranechi Tejeda", "Angela Vidal", "Felix Morillo", "Hander Perez",
     "Julissa Rosario", "Amalfi Julissa Rodriguez", "Charles Furment", "Angela Valerio", "Dioselina Ramos",
-    "Luisa Gonzalez", "Hugo Cruz", "Jose Terrero", "Maribel Fernandez", "Esperanza Regalado",
+    "Luisa Gonzalez", "Hugo Cruz", "Jose Terrero", "Mercedes Fernandez", "Esperanza Regalado",
     "John Adams", "Maria Soriano", "Albertina Febles", "Franklin Graterol", "Cirilo Fermin",
     "Eddy Concepcion", "Yolanda Cabrera", "Paula Herrera", "Rafael Capellan", "Salvador Martinez",
     "Wilfredo Vicente"
