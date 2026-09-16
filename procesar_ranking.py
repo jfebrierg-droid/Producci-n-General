@@ -213,10 +213,10 @@ def procesar_y_enviar():
             "val_auto": val_auto
         })
 
-    top_local = sorted(datos_procesados, key=lambda x: x["val_local"], reverse=True)[:3]
-    top_inter = sorted(datos_procesados, key=lambda x: x["val_inter"], reverse=True)[:3]
-    top_vida = sorted(datos_procesados, key=lambda x: x["val_vida"], reverse=True)[:3]
-    top_auto = sorted(datos_procesados, key=lambda x: x["val_auto"], reverse=True)[:3]
+    top_local = sorted(datos_procesados, key=lambda x: x["val_local"], reverse=True)[:5]
+    top_inter = sorted(datos_procesados, key=lambda x: x["val_inter"], reverse=True)[:5]
+    top_vida = sorted(datos_procesados, key=lambda x: x["val_vida"], reverse=True)[:5]
+    top_auto = sorted(datos_procesados, key=lambda x: x["val_auto"], reverse=True)[:5]
 
     def format_top_item(item, ramo, valor):
         if valor <= 0:
@@ -266,52 +266,57 @@ def procesar_y_enviar():
         
         <table style="width: 100%; border-collapse: collapse; font-size: 19px; line-height: 1.6; text-align: left;">
             <tr>
-                <td style="width: 50%; vertical-align: top; padding-right: 16px; padding-bottom: 20px; text-align: left;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 3 &mdash; LOCAL</div>
-                    <div style="color: #334155; text-align: left;">
+                <td style="width: 50%; vertical-align: top; padding-right: 16px; padding-bottom: 25px; text-align: left;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 5 &mdash; LOCAL</div>
+                    <div style="color: #334155; text-align: left; font-size: 18px;">
                         1. {format_top_item(top_local[0]['intermediario'], 'local', top_local[0]['val_local'])}<br>
                         2. {format_top_item(top_local[1]['intermediario'], 'local', top_local[1]['val_local'])}<br>
-                        3. {format_top_item(top_local[2]['intermediario'], 'local', top_local[2]['val_local'])}
+                        3. {format_top_item(top_local[2]['intermediario'], 'local', top_local[2]['val_local'])}<br>
+                        4. {format_top_item(top_local[3]['intermediario'], 'local', top_local[3]['val_local'])}<br>
+                        5. {format_top_item(top_local[4]['intermediario'], 'local', top_local[4]['val_local'])}
                     </div>
                 </td>
-                <td style="width: 50%; vertical-align: top; padding-left: 16px; padding-bottom: 20px; text-align: left;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 3 &mdash; INTERNACIONAL</div>
-                    <div style="color: #334155; text-align: left;">
+                <td style="width: 50%; vertical-align: top; padding-left: 16px; padding-bottom: 25px; text-align: left;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 5 &mdash; INTERNACIONAL</div>
+                    <div style="color: #334155; text-align: left; font-size: 18px;">
                         1. {format_top_item(top_inter[0]['intermediario'], 'inter', top_inter[0]['val_inter'])}<br>
                         2. {format_top_item(top_inter[1]['intermediario'], 'inter', top_inter[1]['val_inter'])}<br>
-                        3. {format_top_item(top_inter[2]['intermediario'], 'inter', top_inter[2]['val_inter'])}
+                        3. {format_top_item(top_inter[2]['intermediario'], 'inter', top_inter[2]['val_inter'])}<br>
+                        4. {format_top_item(top_inter[3]['intermediario'], 'inter', top_inter[3]['val_inter'])}<br>
+                        5. {format_top_item(top_inter[4]['intermediario'], 'inter', top_inter[4]['val_inter'])}
                     </div>
                 </td>
             </tr>
             <tr>
                 <td style="width: 50%; vertical-align: top; padding-right: 16px; padding-top: 10px; text-align: left;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 3 &mdash; VIDA</div>
-                    <div style="color: #334155; text-align: left;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 5 &mdash; VIDA</div>
+                    <div style="color: #334155; text-align: left; font-size: 18px;">
                         1. {format_top_item(top_vida[0]['intermediario'], 'vida', top_vida[0]['val_vida'])}<br>
                         2. {format_top_item(top_vida[1]['intermediario'], 'vida', top_vida[1]['val_vida'])}<br>
-                        3. {format_top_item(top_vida[2]['intermediario'], 'vida', top_vida[2]['val_vida'])}
+                        3. {format_top_item(top_vida[2]['intermediario'], 'vida', top_vida[2]['val_vida'])}<br>
+                        4. {format_top_item(top_vida[3]['intermediario'], 'vida', top_vida[3]['val_vida'])}<br>
+                        5. {format_top_item(top_vida[4]['intermediario'], 'vida', top_vida[4]['val_vida'])}
                     </div>
                 </td>
                 <td style="width: 50%; vertical-align: top; padding-left: 16px; padding-top: 10px; text-align: left;">
-                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 3 &mdash; AUTO, HOGAR Y EMPRESA</div>
-                    <div style="color: #334155; text-align: left;">
+                    <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 5 &mdash; AUTO, HOGAR Y EMPRESA</div>
+                    <div style="color: #334155; text-align: left; font-size: 18px;">
                         1. {format_top_item(top_auto[0]['intermediario'], 'auto', top_auto[0]['val_auto'])}<br>
                         2. {format_top_item(top_auto[1]['intermediario'], 'auto', top_auto[1]['val_auto'])}<br>
-                        3. {format_top_item(top_auto[2]['intermediario'], 'auto', top_auto[2]['val_auto'])}
+                        3. {format_top_item(top_auto[2]['intermediario'], 'auto', top_auto[2]['val_auto'])}<br>
+                        4. {format_top_item(top_auto[3]['intermediario'], 'auto', top_auto[3]['val_auto'])}<br>
+                        5. {format_top_item(top_auto[4]['intermediario'], 'auto', top_auto[4]['val_auto'])}
                     </div>
                 </td>
             </tr>
         </table>
         
-        <div style="margin-top: 16px; font-size: 19px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: left; font-weight: bold;">
+        <div style="margin-top: 20px; font-size: 19px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: left; font-weight: bold;">
             A continuación, el detalle completo de la producción:
         </div>
     </div>
     """
 
-    # ============================================================
-    # BANNER: URL DE GITHUB (RAW) ACTUALIZADA
-    # ============================================================
     BANNER_URL = "https://raw.githubusercontent.com/jfebrierg-droid/Producci-n-General/refs/heads/main/Banner%20Ranking%20de%20Producci%C3%B3n%20-%201.jpg"
 
     html_content = f"""
@@ -323,7 +328,6 @@ def procesar_y_enviar():
             <div style="background-color: #ffffff; color: #1e293b; padding: 24px 28px; font-family: Arial, sans-serif; border: 1px solid #cbd5e1; text-align: left; margin-bottom: 16px; border-radius: 8px; border-left: 6px solid #0284c7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
                 {texto_dinamico}
             </div>
-            <!-- Banner Superior - URL de GitHub compatible con Outlook -->
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin: 0 0 16px 0;">
                 <tr>
                     <td align="center" style="padding: 0;">
@@ -363,67 +367,27 @@ def procesar_y_enviar():
     </html>
     """
 
-    # ============================================================
-    # ENVÍO DEL CORREO - ESTRUCTURA MIME ESPECÍFICA PARA OUTLOOK
-    # ============================================================
     msg = MIMEMultipart("alternative")
-
     msg["Subject"] = f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS 💪"
     msg["From"] = sender_email
     msg["To"] = recipient_email
     msg["Date"] = formatdate(localtime=True)
 
-    # ------------------------------------------------------------
-    # 1. TEXTO PLANO
-    # ------------------------------------------------------------
     texto_plano = (
         f"Producción de {mes_actual.capitalize()} - MEGAPODEROSOS\n\n"
         "Este correo contiene información de producción del equipo."
     )
+    msg.attach(MIMEText(texto_plano, "plain", "utf-8"))
+    msg.attach(MIMEText(html_content, "html", "utf-8"))
 
-    msg.attach(
-        MIMEText(texto_plano, "plain", "utf-8")
-    )
-
-    # ------------------------------------------------------------
-    # 2. HTML
-    # ------------------------------------------------------------
-    msg.attach(
-        MIMEText(html_content, "html", "utf-8")
-    )
-
-    # ------------------------------------------------------------
-    # 3. ENVÍO
-    # ------------------------------------------------------------
+    # Código para envío por SMTP (ej. Gmail)
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login(sender_email, password)
-
-        destinatarios = [
-            email.strip()
-            for email in recipient_email.split(",")
-            if email.strip()
-        ]
-
-        server.sendmail(
-            sender_email,
-            destinatarios,
-            msg.as_string()
-        )
-
-        server.quit()
-
-        print("==============================================")
-        print("¡CORREO ENVIADO CORRECTAMENTE!")
-        print("Banner configurado con tu enlace de GitHub (Raw).")
-        print("==============================================")
-
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender_email, password)
+            server.sendmail(sender_email, recipient_email, msg.as_string())
+        print("Correo enviado exitosamente.")
     except Exception as e:
-        print(f"ERROR al enviar el correo: {e}")
-
+        print(f"Error al enviar el correo: {e}")
 
 if __name__ == "__main__":
     procesar_y_enviar()
