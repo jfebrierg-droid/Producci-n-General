@@ -3,7 +3,7 @@
 Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4 -> 3 -> 2 -> 1),
 reintentos automáticos para errores 503, respaldo de modelos, estructura MIME robusta (MIMEMultipart)
-para compatibilidad total con Outlook y clientes estrictos. Lista maestra actualizada con los miembros del listado.
+para compatibilidad total con Outlook y clientes estrictos. Actualizado con Estefania Villegas (Rogers).
 """
 
 from datetime import datetime
@@ -29,11 +29,11 @@ API_KEYS_GEMINI = [
     os.environ.get("GEMINI_API_KEY")
 ]
 
-# Lista maestra actualizada con TODOS los miembros del equipo MEGAPODEROSOS
+# Lista maestra con TODOS los miembros del equipo MEGAPODEROSOS (Estefania Villegas actualizada a Rogers)
 LISTA_MAESTRA_AGENTES = [
     "Milvio Espinal", "Delkis Perez", "Sory Morla", "Indhira Mora", "Luis T Ortiz",
     "Ruddy Arias", "Leomayra Alcantara", "Marcos Adames", "Maria De La Cruz", "Indhira Santos",
-    "Nicauris Benitez", "Mariela de León Minaya", "Mery Lopez", "Estefania Villegas (Roger)", "Yudelfa Cuevas",
+    "Nicauris Benitez", "Mariela de León Minaya", "Mery Lopez", "Estefania Villegas (Rogers)", "Yudelfa Cuevas",
     "Vladimil Herrera", "Orquidia Feliz", "Marisol Payano", "Jairo Martinez", "Alsiwin Ruiz",
     "Estarlin Acosta", "Eleuterio Fernandez", "Ninfa Perez", "Angel Matos", "Ingrid Beras",
     "Kevin Ramirez", "Eduardo Hernandez", "Ana Veloz", "Wanda Peña", "Joan Danis",
