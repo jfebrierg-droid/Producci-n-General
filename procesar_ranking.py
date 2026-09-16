@@ -3,7 +3,7 @@
 Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4 -> 3 -> 2 -> 1),
 reintentos automáticos para errores 503, respaldo de modelos, estructura MIME robusta (MIMEMultipart)
-para compatibilidad total con Outlook y clientes estrictos. Muestra mensaje motivador en espacios vacíos del Top 5.
+para compatibilidad total con Outlook y clientes estrictos. Incluye a Wilfredo Vicente en la lista maestra.
 """
 
 from datetime import datetime
@@ -41,7 +41,8 @@ LISTA_MAESTRA_AGENTES = [
     "Julissa Rosario", "Amalfi Julissa Rodriguez", "Charles Furment", "Angela Valerio", "Dioselina Ramos",
     "Luisa Gonzalez", "Hugo Cruz", "Jose Terrero", "Maribel Fernandez", "Esperanza Regalado",
     "John Adams", "Maria Soriano", "Albertina Febles", "Franklin Graterol", "Cirilo Fermin",
-    "Eddy Concepcion", "Yolanda Cabrera", "Paula Herrera", "Rafael Capellan", "Salvador Martinez"
+    "Eddy Concepcion", "Yolanda Cabrera", "Paula Herrera", "Rafael Capellan", "Salvador Martinez",
+    "Wilfredo Vicente"
 ]
 
 def format_moneda(valor):
