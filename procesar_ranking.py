@@ -3,7 +3,7 @@
 Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4 -> 3 -> 2 -> 1),
 reintentos automáticos para errores 503, respaldo de modelos, estructura MIME robusta (MIMEMultipart)
-para compatibilidad total con Outlook y clientes estrictos. Excluye $0.00 de los Top 5.
+para compatibilidad total con Outlook y clientes estrictos. Muestra mensaje motivador en espacios vacíos del Top 5.
 """
 
 from datetime import datetime
@@ -241,7 +241,7 @@ def procesar_y_enviar():
                 
                 html_tops += f"{i+1}. {detalle}<br>"
             else:
-                html_tops += f"{i+1}. <span style='color: #94a3b8; font-style: italic;'>&mdash; Sin registros &mdash;</span><br>"
+                html_tops += f"{i+1}. <span style='color: #0284c7; font-style: italic; font-weight: bold;'>Tú puedes estar en este Top</span><br>"
         return html_tops
 
     meses_es = {1: "enero", 2: "febrero", 3: "marzo", 4: "abril", 5: "mayo", 6: "junio", 7: "julio", 8: "agosto", 9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre"}
