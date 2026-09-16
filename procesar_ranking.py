@@ -3,7 +3,7 @@
 Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4 -> 3 -> 2 -> 1),
 reintentos automáticos para errores 503, respaldo de modelos, estructura MIME robusta (MIMEMultipart)
-para compatibilidad total con Outlook y clientes estrictos.
+para compatibilidad total con Outlook y clientes estrictos. Excluye $0.00 de los Top 5.
 """
 
 from datetime import datetime
@@ -213,23 +213,36 @@ def procesar_y_enviar():
             "val_auto": val_auto
         })
 
-    top_local = sorted(datos_procesados, key=lambda x: x["val_local"], reverse=True)[:5]
-    top_inter = sorted(datos_procesados, key=lambda x: x["val_inter"], reverse=True)[:5]
-    top_vida = sorted(datos_procesados, key=lambda x: x["val_vida"], reverse=True)[:5]
-    top_auto = sorted(datos_procesados, key=lambda x: x["val_auto"], reverse=True)[:5]
+    # Filtrar solo valores mayores a 0 para el Top 5
+    top_local = sorted([x for x in datos_procesados if x["val_local"] > 0], key=lambda x: x["val_local"], reverse=True)[:5]
+    top_inter = sorted([x for x in datos_procesados if x["val_inter"] > 0], key=lambda x: x["val_inter"], reverse=True)[:5]
+    top_vida = sorted([x for x in datos_procesados if x["val_vida"] > 0], key=lambda x: x["val_vida"], reverse=True)[:5]
+    top_auto = sorted([x for x in datos_procesados if x["val_auto"] > 0], key=lambda x: x["val_auto"], reverse=True)[:5]
 
-    def format_top_item(item, ramo, valor):
-        if valor <= 0:
-            return f"<b>{item}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(0.0)})</span>"
-        if cumple_meta(ramo, valor):
-            return f"<b>{item}</b> 💪 <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(valor)})</span>"
-        else:
-            meta = obtener_meta(ramo)
-            if ramo == "auto":
-                return f"<b>{item}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(valor)})</span>"
+    def generar_filas_top(lista_top, ramo):
+        html_tops = ""
+        for i in range(5):
+            if i < len(lista_top):
+                item = lista_top[i]
+                val = item[f"val_{ramo}"]
+                nombre = item['intermediario']
+                
+                if val <= 0:
+                    detalle = f"<b>{nombre}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(0.0)})</span>"
+                elif cumple_meta(ramo, val):
+                    detalle = f"<b>{nombre}</b> 💪 <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(val)})</span>"
+                else:
+                    meta = obtener_meta(ramo)
+                    if ramo == "auto":
+                        detalle = f"<b>{nombre}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(val)})</span>"
+                    else:
+                        falta = meta - val
+                        detalle = f"<b>{nombre}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(val)})</span><br><span style='font-size: 15px; color: #c2410c; font-weight: bold; padding-left: 20px;'>— Te faltan {format_moneda(falta)} para ganar!!</span>"
+                
+                html_tops += f"{i+1}. {detalle}<br>"
             else:
-                falta = meta - valor
-                return f"<b>{item}</b> <span style='color: #64748b; font-weight: normal; font-size: 18px;'>({format_moneda(valor)})</span><br><span style='font-size: 15px; color: #c2410c; font-weight: bold; padding-left: 20px;'>— Te faltan {format_moneda(falta)} para ganar!!</span>"
+                html_tops += f"{i+1}. <span style='color: #94a3b8; font-style: italic;'>&mdash; Sin registros &mdash;</span><br>"
+        return html_tops
 
     meses_es = {1: "enero", 2: "febrero", 3: "marzo", 4: "abril", 5: "mayo", 6: "junio", 7: "julio", 8: "agosto", 9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre"}
     mes_actual = meses_es.get(datetime.now().month, "mes")
@@ -269,21 +282,13 @@ def procesar_y_enviar():
                 <td style="width: 50%; vertical-align: top; padding-right: 16px; padding-bottom: 25px; text-align: left;">
                     <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 5 &mdash; LOCAL</div>
                     <div style="color: #334155; text-align: left; font-size: 18px;">
-                        1. {format_top_item(top_local[0]['intermediario'], 'local', top_local[0]['val_local'])}<br>
-                        2. {format_top_item(top_local[1]['intermediario'], 'local', top_local[1]['val_local'])}<br>
-                        3. {format_top_item(top_local[2]['intermediario'], 'local', top_local[2]['val_local'])}<br>
-                        4. {format_top_item(top_local[3]['intermediario'], 'local', top_local[3]['val_local'])}<br>
-                        5. {format_top_item(top_local[4]['intermediario'], 'local', top_local[4]['val_local'])}
+                        {generar_filas_top(top_local, 'local')}
                     </div>
                 </td>
                 <td style="width: 50%; vertical-align: top; padding-left: 16px; padding-bottom: 25px; text-align: left;">
                     <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 5 &mdash; INTERNACIONAL</div>
                     <div style="color: #334155; text-align: left; font-size: 18px;">
-                        1. {format_top_item(top_inter[0]['intermediario'], 'inter', top_inter[0]['val_inter'])}<br>
-                        2. {format_top_item(top_inter[1]['intermediario'], 'inter', top_inter[1]['val_inter'])}<br>
-                        3. {format_top_item(top_inter[2]['intermediario'], 'inter', top_inter[2]['val_inter'])}<br>
-                        4. {format_top_item(top_inter[3]['intermediario'], 'inter', top_inter[3]['val_inter'])}<br>
-                        5. {format_top_item(top_inter[4]['intermediario'], 'inter', top_inter[4]['val_inter'])}
+                        {generar_filas_top(top_inter, 'inter')}
                     </div>
                 </td>
             </tr>
@@ -291,21 +296,13 @@ def procesar_y_enviar():
                 <td style="width: 50%; vertical-align: top; padding-right: 16px; padding-top: 10px; text-align: left;">
                     <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 5 &mdash; VIDA</div>
                     <div style="color: #334155; text-align: left; font-size: 18px;">
-                        1. {format_top_item(top_vida[0]['intermediario'], 'vida', top_vida[0]['val_vida'])}<br>
-                        2. {format_top_item(top_vida[1]['intermediario'], 'vida', top_vida[1]['val_vida'])}<br>
-                        3. {format_top_item(top_vida[2]['intermediario'], 'vida', top_vida[2]['val_vida'])}<br>
-                        4. {format_top_item(top_vida[3]['intermediario'], 'vida', top_vida[3]['val_vida'])}<br>
-                        5. {format_top_item(top_vida[4]['intermediario'], 'vida', top_vida[4]['val_vida'])}
+                        {generar_filas_top(top_vida, 'vida')}
                     </div>
                 </td>
                 <td style="width: 50%; vertical-align: top; padding-left: 16px; padding-top: 10px; text-align: left;">
                     <div style="color: #0284c7; font-weight: bold; margin-bottom: 10px; font-size: 19px; text-align: left;">🏆 TOP 5 &mdash; AUTO, HOGAR Y EMPRESA</div>
                     <div style="color: #334155; text-align: left; font-size: 18px;">
-                        1. {format_top_item(top_auto[0]['intermediario'], 'auto', top_auto[0]['val_auto'])}<br>
-                        2. {format_top_item(top_auto[1]['intermediario'], 'auto', top_auto[1]['val_auto'])}<br>
-                        3. {format_top_item(top_auto[2]['intermediario'], 'auto', top_auto[2]['val_auto'])}<br>
-                        4. {format_top_item(top_auto[3]['intermediario'], 'auto', top_auto[3]['val_auto'])}<br>
-                        5. {format_top_item(top_auto[4]['intermediario'], 'auto', top_auto[4]['val_auto'])}
+                        {generar_filas_top(top_auto, 'auto')}
                     </div>
                 </td>
             </tr>
@@ -380,7 +377,6 @@ def procesar_y_enviar():
     msg.attach(MIMEText(texto_plano, "plain", "utf-8"))
     msg.attach(MIMEText(html_content, "html", "utf-8"))
 
-    # Código para envío por SMTP (ej. Gmail)
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, password)
