@@ -1,10 +1,9 @@
 name: Ejecutar Ranking MEGAPODEROSOS
 
 on:
-  schedule:
-    # Se ejecuta lunes, miércoles y viernes a las 13:00 UTC (9:00 AM hora de RD)
-    - cron: '0 13 * * 1,3,5'
   workflow_dispatch:
+  repository_dispatch:
+    types: [ejecutar_ranking]
 
 jobs:
   ejecutar-script:
