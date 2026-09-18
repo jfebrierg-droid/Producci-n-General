@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 Script: procesar_ranking.py
-Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (ordenado: 4 -> 3 -> 2 -> 1),
-reintentos automáticos para errores 503, respaldo de modelos, estructura MIME robusta (MIMEMultipart)
-para compatibilidad total con Outlook y clientes estrictos. Actualizado con Estefania Villegas (Rogers).
+Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (Gemini 4 -> 3 -> 2 -> 1)
+y respaldo automático de OpenAI (ChatGPT - gpt-4o) para máxima disponibilidad.
+Estructura MIME robusta para compatibilidad total con Outlook.
 """
 
+import base64
 from datetime import datetime
 import json
 import os
@@ -20,6 +21,7 @@ from email.utils import formatdate, make_msgid
 from PIL import Image
 import requests
 from google import genai
+from openai import OpenAI  # Importado para el respaldo de ChatGPT
 
 # --- CONFIGURACIÓN DE MULTI-CUENTAS (Orden de prioridad estricto: 4 -> 3 -> 2 -> 1) ---
 API_KEYS_GEMINI = [
@@ -67,7 +69,7 @@ def obtener_datos_desde_drive_imagen(file_id):
         f.write(response.content)
 
     img = Image.open(image_path)
-    print("Analizando imagen con IA (Sistema multi-cuenta priorizando Key 4 -> 3 -> 2 -> 1)...")
+    print("Analizando imagen con IA (Sistema multi-cuenta Gemini priorizando Key 4 -> 3 -> 2 -> 1)...")
     
     prompt = """
     Analiza esta imagen que contiene un reporte o tabla de producción de seguros del equipo MEGAPODEROSOS.
@@ -94,7 +96,7 @@ def obtener_datos_desde_drive_imagen(file_id):
 
     for index, api_key in enumerate(API_KEYS_GEMINI):
         if not api_key:
-            print(f"Aviso: La API Key #{4 - index} no está configurada o está vacía.")
+            print(f"Aviso: La API Key #{4 - index} de Gemini no está configurada o está vacía.")
             continue
         
         client = genai.Client(api_key=api_key)
@@ -103,25 +105,25 @@ def obtener_datos_desde_drive_imagen(file_id):
             exito_modelo = False
             for intento in range(3):
                 try:
-                    print(f"Intentando con API Key #{4 - index}, modelo {modelo} (intento {intento + 1})...")
+                    print(f"Intentando con Gemini API Key #{4 - index}, modelo {modelo} (intento {intento + 1})...")
                     response = client.models.generate_content(
                         model=modelo,
                         contents=[img, prompt]
                     )
                     texto_respuesta = response.text
                     exito_modelo = True
-                    print(f"¡Éxito con el modelo {modelo} usando la clave actual!")
+                    print(f"¡Éxito con el modelo {modelo} usando Gemini!")
                     break
                 except Exception as e:
                     error_msg = str(e)
                     print(f"Aviso: {error_msg}")
                     if "503" in error_msg or "UNAVAILABLE" in error_msg or "high demand" in error_msg:
                         tiempo_espera = (intento + 1) * 3
-                        print(f"Servidor saturado (503). Esperando {tiempo_espera}s antes de reintentar...")
+                        print(f"Servidor de Gemini saturado (503). Esperando {tiempo_espera}s antes de reintentar...")
                         time.sleep(tiempo_espera)
                         continue
                     elif "429" in error_msg or "Quota" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
-                        print("Límite de cuota alcanzado. Probando siguiente opción...")
+                        print("Límite de cuota alcanzado en Gemini. Probando siguiente opción...")
                         break
                     else:
                         break
@@ -130,11 +132,48 @@ def obtener_datos_desde_drive_imagen(file_id):
         if texto_respuesta:
             break
 
+    # --- RESPALDO AUTOMÁTICO CON OPENAI (CHATGPT) SI GEMINI FALLA ---
+    if not texto_respuesta:
+        print("Gemini agotó sus intentos o presentó saturación. Activando respaldo con ChatGPT (OpenAI - gpt-4o)...")
+        openai_key = os.environ.get("OPENAI_API_KEY")
+        
+        if openai_key:
+            try:
+                client_openai = OpenAI(api_key=openai_key)
+                
+                with open(image_path, "rb") as image_file:
+                    base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+                
+                response_openai = client_openai.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": prompt},
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/jpeg;base64,{base64_image}"
+                                    },
+                                },
+                            ],
+                        }
+                    ],
+                    max_tokens=2000
+                )
+                texto_respuesta = response_openai.choices[0].message.content
+                print("¡Éxito procesando la imagen con el respaldo de ChatGPT (OpenAI)!")
+            except Exception as e_openai:
+                print(f"Error también con el respaldo de OpenAI: {e_openai}")
+        else:
+            print("Aviso: La variable OPENAI_API_KEY no está configurada en los secretos de GitHub.")
+
     if os.path.exists(image_path):
         os.remove(image_path)
 
     if not texto_respuesta:
-        raise Exception("Se agotaron los reintentos, modelos y claves debido a saturación del servidor (503) o límites de cuota.")
+        raise Exception("Se agotaron todas las opciones de Gemini y el respaldo de ChatGPT debido a saturación o errores.")
 
     match = re.search(r"\[.*\]", texto_respuesta, re.DOTALL)
     if match:
