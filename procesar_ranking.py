@@ -35,7 +35,7 @@ API_KEYS_GEMINI = [
 LISTA_MAESTRA_AGENTES = [
     "Milvio Espinal", "Delkis Perez", "Sory Morla", "Indhira Mora", "Luis T Ortiz",
     "Ruddy Arias", "Leomayra Alcantara", "Marcos Adames", "Maria De La Cruz", "Indhira Santos",
-    "Nicauris Benitez", "Mariela de León Minaya", "Mery Lopez", "Estefania Villegas (Rogers)", "Yudelfa Cuevas",
+    "Nicauris Benitez", "Mariela de León Minaya", "Mery Lopez", "Estefania Villegas (Rogers)", "Yudelka Cuevas",
     "Vladimil Herrera", "Orquidia Feliz", "Marisol Payano", "Jairo Martinez", "Alsiwin Ruiz",
     "Estarlin Acosta", "Eleuterio Fernandez", "Ninfa Perez", "Angel Matos", "Ingrid Beras",
     "Kevin Ramirez", "Eduardo Hernandez", "Ana Veloz", "Wanda Peña", "Joan Danis",
