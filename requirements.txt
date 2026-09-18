@@ -5,3 +5,4 @@ pillow
 gdown
 google-genai
 html2image
+openai
