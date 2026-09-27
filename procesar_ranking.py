@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Script: procesar_ranking.py
-Descripción: Procesamiento de ranking por IA con sistema multi-cuenta (Gemini 4 -> 3 -> 2 -> 1)
-y respaldo automático de OpenAI (ChatGPT - gpt-4o) para máxima disponibilidad.
+Descripción: Procesamiento de ranking por IA priorizando Groq (Llama 3.3 70B) 
+y con sistema multi-cuenta de respaldo Gemini (4 -> 3 -> 2 -> 1).
 Estructura MIME robusta para compatibilidad total con Outlook.
 """
 
@@ -21,9 +21,9 @@ from email.utils import formatdate, make_msgid
 from PIL import Image
 import requests
 from google import genai
-from openai import OpenAI  # Importado para el respaldo de ChatGPT
+from openai import OpenAI  # Usado para conectar con la API de Groq
 
-# --- CONFIGURACIÓN DE MULTI-CUENTAS (Orden de prioridad estricto: 4 -> 3 -> 2 -> 1) ---
+# --- CONFIGURACIÓN DE MULTI-CUENTAS DE GEMINI (Como respaldo) ---
 API_KEYS_GEMINI = [
     os.environ.get("GEMINI_API_KEY_4"),
     os.environ.get("GEMINI_API_KEY_3"),
@@ -33,7 +33,7 @@ API_KEYS_GEMINI = [
 
 # Lista maestra con TODOS los miembros del equipo MEGAPODEROSOS (Estefania Villegas actualizada a Rogers)
 LISTA_MAESTRA_AGENTES = [
-    "Milvio Espinal", "Delkis Perez", "Sory Morla", "Indhira Mora", "Luis T Ortiz",
+    "Milvio Espinal", "Delkis Perez", "Sory Morla", "Indhira Mora",
     "Ruddy Arias", "Leomayra Alcantara", "Marcos Adames", "Maria De La Cruz", "Indhira Santos",
     "Nicauris Benitez", "Mariela de León Minaya", "Mery Lopez", "Estefania Villegas (Rogers)", "Yudelka Cuevas",
     "Vladimil Herrera", "Orquidia Feliz", "Marisol Payano", "Jairo Martinez", "Alsiwin Ruiz",
@@ -68,8 +68,7 @@ def obtener_datos_desde_drive_imagen(file_id):
     with open(image_path, "wb") as f:
         f.write(response.content)
 
-    img = Image.open(image_path)
-    print("Analizando imagen con IA (Sistema multi-cuenta Gemini priorizando Key 4 -> 3 -> 2 -> 1)...")
+    print("Analizando imagen con IA...")
     
     prompt = """
     Analiza esta imagen que contiene un reporte o tabla de producción de seguros del equipo MEGAPODEROSOS.
@@ -91,61 +90,25 @@ def obtener_datos_desde_drive_imagen(file_id):
     - Devuelve ÚNICAMENTE el bloque JSON válido, sin texto adicional antes ni después.
     """
 
-    modelos_a_probar = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']
     texto_respuesta = None
 
-    for index, api_key in enumerate(API_KEYS_GEMINI):
-        if not api_key:
-            print(f"Aviso: La API Key #{4 - index} de Gemini no está configurada o está vacía.")
-            continue
-        
-        client = genai.Client(api_key=api_key)
-        
-        for modelo in modelos_a_probar:
-            exito_modelo = False
-            for intento in range(3):
-                try:
-                    print(f"Intentando con Gemini API Key #{4 - index}, modelo {modelo} (intento {intento + 1})...")
-                    response = client.models.generate_content(
-                        model=modelo,
-                        contents=[img, prompt]
-                    )
-                    texto_respuesta = response.text
-                    exito_modelo = True
-                    print(f"¡Éxito con el modelo {modelo} usando Gemini!")
-                    break
-                except Exception as e:
-                    error_msg = str(e)
-                    print(f"Aviso: {error_msg}")
-                    if "503" in error_msg or "UNAVAILABLE" in error_msg or "high demand" in error_msg:
-                        tiempo_espera = (intento + 1) * 3
-                        print(f"Servidor de Gemini saturado (503). Esperando {tiempo_espera}s antes de reintentar...")
-                        time.sleep(tiempo_espera)
-                        continue
-                    elif "429" in error_msg or "Quota" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
-                        print("Límite de cuota alcanzado en Gemini. Probando siguiente opción...")
-                        break
-                    else:
-                        break
-            if exito_modelo:
-                break
-        if texto_respuesta:
-            break
-
-    # --- RESPALDO AUTOMÁTICO CON OPENAI (CHATGPT) SI GEMINI FALLA ---
-    if not texto_respuesta:
-        print("Gemini agotó sus intentos o presentó saturación. Activando respaldo con ChatGPT (OpenAI - gpt-4o)...")
-        openai_key = os.environ.get("OPENAI_API_KEY")
-        
-        if openai_key:
+    # --- 1. PRIORIDAD PRINCIPAL: GROQ (Llama 3.3 70B) ---
+    print("Intentando procesar con Groq (Llama 3.3 70B) como primera opción...")
+    groq_key = os.environ.get("GROQ_API_KEY")
+    
+    if groq_key:
+        for intento in range(3):
             try:
-                client_openai = OpenAI(api_key=openai_key)
+                client_groq = OpenAI(
+                    api_key=groq_key,
+                    base_url="https://api.groq.com/openai/v1"
+                )
                 
                 with open(image_path, "rb") as image_file:
                     base64_image = base64.b64encode(image_file.read()).decode('utf-8')
                 
-                response_openai = client_openai.chat.completions.create(
-                    model="gpt-4o",
+                response_groq = client_groq.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
                     messages=[
                         {
                             "role": "user",
@@ -162,18 +125,66 @@ def obtener_datos_desde_drive_imagen(file_id):
                     ],
                     max_tokens=2000
                 )
-                texto_respuesta = response_openai.choices[0].message.content
-                print("¡Éxito procesando la imagen con el respaldo de ChatGPT (OpenAI)!")
-            except Exception as e_openai:
-                print(f"Error también con el respaldo de OpenAI: {e_openai}")
-        else:
-            print("Aviso: La variable OPENAI_API_KEY no está configurada en los secretos de GitHub.")
+                texto_respuesta = response_groq.choices[0].message.content
+                print("¡Éxito procesando la imagen con Groq!")
+                break
+            except Exception as e_groq:
+                print(f"Aviso en Groq (intento {intento + 1}): {e_groq}")
+                time.sleep(2)
+        if not texto_respuesta:
+            print("Groq no respondió correctamente. Pasando al sistema de respaldo Gemini...")
+    else:
+        print("Aviso: La variable GROQ_API_KEY no está configurada. Pasando directamente a Gemini...")
+
+    # --- 2. RESPALDO SECUNDARIO: SISTEMA MULTI-CUENTAS GEMINI (4 -> 3 -> 2 -> 1) ---
+    if not texto_respuesta:
+        print("Activando respaldo con Gemini (Sistema multi-cuentas Key 4 -> 3 -> 2 -> 1)...")
+        modelos_a_probar = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']
+        img = Image.open(image_path)
+
+        for index, api_key in enumerate(API_KEYS_GEMINI):
+            if not api_key:
+                print(f"Aviso: La API Key #{4 - index} de Gemini no está configurada o está vacía.")
+                continue
+            
+            client = genai.Client(api_key=api_key)
+            
+            for modelo in modelos_a_probar:
+                exito_modelo = False
+                for intento in range(3):
+                    try:
+                        print(f"Intentando con Gemini API Key #{4 - index}, modelo {modelo} (intento {intento + 1})...")
+                        response = client.models.generate_content(
+                            model=modelo,
+                            contents=[img, prompt]
+                        )
+                        texto_respuesta = response.text
+                        exito_modelo = True
+                        print(f"¡Éxito con el modelo {modelo} usando Gemini!")
+                        break
+                    except Exception as e:
+                        error_msg = str(e)
+                        print(f"Aviso: {error_msg}")
+                        if "503" in error_msg or "UNAVAILABLE" in error_msg or "high demand" in error_msg:
+                            tiempo_espera = (intento + 1) * 3
+                            print(f"Servidor de Gemini saturado (503). Esperando {tiempo_espera}s antes de reintentar...")
+                            time.sleep(tiempo_espera)
+                            continue
+                        elif "429" in error_msg or "Quota" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+                            print("Límite de cuota alcanzado en Gemini. Probando siguiente opción...")
+                            break
+                        else:
+                            break
+                if exito_modelo:
+                    break
+            if texto_respuesta:
+                break
 
     if os.path.exists(image_path):
         os.remove(image_path)
 
     if not texto_respuesta:
-        raise Exception("Se agotaron todas las opciones de Gemini y el respaldo de ChatGPT debido a saturación o errores.")
+        raise Exception("Se agotaron todas las opciones de Groq y el respaldo de Gemini debido a saturación o errores.")
 
     match = re.search(r"\[.*\]", texto_respuesta, re.DOTALL)
     if match:
