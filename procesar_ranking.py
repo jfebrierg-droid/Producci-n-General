@@ -21,7 +21,7 @@ from email.utils import formatdate, make_msgid
 from PIL import Image
 import requests
 from google import genai
-from openai import OpenAI  # Usado para conectar con la API de Groq
+from groq import Groq  # Importado directamente desde la librería oficial de Groq
 
 # --- CONFIGURACIÓN DE MULTI-CUENTAS DE GEMINI (Como respaldo) ---
 API_KEYS_GEMINI = [
@@ -99,10 +99,7 @@ def obtener_datos_desde_drive_imagen(file_id):
     if groq_key:
         for intento in range(3):
             try:
-                client_groq = OpenAI(
-                    api_key=groq_key,
-                    base_url="https://api.groq.com/openai/v1"
-                )
+                client_groq = Groq(api_key=groq_key)
                 
                 with open(image_path, "rb") as image_file:
                     base64_image = base64.b64encode(image_file.read()).decode('utf-8')
