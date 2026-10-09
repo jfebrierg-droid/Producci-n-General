@@ -40,7 +40,7 @@ LISTA_MAESTRA_AGENTES = [
     "Estarlin Acosta", "Eleuterio Fernandez", "Ninfa Perez", "Angel Matos", "Ingrid Beras",
     "Kevin Ramirez", "Eduardo Hernandez", "Ana Veloz", "Wanda Peña", "Joan Danis",
     "Belkis Sanchez", "Aranechi Tejeda", "Angela Vidal", "Felix Morillo",
-    "Julissa Rosario", "Amalfi Julissa Rodriguez", "Charles Furment", "Angela Valerio", "Dioselina Ramos",
+    "Julissa Rosario", "Amalfi Nuñez", "Charles Furment", "Angela Valerio", "Dioselina Ramos",
     "Luisa Gonzalez", "Hugo Cruz", "Jose Terrero", "Mercedes Fernandez", "Esperanza Regalado",
     "John Adams", "Maria Soriano", "Albertina Febles", "Franklin Graterol", "Cirilo Fermin",
     "Eddy Concepcion", "Paula Herrera", "Rafael Capellan", "Salvador Martinez",
