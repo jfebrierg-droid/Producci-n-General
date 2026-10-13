@@ -39,7 +39,7 @@ LISTA_MAESTRA_AGENTES = [
     "Vladimil Herrera", "Orquidia Feliz", "Marisol Payano", "Jairo Martinez", "Alsiwin Ruiz",
     "Estarlin Acosta", "Eleuterio Fernandez", "Ninfa Perez", "Angel Matos", "Ingrid Beras",
     "Kevin Ramirez", "Eduardo Hernandez", "Ana Veloz", "Wanda Peña", "Joan Danis",
-    "Belkis Sanchez", "Aranechi Tejeda", "Angela Vidal", "Felix Morillo",
+    "Belkis Sanchez", "Aranechi Tejeda", "Angela Vidal", "Eddy Concepcion", "Shary salazar", "Felix Morillo",
     "Julissa Rosario", "Amalfi Nuñez", "Charles Furment", "Angela Valerio", "Dioselina Ramos",
     "Luisa Gonzalez", "Hugo Cruz", "Jose Terrero", "Mercedes Fernandez", "Esperanza Regalado",
     "John Adams", "Maria Soriano", "Albertina Febles", "Remmy Adames", "Franklin Graterol", "Cirilo Fermin",
