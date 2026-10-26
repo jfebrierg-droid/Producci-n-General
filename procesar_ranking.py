@@ -53,7 +53,7 @@ def format_moneda(valor):
     return f"${valor:,.2f}"
 
 def obtener_datos_desde_drive_imagen(file_id):
-    # URL de visualización directa optimizada para evitar errores 404 en Google Drive
+    # URL de visualización directa con el ID actualizado del reporte diario
     url = f"https://drive.google.com/uc?export=view&id={file_id}"
     print("Descargando imagen desde Google Drive...")
 
@@ -227,7 +227,9 @@ def procesar_y_enviar():
     sender_email = os.environ.get("EMAIL_USER", "jfebrierg@gmail.com")
     password = os.environ.get("EMAIL_PASSWORD", "AQUI_TU_CONTRASEÑA_DE_APLICACION")
     recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
-    drive_file_id = "1YmAVaDyplF6CQ_gk2NZsEmLyjFpcFH9Y"
+    
+    # ID actualizado del archivo en Google Drive
+    drive_file_id = "1u2A8Dcyk97Aa7JXZwh6xhCnE0niOGMVw"
 
     try:
         datos_ranking = obtener_datos_desde_drive_imagen(drive_file_id)
