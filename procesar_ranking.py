@@ -53,24 +53,13 @@ def format_moneda(valor):
     return f"${valor:,.2f}"
 
 def obtener_datos_desde_drive_imagen(file_id):
-    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    # URL de visualización directa optimizada para evitar errores 404 en Google Drive
+    url = f"https://drive.google.com/uc?export=view&id={file_id}"
     print("Descargando imagen desde Google Drive...")
 
     try:
         session = requests.Session()
         response = session.get(url, stream=True, timeout=30)
-        
-        # Manejar la cookie de confirmación que Google interpone en descargas directas públicas
-        for key, value in session.cookies.items():
-            if key.startswith('download_warning'):
-                response = session.get(url, params={'confirm': value}, stream=True)
-                break
-        
-        # Respaldo alternativo por si el formato de exportación directa requiere vista web
-        if response.status_code != 200 or 'text/html' in response.headers.get('Content-Type', ''):
-            url_alt = f"https://drive.google.com/uc?export=view&id={file_id}"
-            response = session.get(url_alt, stream=True, timeout=30)
-
     except requests.exceptions.Timeout:
         raise Exception("La solicitud a Google Drive tardó demasiado tiempo (timeout).")
 
