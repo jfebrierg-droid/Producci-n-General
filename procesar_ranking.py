@@ -57,16 +57,31 @@ def obtener_datos_desde_drive_imagen(file_id):
     print("Descargando imagen desde Google Drive...")
 
     try:
-        response = requests.get(url, timeout=30)
+        session = requests.Session()
+        response = session.get(url, stream=True, timeout=30)
+        
+        # Manejar la cookie de confirmación que Google interpone en descargas directas públicas
+        for key, value in session.cookies.items():
+            if key.startswith('download_warning'):
+                response = session.get(url, params={'confirm': value}, stream=True)
+                break
+        
+        # Respaldo alternativo por si el formato de exportación directa requiere vista web
+        if response.status_code != 200 or 'text/html' in response.headers.get('Content-Type', ''):
+            url_alt = f"https://drive.google.com/uc?export=view&id={file_id}"
+            response = session.get(url_alt, stream=True, timeout=30)
+
     except requests.exceptions.Timeout:
         raise Exception("La solicitud a Google Drive tardó demasiado tiempo (timeout).")
 
     if response.status_code != 200:
-        raise Exception("No se pudo descargar la imagen de Google Drive. Verifica que el archivo sea público.")
+        raise Exception(f"No se pudo descargar la imagen de Google Drive (Código HTTP: {response.status_code}). Verifica que el archivo sea público.")
 
     image_path = "temp_ranking_drive.jpg"
     with open(image_path, "wb") as f:
-        f.write(response.content)
+        for chunk in response.iter_content(chunk_size=32768):
+            if chunk:
+                f.write(chunk)
 
     print("Analizando imagen con IA...")
     
