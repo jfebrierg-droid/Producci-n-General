@@ -4,6 +4,7 @@ Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuentas de Gemini (Prioridad principal)
 y respaldo automático de OpenRouter (Modelos de visión gratuitos).
 Estructura MIME robusta para compatibilidad total con Outlook.
+Enlace del repositorio: https://github.com/jfebrierg-droid/Producci-n-General/blob/main/procesar_ranking.py
 """
 
 import base64
