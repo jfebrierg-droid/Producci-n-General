@@ -229,8 +229,8 @@ def procesar_y_enviar():
     password = os.environ.get("EMAIL_PASSWORD", "AQUI_TU_CONTRASEÑA_DE_APLICACION")
     recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
     
-    # ID correcto del archivo 'reporte_diario.png' en Google Drive
-    drive_file_id = "1KoRqN_BR_u6fkvevBhxZbs8ZtippulBr"
+    # ID actualizado del archivo de imagen en Google Drive
+    drive_file_id = "1PMiZwr8nO5cuthQc_rzx3mMJe6WjIU6r"
 
     try:
         datos_ranking = obtener_datos_desde_drive_imagen(drive_file_id)
