@@ -38,7 +38,7 @@ LISTA_MAESTRA_AGENTES = [
     "Ruddy Arias", "Leomayra Alcantara", "Marcos Adames", "Maria De La Cruz", "Indhira Santos",
     "Nicauris Benitez", "Mariela de León Minaya", "Mery Lopez", "Estefania Villegas (Rogers)", "Yudelka Cuevas",
     "Vladimil Herrera", "Orquidia Feliz", "Marisol Payano", "Jairo Martinez", "Alsiwin Ruiz",
-    "Estarlin Acosta", "Eleuterio Fernandez", "Ninfa Perez", "Angel Matos", "Ingrid Beras",
+    "Estarlin Acosta", "Eleuterio Fernandez", "Ninfa Perez", "Angel Matos", "Ingrid Beras", "Soraya Garrido",
     "Kevin Ramirez", "Eduardo Hernandez", "Ana Veloz", "Wanda Peña", "Joan Danis",
     "Belkis Sanchez", "Aranechi Tejeda", "Angela Vidal", "Eddy Concepcion", "Shary Salazar", "Felix Morillo",
     "Julissa Rosario", "Amalfi Nuñez", "Charles Furment", "Angela Valerio", "Dioselina Ramos",
