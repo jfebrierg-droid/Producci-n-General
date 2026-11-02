@@ -38,7 +38,7 @@ LISTA_MAESTRA_AGENTES = [
     "Nicauris Benitez", "Mariela de León Minaya", "Mery Lopez", "Estefania Villegas (Rogers)", "Yudelka Cuevas",
     "Vladimil Herrera", "Orquidia Feliz", "Marisol Payano", "Jairo Martinez", "Alsiwin Ruiz",
     "Estarlin Acosta", "Eleuterio Fernandez", "Ninfa Perez", "Angel Matos", "Ingrid Beras",
-    "Kevin Ramirez", "Eduardo Hernandez", "Ana Veloz", "Wanda Peña", "Joan Danis", "Soraya Garrido",
+    "Kevin Ramirez", "Eduardo Hernandez", "Ana Veloz", "Wanda Peña", "Joan Danis",
     "Belkis Sanchez", "Aranechi Tejeda", "Angela Vidal", "Eddy Concepcion", "Shary Salazar", "Felix Morillo",
     "Julissa Rosario", "Amalfi Nuñez", "Charles Furment", "Angela Valerio", "Dioselina Ramos",
     "Luisa Gonzalez", "Hugo Cruz", "Jose Terrero", "Mercedes Fernandez", "Esperanza Regalado",
@@ -229,7 +229,7 @@ def procesar_y_enviar():
     recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
     
     # ID actualizado del archivo en Google Drive
-    drive_file_id = "1u2A8Dcyk97Aa7JXZwh6xhCnE0niOGMVw"
+    drive_file_id = "1HQeziFzPYZWawYcbjwM3p26pwTX0RG2l"
 
     try:
         datos_ranking = obtener_datos_desde_drive_imagen(drive_file_id)
