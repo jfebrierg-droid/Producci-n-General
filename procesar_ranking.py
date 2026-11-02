@@ -4,7 +4,6 @@ Script: procesar_ranking.py
 Descripción: Procesamiento de ranking por IA con sistema multi-cuentas de Gemini (Prioridad principal)
 y respaldo automático de OpenRouter (Modelos de visión gratuitos).
 Estructura MIME robusta para compatibilidad total con Outlook.
-Enlace del repositorio: https://github.com/jfebrierg-droid/Producci-n-General/blob/main/procesar_ranking.py
 """
 
 import base64
@@ -38,7 +37,7 @@ LISTA_MAESTRA_AGENTES = [
     "Ruddy Arias", "Leomayra Alcantara", "Marcos Adames", "Maria De La Cruz", "Indhira Santos",
     "Nicauris Benitez", "Mariela de León Minaya", "Mery Lopez", "Estefania Villegas (Rogers)", "Yudelka Cuevas",
     "Vladimil Herrera", "Orquidia Feliz", "Marisol Payano", "Jairo Martinez", "Alsiwin Ruiz",
-    "Estarlin Acosta", "Eleuterio Fernandez", "Ninfa Perez", "Angel Matos", "Ingrid Beras", "Soraya Garrido",
+    "Estarlin Acosta", "Eleuterio Fernandez", "Ninfa Perez", "Angel Matos", "Ingrid Beras",
     "Kevin Ramirez", "Eduardo Hernandez", "Ana Veloz", "Wanda Peña", "Joan Danis",
     "Belkis Sanchez", "Aranechi Tejeda", "Angela Vidal", "Eddy Concepcion", "Shary Salazar", "Felix Morillo",
     "Julissa Rosario", "Amalfi Nuñez", "Charles Furment", "Angela Valerio", "Dioselina Ramos",
@@ -54,7 +53,7 @@ def format_moneda(valor):
     return f"${valor:,.2f}"
 
 def obtener_datos_desde_drive_imagen(file_id):
-    # URL de visualización directa con el ID correcto del archivo de imagen
+    # URL de visualización directa con el ID actualizado del reporte diario
     url = f"https://drive.google.com/uc?export=view&id={file_id}"
     print("Descargando imagen desde Google Drive...")
 
@@ -229,8 +228,8 @@ def procesar_y_enviar():
     password = os.environ.get("EMAIL_PASSWORD", "AQUI_TU_CONTRASEÑA_DE_APLICACION")
     recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
     
-    # ID actualizado del archivo de imagen en Google Drive
-    drive_file_id = "1PMiZwr8nO5cuthQc_rzx3mMJe6WjIU6r"
+    # ID actualizado del archivo en Google Drive
+    drive_file_id = "1u2A8Dcyk97Aa7JXZwh6xhCnE0niOGMVw"
 
     try:
         datos_ranking = obtener_datos_desde_drive_imagen(drive_file_id)
