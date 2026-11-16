@@ -229,7 +229,7 @@ def procesar_y_enviar():
     recipient_email = os.environ.get("EMAIL_RECIPIENT", "jfebrierg@gmail.com")
     
     # ID actualizado del archivo en Google Drive
-    drive_file_id = "1yhNzIk5KNL1BM9AbKOaEp9qcvcYz-3C_"
+    drive_file_id = "1soVkLRhUOyH9zhA9SQz31uFAs5ONJa9l"
 
     try:
         datos_ranking = obtener_datos_desde_drive_imagen(drive_file_id)
